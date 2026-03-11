@@ -1,0 +1,22 @@
+.idea/
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.json
+*.ini
+
+# Distribución / Empaquetado
+dist/
+build/
+*.egg-info/
+
+# Variables de entorno
+.env
+
+# Archivos específicos de SO (evita subir basura de Windows/Mac)
+Thumbs.db
+.DS_Store
+
+# Logs de errores
+*.log
