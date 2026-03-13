@@ -1,674 +1,279 @@
+import msvcrt
 import random
 import time
-
 from colorama import Fore, Style
 
 from assets.resources.resource_manager import ResourceManager
-from characters.enemies import Goblin, Skeleton, Orc, Troll, Mago
-from items.item import Potion
-
 from utils.utils import print_player_enemy_info, print_status
 
-# Instancia global de ResourceManager
-resource_manager = ResourceManager()
 
+# Mapa de progresión: Al derrotar a la LLAVE, se desbloquea el VALOR
+ENEMY_PROGRESSION = {
+    "Goblin": "Esqueleto",
+    "Esqueleto": "Orco",
+    "Orco": "Troll",
+    "Troll": "Mago",
+    "Mago": None  # El Mago es el último por ahora
+}
 
-def auto_battle(player, enemy, defeated_enemies):
-    print("="*60)
-    print(f"{Style.BRIGHT}¡Ha comenzado la batalla automática!{Style.RESET_ALL}")
-    print_player_enemy_info(player, enemy, defeated_enemies)
+def check_for_interrupt():
+    """Retorna True si el usuario ha pulsado 'q' o 'Q'."""
+    if msvcrt.kbhit():  # ¿Se ha pulsado alguna tecla?
+        key = msvcrt.getch().decode('utf-8').lower()
+        if key == 'q':
+            return True
+    return False
 
-    # Define una bandera para controlar si el ataque ya ha sido reducido a la mitad por el estado de quemado
-    attack_reduced = False
-    # Define una bandera para controlar si se ha aplicado un emboscada
-    ambush_applied = False
+def initiate_battle(player, enemy, defeated_enemies, unlocked_enemies):
+    """Punto de entrada principal para cualquier combate."""
+    print("=" * 60)
+    print(f"{Style.BRIGHT}¡Ha comenzado la batalla contra {enemy.name}!{Style.RESET_ALL}")
+    player.in_combat = True
 
-    # Antes de aplicar el efecto de aumento/reducción de daño, guarda los valores originales del ataque
-    original_min_attack = player.min_attack
-    original_max_attack = player.max_attack
-    # Antes de aplicar el efecto de aumento/reducción de defensa, guardar el valor original de la defensa
-    original_defense = player.defense
+    rm = ResourceManager()
+    # Sincronizamos el manager con la batalla
+    rm.set_mood("battle", enemy.name)
+    rm.update()  # Forzamos el cambio de música inmediato
 
-    # Ciclo de batalla, continúa mientras ambos tienen vida
-    while player.health > 0 and enemy.health > 0:
-        random_number = random.random()
-        # Aplicar efectos del estado al jugador si está afectado
-        if player.status_effect:
-            if player.status_effect == "quemado":
-                # Reducir un 6.25% de la salud máxima
-                health_reduction = player.max_health // 16
-                player.health = max(0, player.health - health_reduction)
-                # Reducir el ataque a la mitad solo si no ha sido reducido antes
-                if not attack_reduced:
-                    player.min_attack //= 2
-                    player.max_attack //= 2
-                    attack_reduced = True  # Marcar que el ataque ha sido reducido
-                print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} sufre de {Fore.RED}quemadura{Style.RESET_ALL} y pierde "
-                      f"{Fore.RED}{health_reduction}{Style.RESET_ALL} puntos de salud.")
-                if player.health <= 0:
-                    player.health = 0  # Asegura que la salud no sea negativa
-                    print(f"{Fore.RED}{Style.BRIGHT}{player.name} ha sido derrotado a causa del {player.status_effect}.{Style.RESET_ALL}")
-                    restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-                    break
-            elif player.status_effect == "paralizado":
-                # Hay un 50% de probabilidad de que el jugador no pueda atacar
-                if random.random() < 0.5:
-                    print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} está paralizado y no puede atacar.")
-                    # El jugador no realiza ninguna acción en este turno
-            elif player.status_effect == "envenenado":
-                # Calcular el daño del veneno en función del turno actual del envenenamiento
-                poison_damage = (2 ** (3 - player.status_duration)) * (player.max_health // 16)
-                # Aplicar el daño al jugador
-                player.health = max(0, player.health - poison_damage)
-                print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} sufre de {Fore.GREEN}envenenamiento{Style.RESET_ALL} y pierde "
-                      f"{Fore.RED}{poison_damage}{Style.RESET_ALL} puntos de salud.")
-                if player.health <= 0:
-                    player.health = 0  # Asegura que la salud no sea negativa
-                    print(f"{Fore.RED}{Style.BRIGHT}{player.name} ha sido derrotado a causa del veneno.{Style.RESET_ALL}")
-                    restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-                    break
-            elif player.status_effect == "congelado":
-                print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} está {Fore.BLUE}congelado{Style.RESET_ALL} y no puede realizar ninguna acción.")
-                # El jugador no realiza ninguna acción en este turno
+    # Música específica según el enemigo
+    if enemy.name == "Orco":
+        rm.play_music("scaring_crows")
+    elif enemy.name == "Mago":
+        rm.play_music("Siege_of_the_Black_Gate")
 
-        # Aplica una emboscada si el enemigo es un Goblin y aún no se ha aplicado una emboscada
-        if enemy.name == "Goblin" and not ambush_applied:
-            if enemy.ambush_probability():
-                enemy.apply_ambush(player)
-                print_status(player, enemy, defeated_enemies)
-            ambush_applied = True
-            # Pausa la ejecución por un breve período de tiempo para que sea más legible
-            time.sleep(1)
-
-        # Ataque del jugador comprobando los efectos de estado
-        if player.status_effect != "congelado" or player.status_effect == "paralizado" and random_number >= 0.5:
-            player_attack(player, enemy, defeated_enemies)
-            if check_enemy_defeated(player, enemy, original_min_attack, original_max_attack, original_defense):
-                return True  # Salir del bucle si el enemigo está derrotado
-
-        # Reducir 1 turno la duración de los efectos de estado
-        if player.status_effect is not None:
-            player.reduce_status_duration()
-        # Cuando el efecto de quemado se disipe, restaura los valores originales del ataque
-        if player.status_effect is None or player.status_duration == 0:
-            if attack_reduced:
-                restore_attack_after_burn(player, original_min_attack, original_max_attack)
-                attack_reduced = False  # Restaurar la bandera
-
-        # Pausa la ejecución por un breve período de tiempo para que sea más legible
-        time.sleep(1)
-
-        # Si el enemigo es un Orc, se incrementa el contador de turnos para activar la Furia.
-        if isinstance(enemy, Orc):
-            enemy.increase_fury_turns()
-
-        # Regeneración de salud del Troll
-        if isinstance(enemy, Troll):  # Verifica si el enemigo es un Troll
-            if enemy.health < Troll.max_health:  # Verificar si la salud del Troll no está al máximo
-                regen_amount = enemy.regenerate_health()  # Obtiene la cantidad de salud regenerada
-                # Calcula la cantidad máxima que el Troll puede regenerar
-                max_regen_amount = Troll.max_health - enemy.health
-                # Determina la cantidad real de salud regenerada
-                actual_regen_amount = min(regen_amount, max_regen_amount)
-                if actual_regen_amount > 0:  # Verifica si el Troll realmente regenera salud
-                    enemy.health += actual_regen_amount  # Actualiza la salud del Troll
-                    print(
-                        f"{Fore.RED}{enemy.name}{Style.RESET_ALL} regenera {Fore.GREEN}{actual_regen_amount}"
-                        f"{Style.RESET_ALL} de salud.")
-                    # Pausa la ejecución por un breve período de tiempo para que sea más legible
-                    time.sleep(1)
-
-        if isinstance(enemy, Mago) and random_number < 0.5:  # 50% de probabilidad de que el Mago realice un hechizo
-            spell_type = enemy.cast_spell()
-            # Si el hechizo fue de daño, inflige daño al jugador
-            if spell_type != "Curación":
-                # Calcula el daño del hechizo del enemigo y cualquier efecto de estado asociado.
-                enemy_spell_damage_spell_type = enemy.spell_damage(spell_type)
-                # Extrae el daño del hechizo y el efecto de estado del resultado obtenido.
-                spell_damage, status_effect = enemy_spell_damage_spell_type
-                # Reduce el daño del hechizo por la defensa del jugador.
-                spell_damage -= player.defense
-                # Asegura que el daño no sea negativo y actualiza la salud del jugador.
-                player.health = max(0, player.health - spell_damage)
-                print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} lanza un hechizo de ", end="")
-                if spell_type == "Bola de fuego":
-                    print(f"{Fore.RED}{spell_type}{Style.RESET_ALL}", end="")
-                elif spell_type == "Rayo":
-                    print(f"{Fore.YELLOW}{spell_type}{Style.RESET_ALL}", end="")
-                elif spell_type == "Veneno":
-                    print(f"{Fore.GREEN}{spell_type}{Style.RESET_ALL}", end="")
-                elif spell_type == "Ventisca":
-                    print(f"{Fore.BLUE}{spell_type}{Style.RESET_ALL}", end="")
-                else:
-                    print(spell_type, end="")
-                print(f" y hace {Fore.RED}{spell_damage}{Style.RESET_ALL} de daño a {Fore.GREEN}{player.name}{Style.RESET_ALL}.")
-                if status_effect:
-                    effect_color = Fore.WHITE  # Por defecto
-                    duration = random.randint(1, 5)  # Duración por defecto
-                    if status_effect == "quemado":
-                        duration = random.randint(2, 5)  # Quemado dura entre 2 y 5 turnos
-                    elif status_effect == "paralizado":
-                        duration = random.randint(2, 4)  # Paralizado dura entre 2 y 4 turnos
-                    elif status_effect == "envenenado":
-                        duration = random.randint(2, 3)  # Envenenado dura entre 2 y 3 turnos
-                    elif status_effect == "congelado":
-                        duration = random.randint(1, 2)  # Congelado dura entre 1 y 2 turnos
-                    if spell_type == "Bola de fuego":
-                        effect_color = Fore.RED
-                    elif spell_type == "Rayo":
-                        effect_color = Fore.YELLOW
-                    elif spell_type == "Veneno":
-                        effect_color = Fore.GREEN
-                    elif spell_type == "Ventisca":
-                        effect_color = Fore.BLUE
-                    if player.apply_status_effect(status_effect, duration):  # Aplicar el efecto de estado por 3 turnos
-                        print(f"{effect_color}{player.name} ha sido {status_effect} durante {player.status_duration} turnos.{Style.RESET_ALL}")
-            # Si el hechizo fue de curación, se cura a sí mismo
-            else:
-                # Verificar si la salud del Mago no está al máximo antes de utilizar magia curativa
-                if enemy.health < Mago.max_health:  # Verificar si la salud del Mago no está al máximo
-                    heal_amount = enemy.cast_heal()  # Obtiene la cantidad de salud recuperada
-                    # Calcula la cantidad máxima que el Mago puede recuperada
-                    max_regen_amount = Mago.max_health - enemy.health
-                    # Determina la cantidad real de salud recuperada
-                    actual_heal_amount = min(heal_amount, max_regen_amount)
-                    if actual_heal_amount > 0:  # Verifica si el Mago realmente recupera salud
-                        enemy.health += actual_heal_amount  # Actualiza la salud del Mago
-                        print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} utiliza magia curativa y se cura "
-                              f"{Fore.GREEN}{actual_heal_amount}{Style.RESET_ALL} de salud.")
-                    print_status(player, enemy, defeated_enemies)
-                else:
-                    # Si la salud del Mago está al máximo, lanza un ataque
-                    enemy_attack(player, enemy)
-                    print_status(player, enemy, defeated_enemies)
-                    if check_player_defeated(player, original_min_attack, original_max_attack, original_defense):
-                        break  # Salir del bucle si el jugador está derrotado
-            # Pausa la ejecución por un breve período de tiempo para que sea más legible
-            time.sleep(1)
-            if check_player_defeated(player, original_min_attack, original_max_attack, original_defense):
-                break  # Salir del bucle si el jugador está derrotado
-        else:
-            enemy_attack(player, enemy)
+    # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
+    if hasattr(enemy, 'check_ambush'):
+        if enemy.check_ambush(player):
+            # Mostramos el estado inmediatamente después del daño de emboscada
             print_status(player, enemy, defeated_enemies)
-            # Pausa la ejecución por un breve período de tiempo para que sea más legible
-            time.sleep(1)
-            if check_player_defeated(player, original_min_attack, original_max_attack, original_defense):
-                break  # Salir del bucle si el jugador está derrotado
-        # Si el enemigo es un Orc, se incrementa el contador de turnos para desactivar la Furia.
-        if isinstance(enemy, Orc):
-            enemy.increment_fury_turns_for_deactivation()
-        # Comprobar la duración de la poción
-        player.check_duration()
 
+        # Si el jugador muere por la emboscada (poco probable pero posible)
+        if not player.is_alive():
+            _handle_defeat(player)
+            _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "def": player.stats.defense})
+            return
 
-def battle(player, enemy, defeated_enemies):
-    print("="*60)
-    print(f"{Style.BRIGHT}¡Ha comenzado la batalla!{Style.RESET_ALL}")
-    print_player_enemy_info(player, enemy, defeated_enemies)
+    # Guardamos estado inicial para restaurar después
+    snapshot = {
+        "atk": (player.stats.min_atk, player.stats.max_atk),
+        "def": player.stats.defense
+    }
 
-    # Bandera para controlar si el ataque ya ha sido reducido a la mitad por el estado de quemado
-    attack_reduced = False
-    # Bbandera para controlar si se ha aplicado un emboscada
-    ambush_applied = False
-    # Bandera para controlar si se ha realizado el primer movimiento
-    first_movement_made = False
+    is_auto = False
+    while player.is_alive() and enemy.is_alive():
+        rm.update()
+        # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
+        can_act = player.on_turn_start()
+        turn_consumed = False
 
-    # Guarda los valores originales del ataque
-    original_min_attack = player.min_attack
-    original_max_attack = player.max_attack
-    original_defense = player.defense
+        # --- COMPROBAR CANCELACIÓN DE AUTO ---
+        if is_auto:
+            if check_for_interrupt():
+                is_auto = False
+                print(f"\n{Fore.YELLOW}🛑 ¡Auto-batalla cancelada! Volviendo al menú...{Style.RESET_ALL}")
+                time.sleep(1)  # Pausa para que el usuario lo vea
 
-    # Ciclo de batalla, continúa mientras ambos tienen vida
-    while player.health > 0 and enemy.health > 0:
-        valid_options = ["Atacar", "Objetos", "Información", "Huir"]
-        if enemy.name in defeated_enemies and not first_movement_made:
-            valid_options.append("Batalla automática")
-
-        print_menu_options(valid_options)
-        choice = input(f"Elige una opción (1-{len(valid_options)}): ")
-        print("="*60)
-
-        # Turno del jugador
-        if choice == "1":
-            first_movement_made = True  # El jugador ha realizado el primero movimiento
-            # Aplicar efectos del estado al jugador si está afectado
-            if player.status_effect:
-                if player.status_effect == "quemado":
-                    # Reducir un 6.25% de la salud máxima
-                    health_reduction = player.max_health // 16
-                    player.health = max(0, player.health - health_reduction)
-                    # Reducir el ataque a la mitad solo si no ha sido reducido antes
-                    if not attack_reduced:
-                        player.min_attack //= 2
-                        player.max_attack //= 2
-                        attack_reduced = True  # Marcar que el ataque ha sido reducido
-                    print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} sufre de {Fore.RED}quemadura{Style.RESET_ALL} y pierde "
-                          f"{Fore.RED}{health_reduction}{Style.RESET_ALL} puntos de salud.")
-                    if player.health <= 0:
-                        player.health = 0  # Asegura que la salud no sea negativa
-                        print(f"{Fore.RED}{Style.BRIGHT}{player.name} ha sido derrotado a causa del {player.status_effect}.{Style.RESET_ALL}")
-                        restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
+        action = None
+        if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
+            if not is_auto:
+                if can_act:
+                    action = _player_menu(player, enemy, defeated_enemies)
+                    if action == "huir":
+                        print(f"{Fore.YELLOW}Has huido del combate...{Style.RESET_ALL}")
                         break
-                elif player.status_effect == "paralizado":
-                    # Hay un 50% de probabilidad de que el jugador no pueda atacar
-                    if random.random() < 0.5:
-                        print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} está paralizado y no puede atacar.")
-                        # El jugador no realiza ninguna acción en este turno
-                        choice = None
-                elif player.status_effect == "envenenado":
-                    # Calcular el daño del veneno en función del turno actual del envenenamiento
-                    poison_damage = (2 ** (3 - player.status_duration)) * (player.max_health // 16)
-                    # Aplicar el daño al jugador
-                    player.health = max(0, player.health - poison_damage)
-                    print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} sufre de {Fore.GREEN}envenenamiento{Style.RESET_ALL} y pierde "
-                          f"{Fore.RED}{poison_damage}{Style.RESET_ALL} puntos de salud.")
-                    if player.health <= 0:
-                        player.health = 0  # Asegura que la salud no sea negativa
-                        print(f"{Fore.RED}{Style.BRIGHT}{player.name} ha sido derrotado a causa del veneno.{Style.RESET_ALL}")
-                        restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-                        break
-                elif player.status_effect == "congelado":
-                    print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} está {Fore.BLUE}congelado{Style.RESET_ALL} y no puede realizar ninguna acción.")
-                    # El jugador no realiza ninguna acción en este turno
-                    choice = None
 
-            # Aplica una emboscada si el enemigo es un Goblin y aún no se ha aplicado una emboscada
-            if enemy.name == "Goblin" and not ambush_applied:
-                if enemy.ambush_probability():
-                    enemy.apply_ambush(player)
-                    print_status(player, enemy, defeated_enemies)
-                    input(
-                        f"Es el turno de {Fore.GREEN}{player.name}{Style.RESET_ALL}. Presiona {Fore.GREEN}Enter{Style.RESET_ALL} "
-                        f"para que {Fore.GREEN}{player.name}{Style.RESET_ALL} ataque...")
-                    print("="*60)
-                ambush_applied = True
+                    if action == "auto":
+                        is_auto = True
+                        print(f"{Fore.CYAN}>>> MODO AUTO: ACTIVADO. (Pulsa 'Q' para detener){Style.RESET_ALL}")
 
-            # Reducir 1 turno la duración de los efectos de estado
-            if player.status_effect is not None:
-                player.reduce_status_duration()
-            # Cuando el efecto de quemado se disipe, restaura los valores originales del ataque
-            if player.status_effect is None or player.status_duration == 0:
-                if attack_reduced:
-                    restore_attack_after_burn(player, original_min_attack, original_max_attack)
-                    attack_reduced = False  # Restaurar la bandera
-
-            # Si el jugador puede atacar después de aplicar los efectos del estado
-            if choice == "1":
-                player_attack(player, enemy, defeated_enemies)
-                if check_enemy_defeated(player, enemy, original_min_attack, original_max_attack, original_defense):
-                    return True  # Salir del bucle si el enemigo está derrotado
-
-            # Turno del enemigo
-            enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense)
-
-            if check_player_defeated(player, original_min_attack, original_max_attack, original_defense):
-                return  # Salir del bucle si el jugador está derrotado
-
-            # Comprobar la duración de la poción
-            player.check_duration()
-        elif choice == "2":
-            first_movement_made = True  # El jugador ha realizado el primero movimiento
-            # Mostrar los objetos del jugador y permitirle usarlos
-            player.show_inventory()
-            item_choice = player.inventory.select_item_from_inventory()  # Utilizar el método para seleccionar un objeto del inventario
-            if item_choice:
-                item = item_choice
-                if isinstance(item, Potion):  # Verificar si el objeto es una poción
-                    if item.healing_amount is not None:  # Verificar si la poción restaura salud
-                        if player.health >= player.max_health:
-                            print(f"{Fore.RED}¡Tu salud ya está al máximo! No puedes usar {item.name} en este momento.{Style.RESET_ALL}")
-                        else:
-                            # Calcular la cantidad de salud que se restaurará sin exceder la salud máxima
-                            healing_amount = min(item.healing_amount, player.max_health - player.health)
-                            # Usar la poción para curar al jugador
-                            player.health += healing_amount
-                            # Restar la poción del inventario del jugador
-                            player.inventory.remove_item(item)
-                            print(f"¡Has usado {Fore.GREEN}{Style.BRIGHT}{item.name}{Style.RESET_ALL} y recuperaste "
-                                  f"{Fore.GREEN}{Style.BRIGHT}{item.healing_amount}{Style.RESET_ALL} puntos de salud!")
-                            # Turno del enemigo
-                            enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense)
-                    elif item.defense_boost is not None:  # Verificar si la poción otorga un aumento de defensa
-                        if any(potion.name == "Poción de Resistencia" for potion in player.active_potions):
-                            print(f"{Fore.RED}Ya tienes el efecto de la poción de resistencia activo.{Style.RESET_ALL}")
-                        else:
-                            # Aplicar el efecto de la poción
-                            player.apply_potion_effect("Poción de Resistencia", 3)
-                            # Aplicar el aumento de defensa al jugador
-                            player.defense += item.defense_boost
-                            # Restar la poción del inventario del jugador
-                            player.inventory.remove_item(item)
-                            print(f"¡Has usado {Fore.LIGHTBLUE_EX}{item.name}{Style.RESET_ALL} y obtuviste un aumento de {item.defense_boost} de defensa!")
-                            # Turno del enemigo
-                            enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense)
-                            # Comprobar la duración de la poción
-                            player.check_duration()
-                    elif item.damage_boost is not None:  # Verificar si la poción otorga un aumento de daño
-                        if any(potion.name == "Poción de Fuerza" for potion in player.active_potions):
-                            print(f"{Fore.RED}Ya tienes el efecto de la poción de fuerza activo.{Style.RESET_ALL}")
-                        else:
-                            # Aplicar el efecto de la poción
-                            player.apply_potion_effect("Poción de Fuerza", 3)
-                            # Aplicar el aumento de daño al jugador
-                            player.min_attack += item.damage_boost
-                            player.max_attack += item.damage_boost
-                            # Restar la poción del inventario del jugador
-                            player.inventory.remove_item(item)
-                            print(f"¡Has usado {Fore.LIGHTRED_EX}{item.name}{Style.RESET_ALL} y obtuviste un aumento "
-                                  f"de {Fore.LIGHTRED_EX}{item.damage_boost}{Style.RESET_ALL} de daño!")
-                            # Turno del enemigo
-                            enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense)
-                            # Comprobar la duración de la poción
-                            player.check_duration()
-                    elif item.regeneration_amount is not None:  # Verificar si la poción otorga regeneración de salud
-                        if any(potion.name == "Poción de Regeneración" for potion in player.active_potions):
-                            print(f"{Fore.RED}Ya tienes el efecto de la poción de regeneración activo.{Style.RESET_ALL}")
-                        else:
-                            # Aplicar el efecto de la poción
-                            player.apply_potion_effect("Poción de Regeneración", 3)
-                            # Restar la poción del inventario del jugador
-                            player.inventory.remove_item(item)
-                            print(f"¡Has usado {Fore.LIGHTGREEN_EX}{item.name}{Style.RESET_ALL} y comenzaste a regenerar "
-                                  f"{Fore.LIGHTGREEN_EX}{item.regeneration_amount}{Style.RESET_ALL} puntos de salud por turno!")
-                            # Turno del enemigo
-                            enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense)
-                            # Comprobar la duración de la poción
-                            player.check_duration()
+                    if action == "objeto_usado":
+                        turn_consumed = True
                 else:
-                    print("No puedes usar ese objeto en combate.")
+                    input(f"\n{Fore.YELLOW}Presiona Enter para pasar turno...{Style.RESET_ALL}")
+
+            # --- TURNO DEL JUGADOR (Si puede actuar) ---
+            if (is_auto or action == "atacar") and can_act and not turn_consumed:
+                _execute_turn(player, enemy, defeated_enemies)
+
+        if not enemy.is_alive():
+            # CAPTURAMOS LOS NUEVOS STATS SI SUBE DE NIVEL
+            new_atk, new_def = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
+
+            # SI SUBIÓ DE NIVEL, ACTUALIZAMOS EL SNAPSHOT
+            if player.just_leveled_up:
+                snapshot["atk"] = new_atk
+                snapshot["def"] = new_def
+            break
+
+        # --- TURNO DEL ENEMIGO ---
+        if enemy.is_alive():
+            time.sleep(1)
+            print(f"\nTurno de {Fore.RED}{enemy.name}{Style.RESET_ALL}...")
+            enemy.perform_turn(player)
+            print_status(player, enemy, defeated_enemies)
+
+        if not player.is_alive():
+            _handle_defeat(player)
+            break
+
+        # --- FIN DE TURNO (Reducir duración de efectos) ---
+        player.on_turn_end()
+        if hasattr(enemy, 'on_turn_end'):
+            enemy.on_turn_end()
+
+        # Si estamos en modo auto, esperamos para poder leer el resultado
+        if is_auto and player.is_alive() and enemy.is_alive():
+            print(f"{Fore.BLACK}{Style.BRIGHT}(Esperando siguiente turno...){Style.RESET_ALL}")
+            time.sleep(1)  # Pequeña pausa para asimilar el daño recibido
+
+    _restore_player(player, snapshot)
+    player.in_combat = False
+    # Al salir, volvemos a modo aventura
+    rm.set_mood("adventure")
+    rm.play_random_adventure_music()
+
+
+def _player_menu(player, enemy, defeated_enemies):
+    """Maneja la interfaz de usuario durante el combate."""
+    while True:
+        options = ["1. Atacar", "2. Objetos", "3. Info", "4. Huir"]
+        if enemy.name in defeated_enemies:
+            options.append("5. Auto-Batalla")
+
+        print("\n" + " | ".join(options))
+        choice = input(f"Selección: ")
+
+        if choice == "1":
+            return "atacar"
+        elif choice == "2":
+            # Si el menú de equipo devuelve True es que se usó un objeto
+            if player.inventory.equip_menu():
+                return "objeto_usado"
         elif choice == "3":
             print_player_enemy_info(player, enemy, defeated_enemies)
+            continue
         elif choice == "4":
-            # El jugador decide huir
-            print(f"{Fore.GREEN}{player.name}{Style.RESET_ALL} ha huido del combate.")
-            restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-            return
+            return "huir"
         elif choice == "5" and enemy.name in defeated_enemies:
-            auto_battle(player, enemy, defeated_enemies)
+            return "auto"
         else:
-            print_invalid_option(valid_options)
-    restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
+            print(f"{Fore.RED}Opción no válida.{Style.RESET_ALL}")
 
 
-def enemy_turn(player, enemy, defeated_enemies, original_min_attack, original_max_attack, original_defense):
-    # Turno del enemigo
-    input(f"Es el turno de {Fore.RED}{enemy.name}{Style.RESET_ALL}. Presiona {Fore.GREEN}Enter{Style.RESET_ALL} "
-          f"para que {Fore.RED}{enemy.name}{Style.RESET_ALL} ataque...")
-    print("="*60)
+def _execute_turn(attacker, defender, defeated_enemies):
+    """Ejecuta un ataque estándar calculando daño y stats."""
+    from characters.player import Player
+    if isinstance(attacker, Player):
+        rm = ResourceManager()
+        # Elegimos al azar entre los nombres en AUDIO_ASSETS en main.py
+        sonido_ataque = random.choice(["hit", "slash"])
+        rm.play_sfx(sonido_ataque)
 
-    if isinstance(enemy, Orc):
-        enemy.increase_fury_turns()
-
-    # Regeneración de salud del Troll
-    if isinstance(enemy, Troll):  # Verifica si el enemigo es un Troll
-        if enemy.health < Troll.max_health:  # Verificar si la salud del Troll no está al máximo
-            regen_amount = enemy.regenerate_health()  # Obtiene la cantidad de salud regenerada
-            # Calcula la cantidad máxima que el Troll puede regenerar
-            max_regen_amount = Troll.max_health - enemy.health
-            # Determina la cantidad real de salud regenerada
-            actual_regen_amount = min(regen_amount, max_regen_amount)
-            if actual_regen_amount > 0:  # Verifica si el Troll realmente regenera salud
-                enemy.health += actual_regen_amount  # Actualiza la salud del Troll
-                print(
-                    f"{Fore.RED}{enemy.name}{Style.RESET_ALL} regenera {Fore.GREEN}{actual_regen_amount}"
-                    f"{Style.RESET_ALL} de salud.")
-
-    if isinstance(enemy, Mago) and random.random() < 0.5:  # 50% de probabilidad de que el Mago realice un hechizo
-        spell_type = enemy.cast_spell()
-        # Si el hechizo fue de daño, inflige daño al jugador
-        if spell_type != "Curación":
-            # Calcula el daño del hechizo del enemigo y cualquier efecto de estado asociado.
-            enemy_spell_damage_spell_type = enemy.spell_damage(spell_type)
-            # Extrae el daño del hechizo y el efecto de estado del resultado obtenido.
-            spell_damage, status_effect = enemy_spell_damage_spell_type
-            # Resta la defensa del jugador del daño del hechizo.
-            spell_damage = max(0, spell_damage - player.defense)
-            # Asegura que el daño no sea negativo y actualiza la salud del jugador.
-            player.health = max(0, player.health - spell_damage)
-            print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} lanza un hechizo de ", end="")
-            if spell_type == "Bola de fuego":
-                print(f"{Fore.RED}{spell_type}{Style.RESET_ALL}", end="")
-            elif spell_type == "Rayo":
-                print(f"{Fore.YELLOW}{spell_type}{Style.RESET_ALL}", end="")
-            elif spell_type == "Veneno":
-                print(f"{Fore.GREEN}{spell_type}{Style.RESET_ALL}", end="")
-            elif spell_type == "Ventisca":
-                print(f"{Fore.BLUE}{spell_type}{Style.RESET_ALL}", end="")
-            else:
-                print(spell_type, end="")
-            if spell_damage > 0:
-                print(f" y hace {Fore.RED}{spell_damage}{Style.RESET_ALL} de daño a {Fore.GREEN}{player.name}{Style.RESET_ALL}.")
-            else:
-                print(f" y {Fore.GREEN}{player.name}{Style.RESET_ALL} {Fore.BLUE}bloquea{Style.RESET_ALL} el hechizo.")
-            if status_effect:
-                effect_color = Fore.WHITE  # Color por defecto
-                duration = random.randint(1, 5)  # Duración por defecto
-                if status_effect == "quemado":
-                    duration = random.randint(2, 5)  # Quemado dura entre 2 y 5 turnos
-                elif status_effect == "paralizado":
-                    duration = random.randint(2, 4)  # Paralizado dura entre 2 y 4 turnos
-                elif status_effect == "envenenado":
-                    duration = random.randint(2, 3)  # Envenenado dura entre 2 y 3 turnos
-                elif status_effect == "congelado":
-                    duration = random.randint(1, 2)  # Congelado dura entre 1 y 2 turnos
-                if spell_type == "Bola de fuego":
-                    effect_color = Fore.RED
-                elif spell_type == "Rayo":
-                    effect_color = Fore.YELLOW
-                elif spell_type == "Veneno":
-                    effect_color = Fore.GREEN
-                elif spell_type == "Ventisca":
-                    effect_color = Fore.BLUE
-                if player.apply_status_effect(status_effect, duration):  # Aplicar el efecto de estado por X turnos
-                    print(f"{effect_color}{player.name} ha sido {status_effect} durante {player.status_duration} turnos.{Style.RESET_ALL}")
-            print_status(player, enemy, defeated_enemies)
-        # Si el hechizo fue de curación, se cura a sí mismo
-        else:
-            # Verificar si la salud del Mago no está al máximo antes de utilizar magia curativa
-            if enemy.health < Mago.max_health:  # Verificar si la salud del Mago no está al máximo
-                heal_amount = enemy.cast_heal()  # Obtiene la cantidad de salud recuperada
-                # Calcula la cantidad máxima que el Mago puede recuperar
-                max_regen_amount = Mago.max_health - enemy.health
-                # Determina la cantidad real de salud recuperada
-                actual_heal_amount = min(heal_amount, max_regen_amount)
-                if actual_heal_amount > 0:  # Verifica si el Mago realmente recupera salud
-                    enemy.health += actual_heal_amount  # Actualiza la salud del Mago
-                    print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} utiliza magia curativa y se cura "
-                          f"{Fore.GREEN}{actual_heal_amount}{Style.RESET_ALL} de salud.")
-                print_status(player, enemy, defeated_enemies)
-            else:
-                # Si la salud del Mago está al máximo, lanzar un hechizo de daño
-                enemy_attack(player, enemy)
-                print_status(player, enemy, defeated_enemies)
-    else:
-        enemy_attack(player, enemy)
-        print_status(player, enemy, defeated_enemies)
-    # Si el enemigo es un Orc y está en estado de Furia, se incrementa el contador de turnos para desactivar la Furia.
-    if isinstance(enemy, Orc):
-        enemy.increment_fury_turns_for_deactivation()
-
-
-def player_attack(player, enemy, defeated_enemies):
-    """
-    Maneja la lógica de ataque del jugador.
-    """
-    player_damage = player.attack_damage() - enemy.defense
-    if player_damage <= 0:
-        print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} ha {Fore.BLUE}bloqueado{Style.RESET_ALL} el ataque de "
-              f"{Fore.GREEN}{player.name}{Style.RESET_ALL}.")
-    else:
-        enemy.health = max(0, enemy.health - player_damage)  # Asegura que la salud no sea negativa
-        print(
-            f"{Fore.GREEN}{player.name}{Style.RESET_ALL} ataca a {Fore.RED}{enemy.name}{Style.RESET_ALL} y le "
-            f"hace {Fore.GREEN}{player_damage}{Style.RESET_ALL} de daño.")
-    print_status(player, enemy, defeated_enemies)
-
-    # Reproducir aleatoriamente uno de los dos sonidos
-    sound_to_play = random.choice(["metal_hit_woosh", "sword_slash_swoosh"])
-    resource_manager.play_sound(sound_to_play)
-
-    # Si el esqueleto aún no ha sido derrotado y no tiene salud, resucita con la mitad de la vida máxima
-    if isinstance(enemy, Skeleton) and not enemy.defeated_once and enemy.health <= 0:
-        enemy.health = enemy.max_health // 2  # Esqueleto resucita con la mitad de vida
-        enemy.defeated_once = True
-        print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} está a punto de ser {Fore.RED}derrotado{Style.RESET_ALL}, "
-              f"pero resucita de entre los muertos.")
-        print_status(player, enemy, defeated_enemies)
-
-
-def check_enemy_defeated(player, enemy, original_min_attack, original_max_attack, original_defense):
-    if enemy.health <= 0:
-        enemy.health = 0  # Asegura que la salud no sea negativa
-        print(f"{Fore.GREEN}{Style.BRIGHT}{enemy.name} ha sido derrotado.{Style.RESET_ALL}")
-        restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-
-        exp = random.randint(20, 30)
-        if isinstance(enemy, Goblin):
-            player.gain_experience(exp)
-        elif isinstance(enemy, Skeleton):
-            player.gain_experience(exp*2)
-        elif isinstance(enemy, Orc):
-            player.gain_experience(exp*6)
-        elif isinstance(enemy, Troll):
-            player.gain_experience(exp*12)
-        elif isinstance(enemy, Mago):
-            player.gain_experience(exp*20)
-
-        # Verifica si el enemigo tiene un ítem para soltar
-        if hasattr(enemy, 'drop_item'):
-            dropped_items = enemy.drop_item()
-            for item in dropped_items:
-                player.inventory.add_item(item)
-
-        # Obtener el oro del enemigo derrotado
-        enemy_gold = enemy.drop_gold()
-
-        # Añadir el oro al inventario del jugador
-        player.inventory.add_gold(enemy_gold)
-        return True
-    return False
-
-
-def enemy_attack(player, enemy):
-    """
-    Maneja la lógica de ataque del enemigo.
-    """
-    enemy_damage = enemy.attack_damage_enemy()
-    damage_taken = player.take_damage(enemy_damage)
-    if enemy_damage <= 0:
-        print(
-            f"{Fore.GREEN}{player.name}{Style.RESET_ALL} ha {Fore.BLUE}bloqueado{Style.RESET_ALL} el ataque "
-            f"de {Fore.RED}{enemy.name}{Style.RESET_ALL}")
-    else:
-        if player.health <= 0:
-            player.health = 0  # Asegura que la salud no sea negativa
-        print(f"{Fore.RED}{enemy.name}{Style.RESET_ALL} ataca a {Fore.GREEN}{player.name}"
-              f"{Style.RESET_ALL} y le hace {Fore.RED}{damage_taken}{Style.RESET_ALL} de daño")
-
-
-def check_player_defeated(player, original_min_attack, original_max_attack, original_defense):
-    if player.health <= 0:
-        print(f"{Fore.RED}{Style.BRIGHT}{player.name} ha sido derrotado.{Style.RESET_ALL}")
-        # Calcular el 10% del oro total del jugador
-        gold_to_remove = int(player.inventory.gold * 0.1)
-        # Verificar si la cantidad calculada es mayor que la cantidad actual de oro
-        if 0 < gold_to_remove <= player.inventory.gold:
-            # Restar el 10% del oro total del inventario del jugador
-            player.inventory.remove_gold(gold_to_remove)
-            print(f"{Fore.RED}Has perdido {Fore.YELLOW}{gold_to_remove}{Style.RESET_ALL}{Fore.RED} de oro.{Style.RESET_ALL}")
-        elif gold_to_remove > 0:
-            print("No tienes suficiente oro para perder.")
-        restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense)
-        return True
-    return False
-
-
-def restore_attack_after_burn(player, original_min_attack, original_max_attack):
-    """
-    Restaura los valores originales del ataque del jugador después de que el efecto de quemado se disipe.
-    """
-    player.min_attack = original_min_attack
-    player.max_attack = original_max_attack
-
-
-def restore_player_after_battle(player, original_min_attack, original_max_attack, original_defense):
-    """
-    Restaura los valores originales del jugador después de la batalla.
-    """
-    # Recuperar la vida del jugador al finalizar la batalla
-    player.health = player.max_health
-    # Restaura el efecto de estado al finalizar la batalla
-    player.status_effect = None
-    # Restaura los valores originales del ataque
-    player.min_attack = original_min_attack
-    player.max_attack = original_max_attack
-    # Restaura el valor original de la defensa
-    player.defense = original_defense
-
-
-def print_invalid_option(options):
-    print(f"{Fore.RED}Opción no válida. Por favor, elige una de las opciones (1-{len(options)}).{Style.RESET_ALL}")
-
-
-def print_menu_options(valid_options):
-    print("Opciones:")
-    for idx, option in enumerate(valid_options, start=1):
-        print(f"{idx}. {option}")
-
-
-def initiate_battle(player, unlocked_enemies, defeated_enemies):
-    # Lista de enemigos disponibles con sus clases correspondientes
-    all_enemy_types = [("Goblin", Goblin), ("Esqueleto", Skeleton), ("Orco", Orc), ("Troll", Troll), ("Mago", Mago)]
-
-    # Filtra los enemigos disponibles según los desbloqueados
-    available_enemies = [(name, enemy_class) for name, enemy_class in all_enemy_types if name in unlocked_enemies]
-
-    if not available_enemies:
-        print("No hay enemigos desbloqueados. Derrota a los enemigos anteriores primero.")
+    # Verificación de seguridad: si attacker es una lista, tenemos un problema de lógica previo
+    if isinstance(attacker, list):
+        print(f"{Fore.RED}Error Interno: El atacante es una lista, no un objeto.{Style.RESET_ALL}")
         return
 
-    while True:  # Bucle para solicitar la elección del enemigo hasta que se elija uno válido
-        print("="*60)
-        print("Enemigos disponibles:")
-        print("0. Volver atrás")  # Opción para volver atrás
-        # Muestra los nombres de los enemigos disponibles con sus números correspondientes
-        for i, (enemy_name, _) in enumerate(available_enemies, start=1):
-            print(f"{i}. {enemy_name}")
+    damage = attacker.get_attack_damage()
 
-        # Solicita al jugador que elija un número correspondiente al enemigo contra el que quiere pelear
-        enemy_choice = input("Elige contra qué enemigo quieres pelear: ")
-        try:
-            # Convierte la opción del jugador en un número entero
-            enemy_index = int(enemy_choice)
-            if enemy_index == 0:
-                return  # Salir de la función si se elige volver atrás
-            elif 0 < enemy_index <= len(available_enemies):  # Verifica si el índice está dentro del rango
-                # Obtiene el nombre y la clase del enemigo seleccionado
-                selected_enemy_name, selected_enemy_type = available_enemies[enemy_index - 1]
-                # Crea una instancia del enemigo seleccionado
-                enemy = selected_enemy_type(selected_enemy_name)
+    # Usamos un try/except o verificamos el tipo por si otros enemigos no aceptan el parámetro aún
+    try:
+        final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies)
+    except TypeError:
+        # Si el enemigo no tiene lógica especial, llamamos normal
+        final_dmg = defender.take_damage(damage)
 
-                if isinstance(enemy, Orc):
-                    # Detener la música menos la que voy a reproducir a continuación
-                    resource_manager.stop_all_music("scaring_Crows")
-                    # Iniciar música de fondo si aún no se ha iniciado
-                    if not resource_manager.is_music_playing("scaring_Crows"):
-                        resource_manager.play_music("scaring_Crows", loops=-1)
+    if final_dmg > 0:
+        print(f"{Fore.GREEN}{attacker.name}{Style.RESET_ALL} ataca a {Fore.RED}{defender.name}{Style.RESET_ALL} y hace {Fore.YELLOW}{final_dmg}{Style.RESET_ALL} de daño")
+    else:
+        print(f"{Fore.BLUE}{defender.name}{Style.RESET_ALL} ha bloqueado el ataque.")
 
-                # Comienza la batalla con el jugador y el enemigo seleccionados
-                won_battle = battle(player, enemy, defeated_enemies)
-                # Actualiza la lista de enemigos desbloqueados después de la batalla exitosa
-                if won_battle and selected_enemy_name == unlocked_enemies[-1]:  # Verifica si se ganó la batalla y si es el último enemigo desbloqueado
-                    defeated_enemies.append(enemy.name)  # Agrega el nombre del enemigo a la lista de enemigos derrotados
-                    next_enemy_index = unlocked_enemies.index(selected_enemy_name) + 1
-                    if next_enemy_index < len(all_enemy_types):
-                        next_enemy_name, _ = all_enemy_types[next_enemy_index]
-                        unlocked_enemies.append(next_enemy_name)
-                # Salir de la función de batalla después de que termine
-                return
-            else:
-                print(f"{Fore.RED}Opción no válida. Por favor, elige un {Style.BRIGHT}número{Style.RESET_ALL}"
-                      f"{Fore.RED} entre 0 y {len(available_enemies)}.{Style.RESET_ALL}")
-        except ValueError:
-            print(f"{Fore.RED}Opción no válida. Por favor, ingresa un {Style.BRIGHT}número{Style.RESET_ALL}{Fore.RED}"
-                  f" entre 0 y {len(available_enemies)}.{Style.RESET_ALL}")
+    from characters.player import Player
+    if isinstance(attacker, Player):
+        print_status(attacker, defender, defeated_enemies)
+    else:
+        print_status(defender, attacker, defeated_enemies)
+
+
+def _handle_victory(player, enemy, defeated_enemies, unlocked_enemies):
+    print(f"\n{Fore.YELLOW}{Style.BRIGHT}¡VICTORIA! {enemy.name} ha sido derrotado.{Style.RESET_ALL}")
+
+    if enemy.name not in defeated_enemies:
+        defeated_enemies.append(enemy.name)
+
+        # Consultamos si este enemigo desbloquea a otro
+        next_enemy = ENEMY_PROGRESSION.get(enemy.name)
+
+        if next_enemy and next_enemy not in unlocked_enemies:
+            unlocked_enemies.append(next_enemy)
+            print(f"{Fore.MAGENTA}✨ ¡NUEVO ENEMIGO DESBLOQUEADO: {next_enemy}!{Style.RESET_ALL}")
+
+    # Recompensa de Oro
+    gold = enemy.gold_drop
+    player.inventory.gold += gold
+    print(f"💰 Oro obtenido: {Fore.YELLOW}{gold}{Style.RESET_ALL}")
+
+    # Experiencia y Nivel
+    old_level = player.level
+    player.gain_experience(gold * 2)
+
+    # Comprobamos si subió de nivel
+    player.just_leveled_up = player.level > old_level
+
+    # Recompensa de Ítems (Drops)
+    drops = enemy.drop_item()
+    if drops:
+        print(f"\n{Fore.CYAN}--- BOTÍN ENCONTRADO ---{Style.RESET_ALL}")
+        for item in drops:
+            player.inventory.add_item(item)
+            # Imprimimos solo aquí el mensaje del objeto encontrado
+            print(f"📦 {Fore.GREEN}{item.name}{Style.RESET_ALL}: {item.description}")
+
+    # Si sube de nivel, devolvemos el nuevo snapshot de stats
+    return (player.stats.min_atk, player.stats.max_atk), player.stats.defense
+
+
+def _handle_defeat(player):
+    """Gestiona lo que ocurre cuando el jugador cae en combate."""
+    print("\n" + "x" * 60)
+    print(f"{Fore.RED}{Style.BRIGHT}¡HAS SIDO DERROTADO!{Style.RESET_ALL}")
+
+    # Penalización de oro (ejemplo: pierdes el 30% de tu oro actual)
+    penalty = player.inventory.gold // 3
+    player.inventory.gold -= penalty
+
+    # Restauración por "emergencia"
+    player.stats.health = player.stats.max_health
+
+    print(f"{Fore.YELLOW}Unos viajeros te han rescatado y llevado a la ciudad.{Style.RESET_ALL}")
+    print(f"Penalización: Has perdido {Fore.RED}{penalty} de oro{Style.RESET_ALL}.")
+    print(f"{Fore.GREEN}Tu salud ha sido restaurada para que puedas continuar.{Style.RESET_ALL}")
+    print("x" * 60)
+    input("\nPresiona Enter para volver...")
+
+
+def _restore_player(player, snapshot):
+    """Elimina efectos, restaura stats base y cura al jugador."""
+    # Restaurar stats base (por si hubo pociones de fuerza/defensa)
+    player.stats.min_atk, player.stats.max_atk = snapshot["atk"]
+    player.stats.defense = snapshot["def"]
+
+    # Limpiar estados alterados
+    player.status_effects = []
+
+    if hasattr(player, 'active_effects'):
+        player.active_effects = []
+
+    # Recuperar Salud al finalizar
+    if player.is_alive():
+        if player.just_leveled_up:
+            print(f"{Fore.MAGENTA}✨ ¡Energía renovada por el nuevo nivel!{Style.RESET_ALL}")
+            player.just_leveled_up = False  # Reseteamos el flag
+        else:
+            # Lógica de curación normal (50% de lo perdido)
+            missing_health = player.stats.max_health - player.stats.health
+            recovery = missing_health // 2
+            player.stats.health += recovery
+            if recovery > 0:
+                print(f"\n{Fore.GREEN}Tras el combate, descansas y recuperas {recovery} HP.")
+                print(f"Vida actual: {player.stats.health}/{player.stats.max_health}{Style.RESET_ALL}")

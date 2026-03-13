@@ -1,123 +1,130 @@
 import base64
+import binascii
 import json
 import os
+import shutil
 
 from colorama import Fore, Style
+from items.item_base import item_factory
 
-from items.item import Item, Potion, Weapon, Armor
-
-# Directorio para los archivos de guardado
 SAVE_DIRECTORY = "saved_games/"
 
-
 def check_save_directory():
-    # Comprueba si el directorio de guardado existe, si no, lo crea
+    """Asegura la existencia de la carpeta de guardado."""
     if not os.path.exists(SAVE_DIRECTORY):
-        os.makedirs(SAVE_DIRECTORY)
-
+        try:
+            os.makedirs(SAVE_DIRECTORY)
+        except OSError as e:
+            print(f"{Fore.RED}No se pudo crear la carpeta de guardado: {e}{Style.RESET_ALL}")
 
 def save_game(player, unlocked_enemies, defeated_enemies):
-    check_save_directory()  # Comprueba y crea el directorio de guardado si es necesario
+    """Serializa, crea backup y guarda el estado del juego."""
+    check_save_directory()
 
-    equipped_weapon_data = player.equipped_weapon.to_dict() if player.equipped_weapon else None
-    equipped_armor_data = player.equipped_armor.to_dict() if player.equipped_armor else None
+    file_path = os.path.join(SAVE_DIRECTORY, f"{player.name}.sav")
+    backup_path = os.path.join(SAVE_DIRECTORY, f"{player.name}.bak")
 
-    # Obtener las estadísticas actualizadas del jugador
-    player_stats = player.stats()
+    # --- LÓGICA DE BACKUP ---
+    # Si ya existe una partida guardada, la renombramos a .bak antes de escribir la nueva
+    if os.path.exists(file_path):
+        try:
+            shutil.copy2(file_path, backup_path)  # copy2 preserva metadatos
+        except Exception as e:
+            print(f"{Fore.YELLOW}Aviso: No se pudo crear el backup: {e}{Style.RESET_ALL}")
 
-    # Convertir los datos del juego a formato JSON
+    # Delegamos la creación del diccionario de stats al objeto stats (Encapsulamiento)
     save_data = {
         "player_name": player.name,
         "unlocked_enemies": unlocked_enemies,
         "defeated_enemies": defeated_enemies,
-        "inventory": [item.to_dict() for item in player.inventory.items],  # Convertir los objetos a diccionarios
-        "equipped_weapon": equipped_weapon_data,
-        "equipped_armor": equipped_armor_data,
-        "gold": player.inventory.gold,  # Guardar la cantidad de oro del jugador
-        "player_stats": player_stats  # Guardar las estadísticas del jugador
+        "gold": player.inventory.gold,
+        "player_stats": {
+            "level": player.level,
+            "experience": player.experience,
+            "health": player.stats.health,
+            "max_health": player.stats.max_health,
+            "min_atk": player.stats.min_atk,
+            "max_atk": player.stats.max_atk,
+            "defense": player.stats.defense
+        },
+        # Usamos list comprehension para el inventario
+        "inventory": [item.to_dict() for item in player.inventory.items],
+        "inventory_quantities": player.inventory.quantities,
+        "equipped_weapon": player.equipped_weapon.to_dict() if player.equipped_weapon else None,
+        "equipped_armor": player.equipped_armor.to_dict() if player.equipped_armor else None,
     }
-    save_file = SAVE_DIRECTORY + player.name + ".json"
-
-    # Convertir los datos del juego a formato JSON
-    json_str = json.dumps(save_data)
-
-    # Codificar la cadena JSON utilizando Base64
-    encoded_data = base64.b64encode(json_str.encode('utf-8'))
-
-    # Guardar la representación codificada en un archivo
-    with open(save_file, "wb") as f:
-        f.write(encoded_data)
-
-
-def load_game(player):
-    save_file = SAVE_DIRECTORY + player.name + ".json"
 
     try:
-        with open(save_file, "rb") as f:
-            # Leer la representación codificada desde el archivo
-            encoded_data = f.read()
+        json_str = json.dumps(save_data)
+        encoded_data = base64.b64encode(json_str.encode('utf-8'))
 
-        # Decodificar la representación codificada
-        decoded_data = base64.b64decode(encoded_data)
+        file_path = os.path.join(SAVE_DIRECTORY, f"{player.name}.sav")
+        with open(file_path, "wb") as f:
+            f.write(encoded_data)
+        print(f"{Fore.GREEN}¡Progreso de {player.name} guardado con éxito!{Style.RESET_ALL}")
+    except PermissionError:
+        print(f"{Fore.RED}Error: No tienes permisos para escribir en {SAVE_DIRECTORY}.{Style.RESET_ALL}")
+    except TypeError as e:
+        print(f"{Fore.RED}Error de serialización: Algún objeto no se puede convertir a JSON. {e}{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}Error inesperado al guardar: {e}{Style.RESET_ALL}")
 
-        # Convertir la cadena decodificada de nuevo a un objeto JSON
-        json_str = decoded_data.decode('utf-8')
-        save_data = json.loads(json_str)
+def load_game(player):
+    """Carga y reconstruye el estado del jugador desde un archivo. Intenta usar backup si el original falla."""
+    file_path = os.path.join(SAVE_DIRECTORY, f"{player.name}.sav")
+    backup_path = os.path.join(SAVE_DIRECTORY, f"{player.name}.bak")
 
-        # Imprimir los datos cargados del archivo JSON
-        # print("Datos cargados del archivo JSON:")
-        # print(save_data)
+    # Si no existe el principal, pero sí el backup, intentamos restaurar el backup
+    if not os.path.exists(file_path) and os.path.exists(backup_path):
+        print(f"{Fore.YELLOW}Archivo principal no encontrado. Restaurando desde backup...{Style.RESET_ALL}")
+        try:
+            shutil.copy2(backup_path, file_path)
+        except OSError:
+            pass
 
-        # Extraer los datos del juego
-        player_name = save_data["player_name"]
-        unlocked_enemies = save_data["unlocked_enemies"]
-        defeated_enemies = save_data.get("defeated_enemies", [])
-        inventory_data = save_data.get("inventory", [])
-        equipped_weapon_data = save_data.get("equipped_weapon")
-        equipped_armor_data = save_data.get("equipped_armor")
-        gold = save_data.get("gold")  # Cargar la cantidad de oro del jugador
-        player_stats = save_data.get("player_stats", {})  # Cargar las estadísticas del jugador
+    if not os.path.exists(file_path):
+        print(f"{Fore.RED}No se encontró ninguna partida guardada para {player.name}.{Style.RESET_ALL}")
+        return None
 
-        # Restaurar las estadísticas del jugador
-        player.level = player_stats.get("level", player.level)
-        player.experience = player_stats.get("experience", player.experience)
-        player.max_health = player_stats.get("max_health", player.max_health)
-        player.health = player_stats.get("health", player.health)
-        player.min_attack = player_stats.get("min_attack", player.min_attack)
-        player.max_attack = player_stats.get("max_attack", player.max_attack)
-        player.defense = player_stats.get("defense", player.defense)
+    try:
+        # Intentamos cargar el principal
+        return _perform_load(player, file_path)
+    except (json.JSONDecodeError, binascii.Error, UnicodeDecodeError):
+        print(f"{Fore.RED}El archivo de guardado está corrupto o no es válido.{Style.RESET_ALL}")
+        return None
+    except KeyError as e:
+        print(f"{Fore.RED}Falta un dato esperado en el archivo de guardado: {e}{Style.RESET_ALL}")
+    except Exception as e:
+        if os.path.exists(backup_path):
+            print(f"{Fore.YELLOW}Fallo en el archivo principal. Intentando con el backup...{e}{Style.RESET_ALL}")
+            return _perform_load(player, backup_path)
+        return None
 
-        # Cargar el arma equipada del jugador, si existe
-        if equipped_weapon_data:
-            player.equipped_weapon = Weapon.from_dict(equipped_weapon_data)
+def _perform_load(player, path):
+    """Función auxiliar para realizar la carga física desde un path determinado."""
+    with open(path, "rb") as f:
+        encoded_data = f.read()
 
-        # Cargar la armadura equipada del jugador, si existe
-        if equipped_armor_data:
-            player.equipped_armor = Armor.from_dict(equipped_armor_data)
+    decoded_bytes = base64.b64decode(encoded_data)
+    save_data = json.loads(decoded_bytes.decode('utf-8'))
 
-        # Cargar los objetos del inventario del jugador
-        if inventory_data:
-            inventory_items = []
-            for item_data in inventory_data:
-                if "healing_amount" in item_data:  # Verificar si es una poción
-                    item = Potion.from_dict(item_data)
-                elif "damage" in item_data:  # Verificar si es un arma
-                    item = Weapon.from_dict(item_data)
-                elif "defense" in item_data:  # Verificar si es una armadura
-                    item = Armor.from_dict(item_data)
-                else:
-                    # Agregar manejo para otros tipos de objetos aquí si es necesario
-                    item = Item.from_dict(item_data)
-                inventory_items.append(item)
-        else:
-            inventory_items = []  # Inicializar como lista vacía si no hay objetos en el inventario
+    stats_data = save_data["player_stats"]
+    player.level = stats_data["level"]
+    player.experience = stats_data["experience"]
+    player.stats.max_health = stats_data["max_health"]
+    player.stats.health = stats_data["health"]
+    player.stats.min_atk = stats_data["min_atk"]
+    player.stats.max_atk = stats_data["max_atk"]
+    player.stats.defense = stats_data["defense"]
 
-        # Actualizar el inventario del jugador con los objetos cargados
-        player.inventory.items = inventory_items
-        # Actualizar la cantidad de oro del jugador
-        player.inventory.gold = gold
+    player.inventory.gold = save_data.get("gold", 0)
+    items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]
+    player.inventory.load_saved_inventory(items_reconstructed, save_data.get("inventory_quantities", {}))
 
-        return player_name, unlocked_enemies, defeated_enemies
-    except FileNotFoundError:
-        print(f"{Fore.RED}No se encontró un archivo de guardado con ese nombre.{Style.RESET_ALL}")
-        return
+    if save_data.get("equipped_weapon"):
+        player.equipped_weapon = item_factory(save_data["equipped_weapon"])
+    if save_data.get("equipped_armor"):
+        player.equipped_armor = item_factory(save_data["equipped_armor"])
+
+    print(f"{Fore.CYAN}Carga exitosa desde: {os.path.basename(path)}{Style.RESET_ALL}")
+    return save_data["player_name"], save_data["unlocked_enemies"], save_data["defeated_enemies"]

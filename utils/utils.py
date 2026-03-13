@@ -2,58 +2,55 @@ from colorama import Fore, Style
 
 
 def print_player_enemy_info(player, enemy, defeated_enemies):
-    print(f"Información del jugador {Fore.GREEN}{player.name}{Style.RESET_ALL}:")
+    """Muestra estadísticas detalladas."""
+    print(f"\nInformación de {Fore.GREEN}{player.name}{Style.RESET_ALL}:")
     print(f"  {Fore.CYAN}Nivel: {player.level}{Style.RESET_ALL}")
-    print(f"  {Fore.GREEN}{Style.BRIGHT}Vida: {player.health}{Style.RESET_ALL}")
-    # Si el jugador tiene un arma equipada, muestra el daño del arma y actualiza el rango de ataque
-    if player.equipped_weapon:
-        player_min_attack_with_weapon = player.min_attack + player.equipped_weapon.damage
-        player_max_attack_with_weapon = player.max_attack + player.equipped_weapon.damage
-        print(f"  {Fore.RED}{Style.BRIGHT}Ataque: {player_min_attack_with_weapon}-{player_max_attack_with_weapon}{Style.RESET_ALL}")
-    else:
-        print(f"  {Fore.RED}{Style.BRIGHT}Ataque: {player.min_attack}-{player.max_attack}{Style.RESET_ALL}")
-    if player.equipped_armor:
-        player_defense_with_armor = player.defense + player.equipped_armor.defense
-        print(f"  {Fore.BLUE}{Style.BRIGHT}Defensa: {player_defense_with_armor}{Style.RESET_ALL}")
-    else:
-        print(f"  {Fore.BLUE}{Style.BRIGHT}Defensa: {player.defense}{Style.RESET_ALL}")
+
+    # Usamos las propiedades de la clase Stats que ya manejan los topes
+    print(f"  {Fore.GREEN}{Style.BRIGHT}Vida: {player.stats.health}/{player.stats.max_health}{Style.RESET_ALL}")
+
+    # Delegamos el cálculo del ataque y defensa al objeto Player (que ya sabe sumar su equipo)
+    # Asumiendo que añadimos métodos get_total_attack_range() y get_total_defense() en Player
+    atk_min, atk_max = player.get_attack_range()
+    print(f"  {Fore.RED}{Style.BRIGHT}Ataque: {atk_min}-{atk_max}{Style.RESET_ALL}")
+    print(f"  {Fore.BLUE}{Style.BRIGHT}Defensa: {player.get_total_defense()}{Style.RESET_ALL}")
     print()
 
+    # Lógica de información oculta para enemigos
     if enemy.name in defeated_enemies:
-        print(f"Información del enemigo {Fore.RED}{enemy.name}{Style.RESET_ALL}:")
-        print(f"  Vida: {enemy.health}")
-        print(f"  Ataque: {enemy.min_attack}-{enemy.max_attack}")
-        print(f"  Defensa: {enemy.defense}")
+        print(f"Información de {Fore.RED}{enemy.name}{Style.RESET_ALL}:")
+        print(f"  Vida: {enemy.stats.health}/{enemy.stats.max_health}")
+        print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
+        print(f"  Defensa: {enemy.stats.defense}")
     else:
-        print(f"Enemigo {Fore.RED}{enemy.name}{Style.RESET_ALL} no derrotado. Información oculta.")
-    print()
-    print("============================================================")
+        print(
+            f"Enemigo {Fore.RED}{enemy.name}{Style.RESET_ALL}: {Fore.BLACK}{Style.BRIGHT}??? [Información oculta]{Style.RESET_ALL}")
+
+    print("\n" + "=" * 60)
 
 
 def print_status(player, enemy, defeated_enemies):
-    # Calcula la longitud máxima de los nombres de jugador y enemigo
-    max_name_length = max(len(player.name), len(enemy.name))
+    """Muestra las barras de salud gráficas de forma profesional."""
 
-    # Calcula el porcentaje de salud del jugador y del enemigo
-    player_health_percentage = player.health / player.max_health
-    enemy_health_percentage = enemy.health / enemy.max_health
+    # Encapsulamos la lógica de la barra en una función interna para no repetir código (DRY)
+    def create_bar(current, maximum, color, hidden=False):
+        if hidden:
+            return f"|{'?' * 20}| ??/?? HP"
 
-    # Convierte el porcentaje de salud en una barra horizontal
-    player_health_bar = "|" + "#" * int(player_health_percentage * 20) + "-" * (
-            20 - int(player_health_percentage * 20)) + "|"
+        percent = max(0, min(current / maximum, 1))
+        filled_length = int(20 * percent)
+        bar = "#" * filled_length + "-" * (20 - filled_length)
+        return f"|{color}{bar}{Style.RESET_ALL}| {current}/{maximum} HP"
 
-    # Alinea los nombres del jugador y del enemigo
-    aligned_player_name = player.name.ljust(max_name_length)
-    aligned_enemy_name = enemy.name.ljust(max_name_length)
+    max_name = max(len(player.name), len(enemy.name))
 
-    # Imprime la salud del jugador y del enemigo con barras de salud gráficas
-    print(
-        f"{Fore.CYAN}{aligned_player_name}: {player_health_bar} {player.health}/{player.max_health} HP{Style.RESET_ALL}")
-    if enemy.name in defeated_enemies:
-        enemy_health_bar = "|" + "#" * int(enemy_health_percentage * 20) + "-" * (
-                20 - int(enemy_health_percentage * 20)) + "|"
-        print(
-            f"{Fore.LIGHTRED_EX}{aligned_enemy_name}: {enemy_health_bar} {enemy.health}/{enemy.max_health} HP{Style.RESET_ALL}")
-    else:
-        print(f"{Fore.LIGHTRED_EX}{aligned_enemy_name}: |????????????????????| ??/?? HP{Style.RESET_ALL}")
-    print("============================================================")
+    # Barra del Jugador
+    player_bar = create_bar(player.stats.health, player.stats.max_health, Fore.GREEN)
+    print(f"{Fore.CYAN}{player.name.ljust(max_name)}{Style.RESET_ALL}: {player_bar}")
+
+    # Barra del Enemigo
+    is_hidden = enemy.name not in defeated_enemies
+    enemy_bar = create_bar(enemy.stats.health, enemy.stats.max_health, Fore.RED, is_hidden)
+    print(f"{Fore.LIGHTRED_EX}{enemy.name.ljust(max_name)}{Style.RESET_ALL}: {enemy_bar}")
+
+    print("=" * 60)

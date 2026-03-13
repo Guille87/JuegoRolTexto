@@ -1,235 +1,214 @@
-import math
-
 from colorama import Fore, Style
 
 from assets.resources.resource_manager import ResourceManager
-from characters.character import Player
+from characters.enemies import Goblin, Skeleton, Orc, Troll
+from characters.enemies.mage import Mago
+from characters.player import Player
+from characters.stats import Stats
 from game_core import config
 from game_core.battle import initiate_battle
-from items.item import Weapon, Armor
+from items.equipment import Weapon, Armor
 from save_load.save_load import save_game, load_game
-from settings_admin import show_settings_window
 
 # Instancia global de ResourceManager
 resource_manager = ResourceManager()
 
 
 def main_menu():
+    resource_manager.set_mood("adventure")
+
     while True:
-        # Cargar la configuración de música y sonido
-        music_volume, sound_volume = config.load_config()
+        # 1. Comprobamos si la música terminó y hay que poner otra
+        resource_manager.update()
 
-        # Detener la música menos la que voy a reproducir a continuación
-        resource_manager.stop_all_music("a_robust_crew")
-        # Iniciar música de fondo si aún no se ha iniciado
-        if not resource_manager.is_music_playing("a_robust_crew"):
-            resource_manager.play_music("a_robust_crew", loops=-1)
+        print("\n" + "="*30)
+        print(f"{Fore.YELLOW}⚔️  MENÚ PRINCIPAL  ⚔️{Style.RESET_ALL}")
+        print("=" * 30)
 
-        print("="*60)
-        print("Menú principal:")
-        options = ["Iniciar partida nueva", "Cargar partida", "Opciones", "Salir"]
-        print_main_menu_options(options)
+        options = {
+            "1": ("Nueva Partida", start_new_game),
+            "2": ("Cargar Partida", load_saved_game),
+            "3": ("Opciones", open_options),
+            "4": ("Salir", exit)
+        }
 
-        choice = input(f"Elige una opción (1-{len(options)}): ")
+        for key, (text, _) in options.items():
+            print(f"{key}. {text}")
 
-        if choice == "1":
-            start_new_game(music_volume, sound_volume)
-        elif choice == "2":
-            load_saved_game(music_volume, sound_volume)
-        elif choice == "3":
-            music_volume, sound_volume = music_sound_options(music_volume, sound_volume)
-            # Guardar la configuración de música y sonido
-            config.save_config(music_volume, sound_volume)
-        elif choice == "4":
-            print("¡Hasta la próxima!")
-            break
+        choice = input(f"\nSelecciona (1-{len(options)}): ")
+
+        if choice in options:
+            if choice == "4": break
+            options[choice][1]()  # Ejecuta la función asociada
         else:
-            print_invalid_option(options)
+            print(f"{Fore.RED}Opción inválida.{Style.RESET_ALL}")
 
 
-def print_main_menu_options(options):
-    for index, option in enumerate(options, start=1):
-        print(f"{index}. {option}")
+def start_new_game():
+    print(f"\n{Fore.CYAN}--- NUEVA AVENTURA ---{Style.RESET_ALL}")
+    name = ""  # Inicializa el nombre del jugador como una cadena vacía
 
-
-def start_new_game(music_volume, sound_volume):
-    player_name = ""  # Inicializa el nombre del jugador como una cadena vacía
-    print("¡Bienvenido al juego!")
     # Bucle while para seguir pidiendo al usuario que ingrese un nombre hasta que ingresen al menos un caracter
-    while len(player_name) == 0:
-        player_name = input("Por favor, introduce tu nombre: ")
-        if len(player_name) == 0:
-            print(f"{Fore.RED}El nombre debe contener al menos un caracter. Por favor, inténtalo de nuevo.{Style.RESET_ALL}")
-    unlocked_enemies = ["Goblin"]  # Lista de enemigos desbloqueados al inicio
+    while not name:
+        name = input("Introduce tu nombre: ").strip()
 
-    # Inicializa la lista de enemigos derrotados si no hay datos guardados
-    defeated_enemies = []
+    # --- LÓGICA DE CHEATS / ADMIN ---
+    # TODO: eliminar después de hacer pruebas
+    if name.lower() == "admin":  # Puedes poner el nombre que prefieras
+        print(f"{Fore.MAGENTA}⚠️  MODO DESARROLLADOR ACTIVADO ⚠️{Style.RESET_ALL}")
+        # Stats muy altas: Vida 500, Ataque 50-70, Defensa 20
+        initial_stats = Stats(500, 500, 20, 40, 10)
+        player = Player(name, initial_stats)
+        player.level = 10
+        player.inventory.gold = 5000
 
-    # Creación del jugador
-    player = Player(player_name)
+        # Desbloqueamos todo para testear cualquier enemigo
+        unlocked = ["Goblin", "Esqueleto", "Orco", "Troll", "Mago"]
+        defeated = ["Goblin", "Esqueleto", "Orco", "Troll"]
 
-    # Iniciar el juego
-    start_game(player, unlocked_enemies, defeated_enemies, music_volume, sound_volume)
-
-
-def load_saved_game(music_volume, sound_volume):
-    # Preguntar al jugador por su nombre para cargar su partida guardada
-    player_name = input("Por favor, introduce tu nombre de jugador: ")
-
-    # Crear un objeto de jugador con el nombre proporcionado
-    player = Player(player_name)
-
-    # Cargar la partida guardada del jugador específico
-    player_data = load_game(player)
-
-    if player_data:
-        player_name, unlocked_enemies, defeated_enemies = player_data
-        print(f"¡Bienvenido de nuevo, {player_name}!")
-        # Iniciar el juego con los datos cargados
-        start_game(player, unlocked_enemies, defeated_enemies, music_volume, sound_volume)
-
-
-def music_sound_options(music_volume, sound_volume):
-    # Construir las rutas a los efectos de sonido
-    level_up = resource_manager.get_sound("level_up")
-    # Lista de efectos de sonido
-    sound_effects = [level_up]
-
-    print("=" * 60)
-    options = ["Música", "Sonido"]
-    print("Opciones:")
-    for i, option in enumerate(options, start=1):
-        print(f"{i}. {option}")
-
-    choice = input(f"Elige una opción (1-{len(options)}): ")
-    if choice.isdigit():
-        choice = int(choice)
-        if 1 <= choice <= len(options):
-            selected_option = options[choice - 1]
-            print(f"Has seleccionado: {Fore.LIGHTGREEN_EX}{Style.BRIGHT}{selected_option}{Style.RESET_ALL}")
-            if selected_option == "Música":
-                # Mostrar el volumen actual
-                current_volume = math.ceil(music_volume * 10)
-                print(f"{Fore.CYAN}{Style.BRIGHT}Volumen de la música actual: {current_volume}{Style.RESET_ALL}")
-                volume = input("Selecciona el volumen de la música (0-10): ")
-                if volume.isdigit():
-                    volume = int(volume)
-                    if 0 <= volume <= 10:
-                        music_volume = volume / 10
-                        resource_manager.set_all_music_volume(music_volume)
-                        print(f"{Fore.GREEN}Volumen de la música ajustado a {Style.BRIGHT}{volume}{Style.RESET_ALL}")
-                    else:
-                        print(f"{Fore.RED}{Style.BRIGHT}El volumen de la música debe estar entre 1 y 10.{Style.RESET_ALL}")
-                else:
-                    print(f"{Fore.RED}{Style.BRIGHT}Por favor, ingresa un número válido para el volumen de la música.{Style.RESET_ALL}")
-            elif selected_option == "Sonido":
-                # Mostrar el volumen actual
-                current_volume = math.ceil(sound_volume * 10)
-                print(f"{Fore.CYAN}{Style.BRIGHT}Volumen de sonido actual: {current_volume}{Style.RESET_ALL}")
-                volume = input("Selecciona el volumen del sonido (0-10): ")
-                if volume.isdigit():
-                    volume = int(volume)
-                    if 0 <= volume <= 10:
-                        sound_volume = volume / 10
-                        for sound in sound_effects:
-                            sound.set_volume(sound_volume)
-                            volume_change_sound = resource_manager.get_sound("level_up")
-                            volume_change_sound.set_volume(sound_volume)
-                            volume_change_sound.play()
-                            print(f"{Fore.GREEN}Volumen del sonido ajustado a {Style.BRIGHT}{volume}{Style.RESET_ALL}")
-                    else:
-                        print(f"{Fore.RED}{Style.BRIGHT}El volumen del sonido debe estar entre 0 y 10.{Style.RESET_ALL}")
-                else:
-                    print(f"{Fore.RED}{Style.BRIGHT}Por favor, ingresa un número válido para el volumen del sonido.{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.RED}{Style.BRIGHT}Opción no válida. Por favor, selecciona un número dentro del rango proporcionado.{Style.RESET_ALL}")
     else:
-        print(f"{Fore.RED}{Style.BRIGHT}Por favor, ingresa un número válido.{Style.RESET_ALL}")
+        initial_stats = Stats(100, 100, 5, 10, 2)
+        player = Player(name, initial_stats)
+        unlocked = ["Goblin"]
+        defeated = []
 
-    # Devolver los volúmenes actualizados
-    return music_volume, sound_volume
+    # Datos iniciales del mundo
+    game_loop(player, unlocked, defeated)
 
 
-def start_game(player, unlocked_enemies, defeated_enemies, music_volume, sound_volume):
-    if not defeated_enemies:  # Verifica si la lista de enemigos derrotados está vacía
-        defeated_enemies = []  # Inicializa la lista solo si está vacía
+def load_saved_game():
+    name = ""
+    while not name:  # FALLO 3 (Validación): No permitir nombre vacío al cargar
+        name = input("Nombre del personaje a cargar: ").strip()
+
+    # Creamos un player temporal para que load_game lo rellene
+    temp_player = Player(name, Stats(1, 1, 1, 1, 1))
+    data = load_game(temp_player)
+
+    if data:
+        player_name, unlocked, defeated = data
+        game_loop(temp_player, unlocked, defeated)
+
+
+def open_options():
+    # Cargamos volúmenes actuales
+    music_vol, sfx_vol = config.load_config()
 
     while True:
-        # Detener la música menos la que voy a reproducir a continuación
-        resource_manager.stop_all_music("a_robust_crew")
-        # Iniciar música de fondo si aún no se ha iniciado
-        if not resource_manager.is_music_playing("a_robust_crew"):
-            resource_manager.play_music("a_robust_crew", loops=-1)
+        print(f"\n{Fore.YELLOW}--- AJUSTES DE AUDIO ---{Style.RESET_ALL}")
+        print(f"1. Música (Actual: {int(music_vol * 10)})")
+        print(f"2. Efectos (Actual: {int(sfx_vol * 10)})")
+        print("3. Volver")
 
-        print("="*60)
-        options = ["Luchar", "Inventario", "Tienda", "Estadísticas", "Equipar arma", "Equipar armadura", "Opciones", "Guardar partida",
-                   "Volver al menú principal", "Salir del juego"]
-
-        if player.name == "asdasd":
-            options.append("Configuracion")
-
-        print_game_menu_options(options)
-        choice = input(f"Elige una opción (1-{len(options)}): ")
+        choice = input("\nSelecciona una opción: ")
 
         if choice == "1":
-            initiate_battle(player, unlocked_enemies, defeated_enemies)
+            vol = input("Volumen Música (0-10): ")
+            if vol.isdigit() and 0 <= int(vol) <= 10:
+                music_vol = int(vol) / 10
+                resource_manager.set_volume_music(music_vol)
+                config.save_config(music_vol, sfx_vol)
+                print(f"{Fore.GREEN}Música ajustada.{Style.RESET_ALL}")
+
         elif choice == "2":
-            player.show_inventory()
-            input(f"Presiona {Fore.GREEN}Enter{Style.RESET_ALL} para continuar...")
+            vol = input("Volumen Efectos (0-10): ")
+            if vol.isdigit() and 0 <= int(vol) <= 10:
+                sfx_vol = int(vol) / 10
+                resource_manager.set_volume_sfx(sfx_vol)
+                config.save_config(music_vol, sfx_vol)
+                resource_manager.play_sfx("level_up")  # Feedback auditivo
+                print(f"{Fore.GREEN}Efectos ajustados.{Style.RESET_ALL}")
+
         elif choice == "3":
-            print(f"{Fore.LIGHTYELLOW_EX}{Style.BRIGHT}¡Opción de tienda aún no implementada! Próximamente disponible.{Style.RESET_ALL}")
-        elif choice == "4":
-            player.show_stats()
-        elif choice == "5":
-            # Mostrar inventario y equipar arma solo si hay armas disponibles
-            weapons_in_inventory = [item for item in player.inventory.items if isinstance(item, Weapon)]
-            player.show_inventory()
-            if weapons_in_inventory:
-                try:
-                    weapon_index = int(input("Selecciona el número del arma que deseas equipar: ")) - 1
-                    player.equip_weapon_by_index(weapon_index)
-                except ValueError:
-                    print("¡Ingresa un número válido!")
+            break
+
+
+def game_loop(player, unlocked_enemies, defeated_enemies):
+    """Bucle principal de la estancia en el mundo"""
+    def start_battle_flow():
+        print(f"\n{Fore.YELLOW}--- SELECCIONAR ENEMIGO ---{Style.RESET_ALL}")
+
+        # Mostramos la lista de enemigos desbloqueados con números
+        for enemy_idx, name in enumerate(unlocked_enemies, 1):
+            # Opcional: poner un check si ya fue derrotado antes
+            status = "✅" if name in defeated_enemies else "❌"
+            print(f"{enemy_idx}. {name} {status}")
+
+        print(f"{len(unlocked_enemies) + 1}. Volver")
+
+        battle_choice = input(f"\nElige a tu oponente (1-{len(unlocked_enemies) + 1}): ")
+
+        if battle_choice.isdigit():
+            target_idx = int(battle_choice) - 1
+
+            # Si elige un enemigo de la lista
+            if 0 <= target_idx < len(unlocked_enemies):
+                enemy_name = unlocked_enemies[target_idx]
+                enemy_obj = _get_enemy_instance(enemy_name)
+                # Iniciamos la batalla
+                initiate_battle(player, enemy_obj, defeated_enemies, unlocked_enemies)
+
+            # Si elige la opción de volver
+            elif target_idx == len(unlocked_enemies):
+                return
             else:
-                print(f"{Fore.RED}{Style.BRIGHT}No tienes armas en tu inventario para equipar.{Style.RESET_ALL}")
-        elif choice == "6":
-            # Mostrar inventario y equipar armadura solo si hay armaduras disponibles
-            armors_in_inventory = [item for item in player.inventory.items if isinstance(item, Armor)]
-            if armors_in_inventory:
-                player.show_inventory()
-                try:
-                    armor_index = int(input("Selecciona el número de la armadura que deseas equipar: ")) - 1
-                    player.equip_armor_by_index(armor_index)
-                except ValueError:
-                    print("¡Ingresa un número válido!")
-            else:
-                print(f"{Fore.RED}{Style.BRIGHT}No tienes armaduras en tu inventario para equipar.{Style.RESET_ALL}")
-        elif choice == "7":
-            music_volume, sound_volume = music_sound_options(music_volume, sound_volume)
-            # Guardar la configuración de música y sonido
-            config.save_config(music_volume, sound_volume)
-        elif choice == "8":
-            save_game(player, unlocked_enemies, defeated_enemies)
-            print("¡Partida guardada!")
-        elif choice == "9":
-            print("Volviendo al menú principal...")
-            break  # Sale del bucle actual y vuelve al menú principal
-        elif choice == "10":
-            print("¡Hasta la próxima!")
-            # input("Pulsa cualquier tecla para salir...")
-            exit()  # Sale del juego directamente
-        elif choice == "11" and player.name == "asdasd":
-            if player.name == "asdasd":
-                show_settings_window(player)
+                print(f"{Fore.RED}Opción fuera de rango.{Style.RESET_ALL}")
         else:
-            print_invalid_option(options)
+            print(f"{Fore.RED}Entrada no válida.{Style.RESET_ALL}")
 
+    while True:
+        print("\n" + "=" * 40)
+        print(f"{Fore.CYAN}ESTADO: {player.name} | Nivel: {player.level}{Style.RESET_ALL}")
+        print("=" * 40)
 
-def print_game_menu_options(options):
-    print("Menú del juego:")
-    for index, option in enumerate(options, start=1):
-        print(f"{index}. {option}")
+        # Usamos una lista de tuplas para mantener el orden de tus 10 opciones
+        options = [
+            ("Luchar", start_battle_flow),
+            ("Inventario", lambda: player.inventory.show_inventory(mode="use")),
+            ("Tienda", lambda: print(f"{Fore.YELLOW}Tienda no implementada...{Style.RESET_ALL}")),
+            ("Estadísticas", player.show_stats),
 
+            # Pasamos la clase Weapon a la opción 5
+            ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
 
-def print_invalid_option(options):
-    print(f"{Fore.RED}Opción no válida. Por favor, elige una de las opciones (1-{len(options)}).{Style.RESET_ALL}")
+            # Pasamos la clase Armor a la opción 6
+            ("Equipar Armadura", lambda: player.inventory.equip_menu(Armor)),
+
+            ("Opciones", open_options),
+            ("Guardar Partida", lambda: save_game(player, unlocked_enemies, defeated_enemies)),
+            ("Volver al Menú Principal", "break"),
+            ("Salir del Juego", exit)
+        ]
+
+        for i, (text, _) in enumerate(options, 1):
+            print(f"{i}. {text}")
+
+        choice = input(f"\nElige (1-{len(options)}): ")
+
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(options):
+                action = options[idx][1]
+                if action == "break": break
+                action()
+                if idx in [1, 3]: input("\nPresiona Enter para continuar...")
+            else:
+                print(f"{Fore.RED}Opción fuera de rango.{Style.RESET_ALL}")
+
+def _get_enemy_instance(name):
+    """Convierte un string en una instancia de clase de enemigo."""
+    enemies = {
+        "Goblin": Goblin,
+        "Esqueleto": Skeleton,
+        "Orco": Orc,
+        "Troll": Troll,
+        "Mago": Mago
+    }
+    # Si el nombre no existe, por defecto crea un Goblin para evitar errores
+    return enemies.get(name, Goblin)()
+
+def smart_input(prompt):
+    """Llama al gestor de recursos antes de esperar la entrada del usuario."""
+    from assets.resources.resource_manager import ResourceManager
+    ResourceManager().update() # Revisamos la música justo antes de pausar el programa
+    return input(prompt)
