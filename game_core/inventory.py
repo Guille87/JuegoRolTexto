@@ -1,150 +1,126 @@
 from colorama import Fore, Style
 
-from items.item import Weapon, Potion, Armor
+from items.equipment import Weapon, Armor
+from items.potions.potion_base import Potion
 
 
 class Inventory:
     def __init__(self, player):
-        self.items = []
+        self.items = []  # Lista de objetos únicos
+        self.quantities = {}  # { "Poción de Salud": 5 }
         self.gold = 0
         self.player = player  # Guarda una referencia al objeto Player
         self.item_mapping = {}
 
     def add_item(self, item):
-        # Verificar si el objeto es una poción
-        if isinstance(item, Potion):
-            # Si es una poción, simplemente la añadimos al inventario
-            self.items.append(item)
-            print(f"{Fore.GREEN}{Style.BRIGHT}Has obtenido: {item.name}.{Style.RESET_ALL}")
-        else:
-            # Busca si ya hay un objeto del mismo nombre en el inventario
-            same_name_item = next((i for i in self.items if i.name == item.name), None)
-            if same_name_item:
-                # Si el objeto ya está en el inventario, se añade el valor del objeto al oro del jugador
+        """Añade un ítem gestionando stacks para consumibles y oro para equipo repetido."""
+        # Si es equipo (Arma/Armadura), comprobamos si ya existe por nombre
+        if isinstance(item, (Weapon, Armor)):
+            existing = next((i for i in self.items if i.name == item.name), None)
+            if existing:
                 self.gold += item.value
-                print(f"{Fore.GREEN}{Style.BRIGHT}¡Ya tienes {item.name}! "
-                      f"{Fore.YELLOW}{Style.BRIGHT}Se ha convertido en {item.value} de oro.{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}¡Repetido! Has vendido el {item.name} por {item.value} de oro.{Style.RESET_ALL}")
+                return
+
+        # Lógica de Stacking
+        if item.name in self.quantities:
+            self.quantities[item.name] += 1
+        else:
+            self.items.append(item)
+            self.quantities[item.name] = 1
+
+        print(f"{Fore.GREEN}Obtenido: {item.name}{Style.RESET_ALL}")
+
+    def load_items(self, items_list):
+        """Limpia y carga una lista de objetos reconstruyendo el stacking."""
+        self.items = []
+        self.quantities = {}
+        for item in items_list:
+            # Usamos la misma lógica que add_item pero sin prints
+            if item.name in self.quantities:
+                self.quantities[item.name] += 1
             else:
-                # Si el objeto no está en el inventario, se añade al inventario
                 self.items.append(item)
-                if item.name not in ["Espada de principiante", "Escudo de principiante"]:
-                    # Si el objeto no es la espada ni el escudo principiante, muestra el mensaje
-                    print(f"{Fore.GREEN}{Style.BRIGHT}Has obtenido: {item.name}.{Style.RESET_ALL}")
+                self.quantities[item.name] = 1
 
-    def remove_item(self, item):
-        if item in self.items:
-            self.items.remove(item)
-        else:
-            print("El objeto no está en el inventario.")
+    def show_inventory(self, filter_class=None, mode="view"):
+        """
+        mode "view": Solo lectura
+        mode "use": Permite seleccionar número para usar
+        """
+        print("\n" + "=" * 45)
+        title = "INVENTARIO COMPLETO"
+        if filter_class == Weapon: title = "SELECCIONAR ARMA"
+        elif filter_class == Armor: title = "SELECCIONAR ARMADURA"
 
-    def add_gold(self, amount):
-        self.gold += amount
-        print(f"{Fore.YELLOW}{Style.BRIGHT}Has conseguido {amount} de oro.{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}--- {title} ---{Style.RESET_ALL}")
 
-    def remove_gold(self, amount):
-        if self.gold >= amount:
-            self.gold -= amount
-        else:
-            print("No tienes suficiente oro.")
+        items_to_show = [i for i in self.items if not filter_class or isinstance(i, filter_class)]
 
-    def sort_inventory(self):
-        # Definir una función de clave personalizada para ordenar los elementos del inventario
-        def custom_sort_key(item):
-            if isinstance(item, Weapon):
-                return 0, item.name  # Ordenar armas primero por nombre
-            elif isinstance(item, Armor):
-                return 1, item.name  # Luego ordenar armaduras por nombre
+        if not items_to_show:
+            print("No hay objetos en esta categoría.")
+            print("=" * 45)
+            return False
+
+        self.item_mapping = {}
+        for idx, item in enumerate(items_to_show, 1):
+            self.item_mapping[idx] = item
+            qty = self.quantities.get(item.name, 1)
+
+            # Formato de línea
+            is_eq = f"{Fore.BLUE}(E){Style.RESET_ALL} " if (item == self.player.equipped_weapon or item == self.player.equipped_armor) else ""
+            qty_str = f" x{qty}" if qty > 1 else ""
+
+            print(f"{idx}. {is_eq}{item.name}{Fore.YELLOW}{qty_str}{Style.RESET_ALL} | {item.description}")
+            print(f"   [{item.get_stats_info()}]")
+
+        print(f"\n{Fore.YELLOW}Oro: {self.gold}{Style.RESET_ALL}")
+        print("=" * 45)
+
+        if mode == "use":
+            return self._handle_selection(filter_class=filter_class)
+        return False
+
+    def _handle_selection(self, filter_class=None):
+        choice = input("\nSelecciona un número (0 para volver): ")
+        if choice == "0" or not choice.isdigit(): return False
+
+        idx = int(choice)
+        item = self.item_mapping.get(idx)
+
+        if item:
+            # 1. Caso: Inventario General (filter_class es None)
+            if filter_class is None:
+                if not isinstance(item, Potion):
+                    print(f"{Fore.RED}Las armas y armaduras se equipan desde sus respectivos menús.{Style.RESET_ALL}")
+                    return False
+
+                # 2. Caso: Menú de Equipo específico (filter_class tiene valor)
             else:
-                return 2, item.name  # Por último, ordenar otros objetos por nombre
+                if not isinstance(item, filter_class):
+                    print(f"{Fore.RED}No puedes equipar eso aquí.{Style.RESET_ALL}")
+                    return False
 
-        # Ordenar los elementos del inventario utilizando la función de clave personalizada
-        self.items.sort(key=custom_sort_key)
-
-    def show_inventory(self):
-        print("=" * 60)
-        if self.items:
-            print("Inventario del jugador:")
-            self.sort_inventory()
-            current_category = None
-            item_number = 1  # Inicializamos el número del objeto
-
-            # Utilizaremos este diccionario para rastrear la cantidad de cada tipo de objeto
-            item_count = {}
-
-            for item in self.items:
-                # Actualizamos el contador para el tipo de objeto actual
-                item_count[item.name] = item_count.get(item.name, 0) + 1
-
-                # Si este es el primer elemento de su tipo, mostramos su información
-                if item_count[item.name] == 1:
-                    # Imprimir el título de la categoría si es diferente al anterior
-                    if isinstance(item, Weapon):
-                        category = "Armas"
-                    elif isinstance(item, Armor):
-                        category = "Armaduras"
-                    else:
-                        category = "Objetos"
-                    if category != current_category:
-                        print(f"\n== {category} ==")
-                        current_category = category
-
-                    # Etiqueta (E) para objetos equipados
-                    equipped_label = "(E)" if item.name == self.player.equipped_weapon.name or item.name == self.player.equipped_armor.name else ""
-
-                    # Calcular la cantidad total de este tipo de objeto
-                    total_count = sum(1 for i in self.items if i.name == item.name)
-
-                    # Imprimir el objeto con su cantidad
-                    if isinstance(item, Potion):
-                        effect_description = self.get_potion_effect_description(item)
-                        print(f"  {item_number}. {Style.BRIGHT}{equipped_label} {item.name}{Style.RESET_ALL}: {item.description} | "
-                              f"{Fore.YELLOW}{Style.BRIGHT}Valor: {item.value}{Style.RESET_ALL} | {Fore.GREEN}{Style.BRIGHT}{effect_description} "
-                              f"{Style.RESET_ALL} | Cantidad: {total_count}")
-                    elif isinstance(item, Weapon):
-                        print(f"  {item_number}. {Style.BRIGHT}{equipped_label} {item.name}{Style.RESET_ALL}: {item.description} | "
-                              f"{Fore.YELLOW}{Style.BRIGHT}Valor: {item.value}{Style.RESET_ALL} | {Fore.GREEN}{Style.BRIGHT}Daño: {item.damage}"
-                              f"{Style.RESET_ALL} | Cantidad: {total_count}")
-                    elif isinstance(item, Armor):
-                        print(f"  {item_number}. {Style.BRIGHT}{equipped_label} {item.name}{Style.RESET_ALL}: {item.description} | "
-                              f"{Fore.YELLOW}{Style.BRIGHT}Valor: {item.value}{Style.RESET_ALL} | {Fore.GREEN}{Style.BRIGHT}Defensa: {item.defense}"
-                              f"{Style.RESET_ALL} | Cantidad: {total_count}")
-                    else:
-                        print(f"  {item_number}. {Style.BRIGHT}{item.name}{Style.RESET_ALL}: {item.description} | "
-                              f"{Fore.YELLOW}{Style.BRIGHT}Valor: {item.value}{Style.RESET_ALL} | Cantidad: {total_count}")
-
-                    # Guardamos el mapeo entre el número de objeto y el índice real del objeto en la lista
-                    self.item_mapping[item_number] = item
-                    item_number += 1  # Incrementamos el número de objeto para la siguiente iteración
-        else:
-            print("No tienes objetos 😓")
-        # Imprimir la cantidad de oro del jugador
-        print(f"\n== Oro ==")
-        print(f"  - {Fore.YELLOW}{Style.BRIGHT}Oro: {self.gold}{Style.RESET_ALL}")
-
-    def select_item_from_inventory(self):
-        # Pedir al jugador que seleccione un número de objeto
-        item_number = input("Selecciona el número del objeto que deseas usar (0 para cancelar): ")
-        try:
-            item_number = int(item_number)
-            # Obtener el objeto asociado al número de objeto seleccionado
-            selected_item = self.item_mapping.get(item_number)
-            if selected_item:
-                return selected_item
+            # Si pasa las validaciones, usamos el objeto
+            success = item.use(self.player)
+            if success:
+                # Si es un consumible (Poción), restamos cantidad
+                if not isinstance(item, (Weapon, Armor)):
+                    self.quantities[item.name] -= 1
+                    if self.quantities[item.name] <= 0:
+                        self.items.remove(item)
+                        del self.quantities[item.name]
+                return True
             else:
-                print("Número de objeto inválido.")
-                return None
-        except ValueError:
-            print("¡Ingresa un número válido!")
-            return None
+                # Si success es False, devolvemos False para no cerrar el menú ni gastar turno
+                return False
+        return False
 
-    def get_potion_effect_description(self, potion):
-        if potion.name == "Poción de Salud":
-            return f"Cantidad de Curación: {potion.healing_amount}"
-        elif potion.name == "Poción de Resistencia":
-            return f"Aumento de Defensa: {potion.defense_boost}"
-        elif potion.name == "Poción de Fuerza":
-            return f"Aumento de Daño: {potion.damage_boost}"
-        elif potion.name == "Poción de Regeneración":
-            return f"Regeneración por Turno: {potion.regeneration_amount}"
-        else:
-            return "Efecto Desconocido"
+    def equip_menu(self, filter_class=None):
+        """Llamado desde las opciones 5 y 6 del menú principal."""
+        return self.show_inventory(filter_class=filter_class, mode="use")
+
+    def load_saved_inventory(self, items_list, quantities_dict):
+        """Sincroniza la lista de items con sus cantidades reales al cargar."""
+        self.items = items_list
+        self.quantities = quantities_dict

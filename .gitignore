@@ -5,6 +5,8 @@ venv/
 .venv/
 *.json
 *.ini
+.sav
+saved_games/
 
 # Distribución / Empaquetado
 dist/
