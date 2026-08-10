@@ -7,9 +7,10 @@ class HealingPotion(Potion):
         super().__init__(name, description, value, duration=0)
         self.heal_amount = heal_amount
 
-    def use(self, player) -> None:
+    def use(self, player) -> bool:
         player.stats.health += self.heal_amount
         print(f"Te has curado {self.heal_amount} HP.")
+        return True
 
     def to_dict(self) -> dict:
         data = super().to_dict()

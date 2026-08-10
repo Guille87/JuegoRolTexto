@@ -105,10 +105,7 @@ class Inventory:
             if success:
                 # Si es un consumible (Poción), restamos cantidad
                 if not isinstance(item, (Weapon, Armor)):
-                    self.quantities[item.name] -= 1
-                    if self.quantities[item.name] <= 0:
-                        self.items.remove(item)
-                        del self.quantities[item.name]
+                    self._remove_one(item)
                 return True
             else:
                 # Si success es False, devolvemos False para no cerrar el menú ni gastar turno
@@ -118,6 +115,23 @@ class Inventory:
     def equip_menu(self, filter_class=None) -> bool:
         """Llamado desde las opciones 5 y 6 del menú principal."""
         return self.show_inventory(filter_class=filter_class, mode="use")
+
+    def _remove_one(self, item) -> None:
+        """Descuenta una unidad de un ítem del inventario, eliminándolo si llega a 0."""
+        self.quantities[item.name] -= 1
+        if self.quantities[item.name] <= 0:
+            self.items.remove(item)
+            del self.quantities[item.name]
+
+    def sell_item(self, item) -> int | None:
+        """Vende una unidad del ítem dado a su valor base. Devuelve el oro obtenido, o None si no se puede vender."""
+        if item == self.player.equipped_weapon or item == self.player.equipped_armor:
+            console.error("No puedes vender un objeto equipado.")
+            return None
+
+        self._remove_one(item)
+        self.gold += item.value
+        return item.value
 
     def load_saved_inventory(self, items_list: list, quantities_dict: dict) -> None:
         """Sincroniza la lista de items con sus cantidades reales al cargar."""

@@ -7,9 +7,10 @@ class Weapon(Item):
         super().__init__(name, description, value)
         self.damage = damage
 
-    def use(self, player) -> None:
+    def use(self, player) -> bool:
         player.equipped_weapon = self
         print(f"Has equipado {self.name}. (+{self.damage} ATK)")
+        return True
 
     def get_stats_info(self) -> str:
         return console.colorize(f"Daño: {self.damage}", console.Fore.RED)
@@ -35,9 +36,10 @@ class Armor(Item):
         super().__init__(name, description, value)
         self.defense = defense
 
-    def use(self, player) -> None:
+    def use(self, player) -> bool:
         player.equipped_armor = self
         print(f"Has equipado {self.name}. (+{self.defense} DEF)")
+        return True
 
     def get_stats_info(self) -> str:
         return console.colorize(f"Defensa: {self.defense}", console.Fore.BLUE)

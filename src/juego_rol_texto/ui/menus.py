@@ -7,6 +7,7 @@ from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import settings
 from juego_rol_texto.items.equipment import Weapon, Armor
 from juego_rol_texto.persistence.save_load import save_game, load_game
+from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
 
 # Instancia global de ResourceManager
@@ -164,7 +165,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         options = [
             ("Luchar", start_battle_flow),
             ("Inventario", lambda: player.inventory.show_inventory(mode="use")),
-            ("Tienda", lambda: print(console.colorize("Tienda no implementada...", console.Fore.YELLOW))),
+            ("Tienda", lambda: Shop().open(player)),
             ("Estadísticas", player.show_stats),
 
             # Pasamos la clase Weapon a la opción 5

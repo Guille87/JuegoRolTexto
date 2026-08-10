@@ -22,15 +22,13 @@ def test_add_item_auto_sells_duplicate_equipment(player):
 
 
 def test_equip_menu_equips_selected_weapon(player, monkeypatch):
-    # Nota: Weapon.use() no hace `return True`, así que _handle_selection
-    # devuelve False aunque el arma sí se equipe (comportamiento preexistente).
     weapon = Weapon("Espada Goblin", "desc", value=5, damage=4)
     player.inventory.add_item(weapon)
 
     monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
     used = player.inventory.equip_menu(Weapon)
 
-    assert used is False
+    assert used is True
     assert player.equipped_weapon is weapon
 
 
@@ -44,19 +42,17 @@ def test_equip_menu_rejects_wrong_category(player, monkeypatch):
     assert player.equipped_weapon is None
 
 
-def test_using_healing_potion_heals_but_is_not_consumed(player, monkeypatch):
-    # Nota: HealingPotion.use() tampoco hace `return True`, así que
-    # _handle_selection no llega a descontar la poción del stack
-    # (comportamiento preexistente, no corregido por ser un refactor puro).
+def test_using_healing_potion_heals_and_consumes_one(player, monkeypatch):
     player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
     player.stats.health = 50
 
     monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
     used = player.inventory.equip_menu()  # filter_class=None -> inventario general
 
-    assert used is False
+    assert used is True
     assert player.stats.health == 70
-    assert player.inventory.quantities["Poción de Salud"] == 1
+    assert "Poción de Salud" not in player.inventory.quantities
+    assert player.inventory.items == []
 
 
 def test_using_stat_buff_potion_in_combat_consumes_one_from_stack(player, monkeypatch):

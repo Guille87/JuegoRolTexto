@@ -7,7 +7,7 @@ Sigue estos pasos para configurar el entorno de desarrollo en tu máquina local:
 1. **Clona** el repositorio:  
 Asegúrate de tener **Python instalado** en tu sistema.  
     ```bash
-   git clone [https://github.com/Guille87/JuegoRolTexto.git](https://github.com/Guille87/JuegoRolTexto.git)
+   git clone https://github.com/Guille87/JuegoRolTexto.git
    cd JuegoRolTexto
    ```
 2. **Crea y activa un entorno virtual:**
