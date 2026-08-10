@@ -24,9 +24,10 @@ class Player(Character):
 
     # --- LÓGICA DE COMBATE ---
 
-    def take_damage(self, amount: int, is_fire: bool = False) -> int:
-        """Calcula el daño final tras aplicar defensa y lo resta de la vida."""
-        final_damage = max(0, amount - self.get_total_defense())
+    def take_damage(self, amount: int, is_fire: bool = False, is_magical: bool = False) -> int:
+        """Calcula el daño final tras aplicar armadura o resistencia mágica y lo resta de la vida."""
+        mitigation = self.get_total_magic_resist() if is_magical else self.get_total_armor()
+        final_damage = max(0, amount - mitigation)
         self.stats.health -= final_damage
 
         if is_fire:
@@ -56,10 +57,14 @@ class Player(Character):
 
         return min_atk, max_atk
 
-    def get_total_defense(self) -> int:
-        """Devuelve la defensa total sumando la armadura."""
+    def get_total_armor(self) -> int:
+        """Devuelve la armadura total sumando la pieza equipada."""
         bonus = self.equipped_armor.defense if self.equipped_armor else 0
-        return self.stats.defense + bonus
+        return self.stats.armor + bonus
+
+    def get_total_magic_resist(self) -> int:
+        """Devuelve la resistencia mágica total (de momento solo la del stat base)."""
+        return self.stats.magic_resist
 
     def is_alive(self) -> bool:
         return self.stats.health > 0
@@ -162,15 +167,26 @@ class Player(Character):
         self.stats.health = self.stats.max_health
         self.stats.min_atk += 2
         self.stats.max_atk += 3
-        self.stats.defense += 1
+        self.stats.armor += 1
+
+        # La resistencia mágica sube más despacio (cada 2 niveles), mientras
+        # no exista equipamiento que la conceda, para no desequilibrar al Mago.
+        gained_magic_resist = self.level % 2 == 0
+        if gained_magic_resist:
+            self.stats.magic_resist += 1
+
         print(f"\n{console.colorize(f'⭐ ¡HAS SUBIDO AL NIVEL {self.level}! ⭐', console.Fore.YELLOW)}")
-        print(console.colorize("HP Max +20 | Ataque +2 | Defensa +1", console.Fore.WHITE))
+        stats_line = "HP Max +20 | Ataque +2-3 | Armadura +1"
+        if gained_magic_resist:
+            stats_line += " | Resistencia Mágica +1"
+        print(console.colorize(stats_line, console.Fore.WHITE))
 
     def show_stats(self) -> None:
         print(f"\n{console.colorize('=' * 10 + ' ESTADÍSTICAS ' + '=' * 10, console.Fore.CYAN)}")
         print(f"Nombre: {self.name.ljust(15)} Nivel: {self.level}")
         print(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}")
-        print(f"Ataque: {self.get_attack_range()} | Defensa: {self.get_total_defense()}")
+        print(f"Ataque: {self.get_attack_range()} | Armadura: {self.get_total_armor()}")
+        print(f"Resistencia Mágica: {self.stats.magic_resist}")
         print(f"XP: {self.experience} / {self.required_xp()}")
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")

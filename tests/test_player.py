@@ -3,10 +3,20 @@ from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Armor, Weapon
 
 
-def test_take_damage_subtracts_total_defense(player):
+def test_take_damage_subtracts_total_armor(player):
     dealt = player.take_damage(10)
-    assert dealt == 8  # 10 - defense(2)
+    assert dealt == 8  # 10 - armor(2)
     assert player.stats.health == 92
+
+
+def test_take_damage_magical_uses_magic_resist_instead_of_armor(player):
+    player.stats.armor = 100  # no debería influir en absoluto en daño mágico
+    player.stats.magic_resist = 3
+
+    dealt = player.take_damage(10, is_magical=True)
+
+    assert dealt == 7  # 10 - magic_resist(3), ignora los 100 de armadura
+    assert player.stats.health == 93
 
 
 def test_take_damage_never_negative(player):
@@ -26,14 +36,14 @@ def test_get_attack_range_halved_when_quemado(player):
     assert player.get_attack_range() == (4, 6)
 
 
-def test_get_total_defense_includes_armor_bonus(player):
+def test_get_total_armor_includes_equipped_armor_bonus(player):
     player.equipped_armor = Armor("Escudo", "desc", 1, defense=5)
-    assert player.get_total_defense() == 7
+    assert player.get_total_armor() == 7
 
 
 def test_gain_experience_levels_up_and_boosts_stats(player):
-    old_max_health, old_min_atk, old_max_atk, old_defense = (
-        player.stats.max_health, player.stats.min_atk, player.stats.max_atk, player.stats.defense
+    old_max_health, old_min_atk, old_max_atk, old_armor = (
+        player.stats.max_health, player.stats.min_atk, player.stats.max_atk, player.stats.armor
     )
     player.gain_experience(40)  # required_xp() en nivel 1 es 40
 
@@ -42,13 +52,27 @@ def test_gain_experience_levels_up_and_boosts_stats(player):
     assert player.stats.health == player.stats.max_health
     assert player.stats.min_atk == old_min_atk + 2
     assert player.stats.max_atk == old_max_atk + 3
-    assert player.stats.defense == old_defense + 1
+    assert player.stats.armor == old_armor + 1
+    assert player.stats.magic_resist == 1  # nivel 2 es par -> gana resistencia mágica
 
 
 def test_gain_experience_can_trigger_multiple_level_ups():
-    player = Player("Heroe", Stats(health=100, max_health=100, min_atk=5, max_atk=10, defense=2))
+    player = Player("Heroe", Stats(health=100, max_health=100, min_atk=5, max_atk=10, armor=2))
     player.gain_experience(1000)
     assert player.level > 2
+
+
+def test_level_up_grants_magic_resist_only_on_even_levels(player):
+    assert player.stats.magic_resist == 0
+
+    player._level_up()  # nivel 1 -> 2 (par)
+    assert player.stats.magic_resist == 1
+
+    player._level_up()  # nivel 2 -> 3 (impar)
+    assert player.stats.magic_resist == 1
+
+    player._level_up()  # nivel 3 -> 4 (par)
+    assert player.stats.magic_resist == 2
 
 
 def test_apply_status_refreshes_duration_instead_of_duplicating(player):

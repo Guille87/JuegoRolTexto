@@ -9,10 +9,11 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     # Usamos las propiedades de la clase Stats que ya manejan los topes
     print(f"  {console.colorize(f'Vida: {player.stats.health}/{player.stats.max_health}', console.Fore.GREEN, bright=True)}")
 
-    # Delegamos el cálculo del ataque y defensa al objeto Player (que ya sabe sumar su equipo)
+    # Delegamos el cálculo del ataque y armadura al objeto Player (que ya sabe sumar su equipo)
     atk_min, atk_max = player.get_attack_range()
     print(f"  {console.colorize(f'Ataque: {atk_min}-{atk_max}', console.Fore.RED, bright=True)}")
-    print(f"  {console.colorize(f'Defensa: {player.get_total_defense()}', console.Fore.BLUE, bright=True)}")
+    print(f"  {console.colorize(f'Armadura: {player.get_total_armor()}', console.Fore.BLUE, bright=True)}")
+    print(f"  {console.colorize(f'Resistencia Mágica: {player.stats.magic_resist}', console.Fore.CYAN, bright=True)}")
     print()
 
     # Lógica de información oculta para enemigos
@@ -20,7 +21,7 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
         print(f"Información de {console.colorize(enemy.name, console.Fore.RED)}:")
         print(f"  Vida: {enemy.stats.health}/{enemy.stats.max_health}")
         print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
-        print(f"  Defensa: {enemy.stats.defense}")
+        print(f"  Armadura: {enemy.stats.armor}")
     else:
         print(
             f"Enemigo {console.colorize(enemy.name, console.Fore.RED)}: "

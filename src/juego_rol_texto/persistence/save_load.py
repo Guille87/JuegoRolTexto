@@ -46,7 +46,8 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             "max_health": player.stats.max_health,
             "min_atk": player.stats.min_atk,
             "max_atk": player.stats.max_atk,
-            "defense": player.stats.defense
+            "armor": player.stats.armor,
+            "magic_resist": player.stats.magic_resist
         },
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
@@ -118,7 +119,10 @@ def _perform_load(player, path):
     player.stats.health = stats_data["health"]
     player.stats.min_atk = stats_data["min_atk"]
     player.stats.max_atk = stats_data["max_atk"]
-    player.stats.defense = stats_data["defense"]
+    # Compatibilidad con partidas guardadas antes de renombrar "defense" a "armor"
+    # y de añadir "magic_resist" (que no existía en absoluto).
+    player.stats.armor = stats_data.get("armor", stats_data.get("defense", 0))
+    player.stats.magic_resist = stats_data.get("magic_resist", 0)
 
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]

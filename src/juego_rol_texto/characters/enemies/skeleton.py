@@ -3,6 +3,7 @@ import random
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Armor
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import HealingPotion
 from juego_rol_texto.ui import console
 
@@ -10,7 +11,7 @@ from juego_rol_texto.ui import console
 class Skeleton(Enemy):
     def __init__(self):
         # Los esqueletos tienen buena defensa pero poca vida
-        super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5), gold_drop=12)
+        super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5), gold_min=10, gold_max=14)
         self.has_revived = False
 
     def take_damage(self, amount: int, defeated_enemies: list | None = None) -> int:
@@ -41,10 +42,13 @@ class Skeleton(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        # 30% de soltar un casco de hueso
-        if random.random() <= 0.3:
+        # 18% de soltar un casco de hueso
+        if random.random() <= 0.18:
             items.append(Armor("Casco de Hueso", "Hecho con restos de otros guerreros", 8, 5))
         # 50% de soltar una poción de salud
         if random.random() <= 0.5:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
+        # 25% de soltar un fragmento de hueso
+        if random.random() <= 0.25:
+            items.append(Material("Fragmento de Hueso", "Un resto óseo todavía impregnado de magia residual.", 4, rarity="Común"))
         return items

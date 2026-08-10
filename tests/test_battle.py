@@ -12,7 +12,7 @@ def test_victory_unlocks_next_enemy_and_grants_rewards(player, weak_enemy, monke
 
     assert "Goblin" in defeated
     assert ENEMY_PROGRESSION["Goblin"] in unlocked
-    assert player.inventory.gold == weak_enemy.gold_drop
+    assert weak_enemy.gold_min <= player.inventory.gold <= weak_enemy.gold_max
     assert player.is_alive()
 
 

@@ -3,6 +3,7 @@ import random
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import HealingPotion
 from juego_rol_texto.ui import console
 
@@ -10,7 +11,7 @@ from juego_rol_texto.ui import console
 class Goblin(Enemy):
     def __init__(self):
         # health, max_health, min_atk, max_atk, defense
-        super().__init__("Goblin", Stats(40, 40, 8, 12, 2), gold_drop=5)
+        super().__init__("Goblin", Stats(40, 40, 8, 12, 2), gold_min=4, gold_max=6)
         self.ambush_done = 0  # Añadimos contador de turnos
 
     def check_ambush(self, player) -> bool:
@@ -34,4 +35,6 @@ class Goblin(Enemy):
             items.append(Weapon("Espada Goblin", "Una hoja mellada y cubierta de herrumbre que aún corta", 5, 4))
         if random.random() <= 0.8:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
+        if random.random() <= 0.25:
+            items.append(Material("Colmillo de Goblin", "Un colmillo curvo y afilado, típico de estas criaturas.", 3, rarity="Común"))
         return items

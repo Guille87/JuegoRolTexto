@@ -5,14 +5,18 @@ from juego_rol_texto.ui import console
 
 
 class Enemy:
-    def __init__(self, name: str, stats: Stats, gold_drop: int):
+    def __init__(self, name: str, stats: Stats, gold_min: int, gold_max: int):
         self.name = name
         self.stats = stats  # Objeto de la clase Stats
-        self.gold_drop = gold_drop
+        self.gold_min = gold_min
+        self.gold_max = gold_max
+
+    def get_gold_drop(self) -> int:
+        return random.randint(self.gold_min, self.gold_max)
 
     def take_damage(self, damage: int) -> int:
-        # Usamos el sistema de defensa de stats
-        actual_damage = max(0, damage - self.stats.defense)
+        # Usamos el sistema de armadura de stats
+        actual_damage = max(0, damage - self.stats.armor)
         self.stats.health -= actual_damage
         return actual_damage
 

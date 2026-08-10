@@ -2,14 +2,15 @@ import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats
-from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.equipment import Armor, Weapon
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import StatBuffPotion
 from juego_rol_texto.ui import console
 
 
 class Orc(Enemy):
     def __init__(self):
-        super().__init__("Orco", Stats(150, 150, 15, 20, 6), gold_drop=25)
+        super().__init__("Orco", Stats(150, 150, 15, 20, 6), gold_min=21, gold_max=29)
         self.fury_active = False
         self.total_turns = 0  # Contador de turnos transcurridos
 
@@ -23,7 +24,7 @@ class Orc(Enemy):
 
             # 2. Calculamos cuánto daño pasaría la defensa del jugador
             # (Ataque - Defensa, mínimo 0 para no curar al jugador)
-            damage_after_def = max(0, base_damage - player.stats.defense)
+            damage_after_def = max(0, base_damage - player.stats.armor)
 
             # 3. Multiplicamos el resultado por 2
             final_dmg = damage_after_def * 2
@@ -66,4 +67,8 @@ class Orc(Enemy):
         if random.random() <= 0.6:
             # Usamos StatBuffPotion para la fuerza
             items.append(StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3))
+        if random.random() <= 0.15:
+            items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12, defense=7))
+        if random.random() <= 0.2:
+            items.append(Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común"))
         return items

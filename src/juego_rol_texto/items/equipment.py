@@ -38,11 +38,11 @@ class Armor(Item):
 
     def use(self, player) -> bool:
         player.equipped_armor = self
-        print(f"Has equipado {self.name}. (+{self.defense} DEF)")
+        print(f"Has equipado {self.name}. (+{self.defense} ARM)")
         return True
 
     def get_stats_info(self) -> str:
-        return console.colorize(f"Defensa: {self.defense}", console.Fore.BLUE)
+        return console.colorize(f"Armadura: {self.defense}", console.Fore.BLUE)
 
     def to_dict(self) -> dict:
         data = super().to_dict()

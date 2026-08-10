@@ -28,7 +28,7 @@ def tmp_save_dir(tmp_path, monkeypatch):
 
 @pytest.fixture
 def player() -> Player:
-    return Player("Heroe", Stats(health=100, max_health=100, min_atk=5, max_atk=10, defense=2))
+    return Player("Heroe", Stats(health=100, max_health=100, min_atk=5, max_atk=10, armor=2))
 
 
 @pytest.fixture

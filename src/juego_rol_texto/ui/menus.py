@@ -56,7 +56,7 @@ def start_new_game() -> None:
     # TODO: eliminar después de hacer pruebas
     if name.lower() == "admin":  # Puedes poner el nombre que prefieras
         print(console.colorize("⚠️  MODO DESARROLLADOR ACTIVADO ⚠️", console.Fore.MAGENTA))
-        # Stats muy altas: Vida 500, Ataque 50-70, Defensa 20
+        # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
         initial_stats = Stats(500, 500, 20, 40, 10)
         player = Player(name, initial_stats)
         player.level = 10

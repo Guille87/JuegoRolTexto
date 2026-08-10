@@ -2,12 +2,14 @@ import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.items.equipment import Armor, Weapon
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.ui import console
 
 
 class Mago(Enemy):
     def __init__(self):
-        super().__init__("Mago", Stats(400, 400, 10, 15, 6), gold_drop=100)
+        super().__init__("Mago", Stats(400, 400, 10, 15, 6), gold_min=85, gold_max=115)
 
     def perform_turn(self, player) -> None:
         # 1. Lógica de Curación (Vida <= 50%)
@@ -52,7 +54,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(15, 25)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Bola de Fuego', console.Fore.RED)}!")
-        player.take_damage(dmg, is_fire=True)
+        player.take_damage(dmg, is_fire=True, is_magical=True)
 
         if random.random() < 0.3:
             player.apply_status("quemado", 3)
@@ -66,7 +68,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(10, 30)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
               f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!")
-        player.take_damage(dmg)
+        player.take_damage(dmg, is_magical=True)
 
         if random.random() < 0.3:
             player.apply_status("paralizado", 3)
@@ -77,7 +79,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(5, 10)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!")
-        player.take_damage(dmg)
+        player.take_damage(dmg, is_magical=True)
 
         if random.random() < 0.3:
             player.apply_status("veneno", 3)
@@ -90,8 +92,18 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(5, 15)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
               f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!")
-        player.take_damage(dmg)
+        player.take_damage(dmg, is_magical=True)
 
         if random.random() < 0.1:
             player.apply_status("congelado", 3)
             print(console.colorize("¡Te has quedado congelado en un bloque de hielo!", console.Fore.CYAN))
+
+    def drop_item(self) -> list:
+        items = []
+        if random.random() <= 0.15:
+            items.append(Weapon("Bastón Arcano", "Un bastón rematado con un cristal que pulsa con energía arcana.", 18, damage=15))
+        if random.random() <= 0.12:
+            items.append(Armor("Túnica Arcana", "Tejida con hilos imbuidos de magia protectora. La mejor protección conocida.", 22, defense=9))
+        if random.random() <= 0.1:
+            items.append(Material("Esencia Arcana", "Energía mágica condensada, inestable pero muy valiosa.", 35, rarity="Raro"))
+        return items

@@ -10,7 +10,7 @@ from juego_rol_texto.ui import console
 
 class Troll(Enemy):
     def __init__(self):
-        super().__init__("Troll", Stats(250, 250, 12, 18, 4), gold_drop=50)
+        super().__init__("Troll", Stats(250, 250, 12, 18, 4), gold_min=42, gold_max=58)
 
     def on_turn_end(self) -> None:
         """Habilidad especial: Regeneración Aleatoria"""
@@ -22,8 +22,8 @@ class Troll(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        # 20% Maza de Piedra
-        if random.random() <= 0.2:
+        # 12% Maza de Piedra (la mejor arma actual, drop más bajo a propósito)
+        if random.random() <= 0.12:
             items.append(Weapon(
                 "Maza de Piedra",
                 "Un bloque de granito atado a un tronco. Pesada y brutal.",

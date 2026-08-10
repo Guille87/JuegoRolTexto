@@ -51,13 +51,13 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         # Si el jugador muere por la emboscada (poco probable pero posible)
         if not player.is_alive():
             _handle_defeat(player)
-            _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "def": player.stats.defense})
+            _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
             return
 
     # Guardamos estado inicial para restaurar después
     snapshot = {
         "atk": (player.stats.min_atk, player.stats.max_atk),
-        "def": player.stats.defense
+        "armor": player.stats.armor
     }
 
     is_auto = False
@@ -98,12 +98,12 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 
         if not enemy.is_alive():
             # CAPTURAMOS LOS NUEVOS STATS SI SUBE DE NIVEL
-            new_atk, new_def = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
+            new_atk, new_armor = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
 
             # SI SUBIÓ DE NIVEL, ACTUALIZAMOS EL SNAPSHOT
             if player.just_leveled_up:
                 snapshot["atk"] = new_atk
-                snapshot["def"] = new_def
+                snapshot["armor"] = new_armor
             break
 
         # --- TURNO DEL ENEMIGO ---
@@ -212,7 +212,7 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             print(console.colorize(f"✨ ¡NUEVO ENEMIGO DESBLOQUEADO: {next_enemy}!", console.Fore.MAGENTA))
 
     # Recompensa de Oro
-    gold = enemy.gold_drop
+    gold = enemy.get_gold_drop()
     player.inventory.gold += gold
     print(f"💰 Oro obtenido: {console.colorize(str(gold), console.Fore.YELLOW)}")
 
@@ -233,7 +233,7 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             print(f"📦 {console.colorize(item.name, console.Fore.GREEN)}: {item.description}")
 
     # Si sube de nivel, devolvemos el nuevo snapshot de stats
-    return (player.stats.min_atk, player.stats.max_atk), player.stats.defense
+    return (player.stats.min_atk, player.stats.max_atk), player.stats.armor
 
 
 def _handle_defeat(player) -> None:
@@ -259,7 +259,7 @@ def _restore_player(player, snapshot: dict) -> None:
     """Elimina efectos, restaura stats base y cura al jugador."""
     # Restaurar stats base (por si hubo pociones de fuerza/defensa)
     player.stats.min_atk, player.stats.max_atk = snapshot["atk"]
-    player.stats.defense = snapshot["def"]
+    player.stats.armor = snapshot["armor"]
 
     # Limpiar estados alterados
     player.status_effects = []

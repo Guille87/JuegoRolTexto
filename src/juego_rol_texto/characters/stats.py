@@ -1,11 +1,12 @@
 class Stats:
     """Maneja las estadísticas básicas con validación de límites."""
-    def __init__(self, health: int, max_health: int, min_atk: int, max_atk: int, defense: int):
+    def __init__(self, health: int, max_health: int, min_atk: int, max_atk: int, armor: int, magic_resist: int = 0):
         self.max_health = max_health
         self._health = health
         self.min_atk = min_atk
         self.max_atk = max_atk
-        self.defense = defense
+        self.armor = armor
+        self.magic_resist = magic_resist
 
     @property
     def health(self) -> int:
@@ -17,4 +18,5 @@ class Stats:
         self._health = max(0, min(value, self.max_health))
 
     def __str__(self) -> str:
-        return f"HP: {self.health}/{self.max_health} | ATK: {self.min_atk}-{self.max_atk} | DEF: {self.defense}"
+        return (f"HP: {self.health}/{self.max_health} | ATK: {self.min_atk}-{self.max_atk} "
+                f"| ARM: {self.armor} | RES.MAG: {self.magic_resist}")
