@@ -20,14 +20,23 @@ Asegúrate de tener **Python instalado** en tu sistema.
     python3 -m venv venv
     source venv/bin/activate
     ```
-3. **Instala las dependencias:**
+3. **Instala el proyecto y sus dependencias:**
     ```
-    pip install -r requirements.txt
+    pip install -e ".[dev]"
     ```
+    (El extra `[dev]` añade `pytest` para poder correr los tests. Si solo quieres jugar, `pip install -e .` es suficiente.)
 4. **Inicia el juego:**
     ```
     python main.py
     ```
+    También puedes usar `python -m juego_rol_texto` o, tras la instalación, el comando `juego-rol-texto`.
+
+## Tests
+
+El proyecto usa `pytest`. Con las dependencias de desarrollo instaladas:
+```
+pytest
+```
 ## Contribución
 **¡Contribuciones son bienvenidas!** Si encuentras algún **problema**, tienes **sugerencias** de mejoras o deseas **contribuir** con código, no dudes en abrir un **issue** o enviar un **pull request**.
 # Contacto

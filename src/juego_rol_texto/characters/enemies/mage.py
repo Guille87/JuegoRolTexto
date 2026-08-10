@@ -1,0 +1,97 @@
+import random
+
+from juego_rol_texto.characters.enemies.enemy_base import Enemy
+from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.ui import console
+
+
+class Mago(Enemy):
+    def __init__(self):
+        super().__init__("Mago", Stats(400, 400, 10, 15, 6), gold_drop=100)
+
+    def perform_turn(self, player) -> None:
+        # 1. Lógica de Curación (Vida <= 50%)
+        if self.stats.health <= (self.stats.max_health * 0.5) and random.random() < 0.4:
+            self._cast_heal()
+            return
+
+        # 2. Lista de estados actuales del jugador
+        active_statuses = [e["name"] for e in player.status_effects]
+
+        # 3. Inteligencia Táctica: Intentar aplicar lo que el jugador NO tenga
+        posibles_hechizos = []
+
+        if "veneno" not in active_statuses: posibles_hechizos.append("poison")
+        if "paralizado" not in active_statuses: posibles_hechizos.append("thunder")
+        if "congelado" not in active_statuses and "quemado" not in active_statuses:
+            posibles_hechizos.append("blizzard")
+
+        # Si ya tiene los estados importantes o por azar, lanzamos Bola de Fuego (daño puro)
+        if not posibles_hechizos or random.random() < 0.3:
+            self._cast_fireball(player)
+        else:
+            choice = random.choice(posibles_hechizos)
+            if choice == "thunder":
+                self._cast_thunder(player)
+            elif choice == "poison":
+                self._cast_poison(player)
+            elif choice == "blizzard":
+                self._cast_blizzard(player)
+
+    def _cast_heal(self) -> None:
+        heal = random.randint(40, 60)
+        self.stats.health = min(self.stats.max_health, self.stats.health + heal)
+        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} susurra palabras antiguas y se cura "
+              f"{console.colorize(f'{heal} HP', console.Fore.GREEN)}.")
+
+    def _cast_fireball(self, player) -> None:
+        from juego_rol_texto.audio.resource_manager import ResourceManager
+        ResourceManager().play_sfx("fireball")
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(15, 25)
+        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
+              f"{console.colorize('Bola de Fuego', console.Fore.RED)}!")
+        player.take_damage(dmg, is_fire=True)
+
+        if random.random() < 0.3:
+            player.apply_status("quemado", 3)
+            console.error("¡Tus ropas arden!")
+
+    def _cast_thunder(self, player) -> None:
+        from juego_rol_texto.audio.resource_manager import ResourceManager
+        ResourceManager().play_sfx("lightning")
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(10, 30)
+        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
+              f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!")
+        player.take_damage(dmg)
+
+        if random.random() < 0.3:
+            player.apply_status("paralizado", 3)
+            console.warning("¡El impacto te deja paralizado!")
+
+    def _cast_poison(self, player) -> None:
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(5, 10)
+        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
+              f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!")
+        player.take_damage(dmg)
+
+        if random.random() < 0.3:
+            player.apply_status("veneno", 3)
+            console.success("¡El veneno recorre tus venas!")
+        else:
+            print("Por suerte, el veneno no logra entrar en tu organismo.")
+
+    def _cast_blizzard(self, player) -> None:
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(5, 15)
+        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
+              f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!")
+        player.take_damage(dmg)
+
+        if random.random() < 0.1:
+            player.apply_status("congelado", 3)
+            print(console.colorize("¡Te has quedado congelado en un bloque de hielo!", console.Fore.CYAN))

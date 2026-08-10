@@ -3,10 +3,12 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+env/
 *.json
 *.ini
 .sav
 saved_games/
+.pytest_cache/
 
 # Distribución / Empaquetado
 dist/

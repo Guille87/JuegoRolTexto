@@ -1,0 +1,25 @@
+[project]
+name = "juego-rol-texto"
+version = "0.2.0"
+description = "Juego de rol por turnos en consola, escrito en Python."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "colorama==0.4.6",
+    "pygame-ce==2.5.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+juego-rol-texto = "juego_rol_texto.app:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
