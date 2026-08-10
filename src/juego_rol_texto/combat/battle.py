@@ -176,13 +176,19 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
         return
 
     damage = attacker.get_attack_damage()
+    element = attacker.get_equipped_element() if isinstance(attacker, Player) else None
 
-    # Usamos un try/except o verificamos el tipo por si otros enemigos no aceptan el parámetro aún
-    try:
-        final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies)
-    except TypeError:
-        # Si el enemigo no tiene lógica especial, llamamos normal
-        final_dmg = defender.take_damage(damage)
+    # ¿Es el defensor débil a este elemento? Lo comprobamos antes de aplicar el daño
+    # para poder mostrar el mensaje de "supereficaz" (take_damage no expone esa info).
+    weaknesses = getattr(type(defender), "ELEMENTAL_WEAKNESSES", {})
+    is_super_effective = bool(element) and weaknesses.get(element, 1.0) > 1.0
+
+    final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies, element=element)
+
+    if is_super_effective:
+        print(console.colorize(
+            f"¡Es supereficaz! El {element} causa estragos en {defender.name}.", console.Fore.RED, bright=True
+        ))
 
     if final_dmg > 0:
         print(f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "

@@ -11,4 +11,5 @@
 - [ ] Añadir submenú "Herrería" en la ciudad.
 
 ## Mejoras de Combate
-- [ ] Implementar daño elemental (Fuego vs. Troll).
+- [x] Implementar daño elemental (Fuego vs. Troll).
+- [ ] Añadir más elementos (Rayo, Veneno, Hielo) reutilizando `Enemy.ELEMENTAL_WEAKNESSES`.

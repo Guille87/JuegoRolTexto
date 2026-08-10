@@ -9,6 +9,7 @@ from juego_rol_texto.items.potions.regen_potion import RegenPotion
 
 ITEM_SAMPLES = [
     Weapon("Espada", "desc", 5, damage=4),
+    Weapon("Espada Flamígera", "desc", 15, damage=10, element="fuego"),
     Armor("Casco", "desc", 8, defense=5),
     HealingPotion("Poción de Salud", "desc", 2, heal_amount=20),
     StatBuffPotion("Poción de Fuerza", "desc", 5, stat_name="max_atk", boost=5, duration=3),

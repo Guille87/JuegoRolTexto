@@ -14,9 +14,9 @@ class Skeleton(Enemy):
         super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5), gold_min=10, gold_max=14)
         self.has_revived = False
 
-    def take_damage(self, amount: int, defeated_enemies: list | None = None) -> int:
+    def take_damage(self, amount: int, defeated_enemies: list | None = None, element: str | None = None) -> int:
         # Calculamos el daño normal usando la lógica de la clase padre
-        final_damage = super().take_damage(amount)
+        final_damage = super().take_damage(amount, element=element)
 
         # LÓGICA DE REANIMACIÓN
         # Si la vida llega a 0 y aún no ha revivido...

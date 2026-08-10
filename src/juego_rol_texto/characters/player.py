@@ -66,6 +66,10 @@ class Player(Character):
         """Devuelve la resistencia mágica total (de momento solo la del stat base)."""
         return self.stats.magic_resist
 
+    def get_equipped_element(self) -> str | None:
+        """Devuelve el elemento del arma equipada, si tiene alguno."""
+        return self.equipped_weapon.element if self.equipped_weapon else None
+
     def is_alive(self) -> bool:
         return self.stats.health > 0
 

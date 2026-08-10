@@ -71,4 +71,6 @@ class Orc(Enemy):
             items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12, defense=7))
         if random.random() <= 0.2:
             items.append(Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común"))
+        if random.random() <= 0.12:
+            items.append(Weapon("Espada Flamígera", "Una hoja que arde con un fuego que nunca se apaga.", 15, 10, element="fuego"))
         return items

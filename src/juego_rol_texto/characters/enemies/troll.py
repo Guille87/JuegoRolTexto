@@ -9,6 +9,8 @@ from juego_rol_texto.ui import console
 
 
 class Troll(Enemy):
+    ELEMENTAL_WEAKNESSES = {"fuego": 2.0}
+
     def __init__(self):
         super().__init__("Troll", Stats(250, 250, 12, 18, 4), gold_min=42, gold_max=58)
 
