@@ -12,7 +12,7 @@ class Nigromante(Enemy):
     def __init__(self):
         # Hechicero oscuro: su ataque habitual es mágico, no físico.
         super().__init__(
-            "Nigromante", Stats(320, 320, 54, 72, 6, magic_resist=10, speed=26, precision=12, evasion=6,
+            "Nigromante", Stats(320, 320, 48, 64, 6, magic_resist=10, speed=23, precision=12, evasion=6,
                                  crit_chance=0.08, crit_damage=1.6, magic_penetration=8),
             gold_min=110, gold_max=145
         )

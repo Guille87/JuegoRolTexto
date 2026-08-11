@@ -10,8 +10,8 @@ from juego_rol_texto.ui import console
 class Mago(Enemy):
     def __init__(self):
         super().__init__(
-            "Mago", Stats(400, 400, 10, 15, 6, magic_resist=15, speed=12, precision=12, evasion=10,
-                          crit_chance=0.12, crit_damage=1.6, magic_penetration=3),
+            "Mago", Stats(400, 400, 10, 15, 6, magic_resist=15, speed=15, precision=12, evasion=10,
+                          crit_chance=0.12, crit_damage=1.6, magic_penetration=4),
             gold_min=85, gold_max=115
         )
 
