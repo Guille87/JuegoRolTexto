@@ -1,0 +1,46 @@
+import random
+
+from juego_rol_texto.characters.enemies.enemy_base import Enemy
+from juego_rol_texto.characters.stats import Stats, resolve_hit
+from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.materials import Material
+from juego_rol_texto.items.potions import HealingPotion
+from juego_rol_texto.ui import console
+
+
+class Huargo(Enemy):
+    def __init__(self):
+        # Lobo salvaje: rápido y evasivo, pero frágil (poca vida y armadura).
+        super().__init__(
+            "Huargo", Stats(42, 42, 9, 13, 1, speed=13, precision=6, evasion=4,
+                             crit_chance=0.05, crit_damage=1.5),
+            gold_min=6, gold_max=9
+        )
+
+    def perform_turn(self, player) -> None:
+        """Ataque normal; a veces caza en manada y otro lobo se suma con un mordisco extra."""
+        super().perform_turn(player)
+
+        if self.is_alive() and player.is_alive() and random.random() < 0.2:
+            print(console.colorize("¡El resto de la manada aprovecha el hueco!", console.Fore.RED))
+            self._pack_bite(player)
+
+    def _pack_bite(self, player) -> None:
+        """Segundo mordisco de un compañero de manada: más débil que el ataque principal."""
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(self.name, console.Fore.RED)} falla el mordisco de manada.")
+            return
+
+        damage = max(1, self.get_attack_damage() // 2)
+        final_damage = player.take_damage(damage, armor_penetration=self.stats.armor_penetration)
+        print(f"El mordisco de manada hace {console.colorize(str(final_damage), console.Fore.RED)} de daño extra.")
+
+    def drop_item(self) -> list:
+        items = []
+        if random.random() <= 0.7:
+            items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
+        if random.random() <= 0.3:
+            items.append(Material("Colmillo de Huargo", "Un colmillo curvo, todavía caliente de la caza.", 5, rarity="Común"))
+        if random.random() <= 0.1:
+            items.append(Weapon("Garras de Huargo", "Un par de garras montadas en guantelete, aún manchadas de sangre.", 10, 7))
+        return items

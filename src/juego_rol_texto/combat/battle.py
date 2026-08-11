@@ -7,13 +7,18 @@ from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
 
-# Mapa de progresión: Al derrotar a la LLAVE, se desbloquea el VALOR
+# Mapa de progresión: Al derrotar a la LLAVE, se desbloquea el VALOR.
+# Orden de tiers acordado con el usuario (ver TODO.md): los enemigos nuevos se
+# van insertando en el hueco que les corresponde según su potencia relativa a
+# los que ya existían, no necesariamente al final de la cadena.
 ENEMY_PROGRESSION = {
-    "Goblin": "Esqueleto",
-    "Esqueleto": "Orco",
+    "Goblin": "Huargo",
+    "Huargo": "Esqueleto",
+    "Esqueleto": "Bandido",
+    "Bandido": "Orco",
     "Orco": "Troll",
     "Troll": "Mago",
-    "Mago": None  # El Mago es el último por ahora
+    "Mago": None  # El resto de tiers superiores (Nigromante, Ángel Caído, Demonio, Dragón...) aún no existen
 }
 
 # Umbral de la barra ATB: cuando el "gauge" de un combatiente llega aquí, actúa

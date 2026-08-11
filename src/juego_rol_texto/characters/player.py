@@ -51,7 +51,9 @@ class Player(Character):
 
     def get_attack_range(self) -> tuple[int, int]:
         """Devuelve el rango de ataque sumando el arma y el equipo (p. ej. anillos) equipados."""
-        weapon_bonus = self.equipped_weapon.damage if self.equipped_weapon else 0
+        # Desarmado (Bandido): el bonus del arma no cuenta mientras dure el estado.
+        is_disarmed = any(e["name"] == "desarmado" for e in self.status_effects)
+        weapon_bonus = self.equipped_weapon.damage if self.equipped_weapon and not is_disarmed else 0
         armor_bonus = sum(item.damage for item in self.equipped_armor.values() if item)
         bonus = weapon_bonus + armor_bonus
         min_atk = self.stats.min_atk + bonus

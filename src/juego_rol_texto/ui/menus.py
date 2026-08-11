@@ -1,5 +1,5 @@
 from juego_rol_texto.audio.resource_manager import ResourceManager
-from juego_rol_texto.characters.enemies import Goblin, Skeleton, Orc, Troll
+from juego_rol_texto.characters.enemies import Bandido, Goblin, Huargo, Skeleton, Orc, Troll
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
@@ -64,8 +64,8 @@ def start_new_game() -> None:
         player.inventory.gold = 5000
 
         # Desbloqueamos todo para testear cualquier enemigo
-        unlocked = ["Goblin", "Esqueleto", "Orco", "Troll", "Mago"]
-        defeated = ["Goblin", "Esqueleto", "Orco", "Troll"]
+        unlocked = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Troll", "Mago"]
+        defeated = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Troll"]
 
     else:
         initial_stats = Stats(100, 100, 5, 10, 2)
@@ -226,7 +226,9 @@ def _get_enemy_instance(name: str):
     """Convierte un string en una instancia de clase de enemigo."""
     enemies = {
         "Goblin": Goblin,
+        "Huargo": Huargo,
         "Esqueleto": Skeleton,
+        "Bandido": Bandido,
         "Orco": Orc,
         "Troll": Troll,
         "Mago": Mago
