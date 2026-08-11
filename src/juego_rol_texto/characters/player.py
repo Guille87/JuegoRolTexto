@@ -25,9 +25,13 @@ class Player(Character):
 
     # --- LÓGICA DE COMBATE ---
 
-    def take_damage(self, amount: int, is_fire: bool = False, is_magical: bool = False) -> int:
+    def take_damage(self, amount: int, is_fire: bool = False, is_magical: bool = False,
+                     armor_penetration: int = 0, magic_penetration: int = 0) -> int:
         """Calcula el daño final tras aplicar armadura o resistencia mágica y lo resta de la vida."""
-        mitigation = self.get_total_magic_resist() if is_magical else self.get_total_armor()
+        if is_magical:
+            mitigation = max(0, self.get_total_magic_resist() - magic_penetration)
+        else:
+            mitigation = max(0, self.get_total_armor() - armor_penetration)
         final_damage = max(0, amount - mitigation)
         self.stats.health -= final_damage
 
@@ -92,6 +96,24 @@ class Player(Character):
         """Devuelve la evasión total (hoy solo el stat base; el equipo no otorga evasión todavía)."""
         return self.stats.evasion
 
+    def get_total_armor_penetration(self) -> int:
+        """Devuelve la penetración de armadura total (hoy solo el stat base; el equipo no otorga todavía)."""
+        return self.stats.armor_penetration
+
+    def get_total_regen(self) -> int:
+        """Devuelve la regeneración de salud total sumando todas las piezas equipadas.
+
+        A diferencia del resto de get_total_*, el stat base (Stats.regen) es
+        siempre 0 para el jugador: esta stat no sube al subir de nivel, solo
+        se consigue vía objetos (típicamente anillos/amuleto).
+        """
+        bonus = sum(item.regen for item in self.equipped_armor.values() if item)
+        return self.stats.regen + bonus
+
+    def get_total_magic_penetration(self) -> int:
+        """Devuelve la penetración mágica total (hoy solo el stat base; el equipo no otorga todavía)."""
+        return self.stats.magic_penetration
+
     def get_equipped_element(self) -> str | None:
         """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
         if self.equipped_weapon and self.equipped_weapon.element:
@@ -140,6 +162,13 @@ class Player(Character):
                 heal = effect.get("power", 0)
                 self.stats.health = min(self.stats.max_health, self.stats.health + heal)
                 console.success(f"❤️ La regeneración te cura {heal} HP.")
+
+        # 3. Regeneración de salud pasiva por equipo (no es un status temporal,
+        # se aplica todos los turnos mientras el objeto siga puesto).
+        passive_regen = self.get_total_regen()
+        if passive_regen > 0 and self.stats.health < self.stats.max_health:
+            self.stats.health = min(self.stats.max_health, self.stats.health + passive_regen)
+            console.success(f"💚 Tu regeneración te cura {passive_regen} HP.")
 
         return can_act
 
@@ -260,6 +289,8 @@ class Player(Character):
               f"Daño Crítico: x{self.get_total_crit_damage():.2f}")
         print(f"Velocidad: {self.get_total_speed()} | "
               f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}")
+        print(f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
+              f"Penetración Mágica: {self.get_total_magic_penetration()}")
         print(f"XP: {self.experience} / {self.required_xp()}")
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")

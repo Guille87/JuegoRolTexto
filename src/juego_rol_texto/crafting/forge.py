@@ -47,7 +47,7 @@ class Forge:
                 result_template=Armor(
                     "Armadura Regenerativa",
                     "Forjada con la piel imperecedera de un Troll; aún parece palpitar con vida propia.",
-                    value=60, slot="peto", defense=14, max_health=35
+                    value=60, slot="peto", defense=14, max_health=35, regen=8
                 )
             ),
             CraftingRecipe(
@@ -138,6 +138,16 @@ class Forge:
                     "Amuleto de Resistencia",
                     "Un talismán que envuelve al portador en una tenue barrera contra la magia.",
                     value=28, slot="amuleto", defense=2, magic_resist=5
+                )
+            ),
+            CraftingRecipe(
+                name="Anillo de Vitalidad",
+                materials={"Fragmento de Hueso": 2},
+                gold_cost=45,
+                result_template=Armor(
+                    "Anillo de Vitalidad",
+                    "Un aro sencillo grabado con símbolos de sanación; late al mismo ritmo que el corazón.",
+                    value=14, slot="anillo", regen=2
                 )
             ),
         ]

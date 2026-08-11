@@ -27,7 +27,8 @@ class Stats:
     """Maneja las estadísticas básicas con validación de límites."""
     def __init__(self, health: int, max_health: int, min_atk: int, max_atk: int, armor: int,
                  magic_resist: int = 0, crit_chance: float = 0.0, crit_damage: float = 1.5,
-                 speed: int = 10, precision: int = 0, evasion: int = 0):
+                 speed: int = 10, precision: int = 0, evasion: int = 0,
+                 armor_penetration: int = 0, magic_penetration: int = 0, regen: int = 0):
         self.max_health = max_health
         self._health = health
         self.min_atk = min_atk
@@ -42,6 +43,14 @@ class Stats:
         # Precisión/Evasión: alimentan resolve_hit() de más arriba.
         self.precision = precision
         self.evasion = evasion
+        # Penetración: reduce la armadura/resistencia mágica *del objetivo* al
+        # calcular la mitigación en take_damage (Player.take_damage /
+        # Enemy.take_damage), no es un stat propio de "recibir" daño.
+        self.armor_penetration = armor_penetration
+        self.magic_penetration = magic_penetration
+        # Regeneración de salud pasiva (HP curados cada turno, aplicada por
+        # quien la use — Player.on_turn_start() / Enemy.on_turn_end()).
+        self.regen = regen
 
     @property
     def health(self) -> int:

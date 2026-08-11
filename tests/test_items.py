@@ -16,6 +16,7 @@ ITEM_SAMPLES = [
     Armor("Brazales Arcanos", "desc", 25, slot="brazales", magic_resist=3, element="fuego"),
     Armor("Anillo de Fuerza", "desc", 16, slot="anillo", damage=3),
     Armor("Amuleto de Resistencia", "desc", 28, slot="amuleto", defense=2, magic_resist=5),
+    Armor("Anillo de Vitalidad", "desc", 14, slot="anillo", regen=2),
     HealingPotion("Poción de Salud", "desc", 2, heal_amount=20),
     StatBuffPotion("Poción de Fuerza", "desc", 5, stat_name="max_atk", boost=5, duration=3),
     RegenPotion("Poción de Regeneración", "desc", 8, regen_amount=10, duration=3),

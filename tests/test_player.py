@@ -25,6 +25,24 @@ def test_take_damage_never_negative(player):
     assert player.stats.health == 100
 
 
+def test_take_damage_armor_penetration_reduces_mitigation(player):
+    dealt = player.take_damage(10, armor_penetration=1)
+    assert dealt == 9  # 10 - max(0, armor(2) - penetración(1))
+    assert player.stats.health == 91
+
+
+def test_take_damage_armor_penetration_cannot_go_below_zero_mitigation(player):
+    dealt = player.take_damage(10, armor_penetration=100)
+    assert dealt == 10  # la armadura mitigada no puede volverse negativa
+    assert player.stats.health == 90
+
+
+def test_take_damage_magic_penetration_reduces_magic_resist_mitigation(player):
+    player.stats.magic_resist = 5
+    dealt = player.take_damage(10, is_magical=True, magic_penetration=2)
+    assert dealt == 7  # 10 - max(0, magic_resist(5) - penetración(2))
+
+
 def test_get_attack_range_includes_weapon_bonus(player):
     player.equipped_weapon = Weapon("Espada", "desc", 1, damage=3)
     assert player.get_attack_range() == (8, 13)
@@ -69,6 +87,36 @@ def test_get_total_crit_chance_and_damage_sum_equipped_slots(player):
 
 def test_get_total_speed_returns_base_stat(player):
     assert player.get_total_speed() == player.stats.speed == 10
+
+
+def test_get_total_regen_is_zero_without_equipment(player):
+    # A diferencia del resto de get_total_*, el stat base nunca sube (solo objetos).
+    assert player.stats.regen == 0
+    assert player.get_total_regen() == 0
+
+
+def test_get_total_regen_sums_equipped_slots(player):
+    player.equipped_armor["peto"] = Armor("Peto Vital", "desc", 1, slot="peto", regen=8)
+    player.equipped_armor["anillo1"] = Armor("Anillo de Vitalidad", "desc", 1, slot="anillo1", regen=2)
+    assert player.get_total_regen() == 10
+
+
+def test_on_turn_start_applies_passive_regen_from_equipment(player):
+    player.equipped_armor["peto"] = Armor("Peto Vital", "desc", 1, slot="peto", regen=8)
+    player.stats.health = 50
+
+    player.on_turn_start()
+
+    assert player.stats.health == 58
+
+
+def test_on_turn_start_passive_regen_never_exceeds_max_health(player):
+    player.equipped_armor["peto"] = Armor("Peto Vital", "desc", 1, slot="peto", regen=8)
+    player.stats.health = player.stats.max_health - 3  # menos que el regen
+
+    player.on_turn_start()
+
+    assert player.stats.health == player.stats.max_health
 
 
 def test_get_equipped_element_prefers_weapon_over_bracers(player):

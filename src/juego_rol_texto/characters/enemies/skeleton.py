@@ -11,12 +11,18 @@ from juego_rol_texto.ui import console
 class Skeleton(Enemy):
     def __init__(self):
         # Los esqueletos tienen buena defensa pero poca vida
-        super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5, speed=8, precision=8, evasion=2), gold_min=10, gold_max=14)
+        super().__init__(
+            "Esqueleto", Stats(60, 60, 10, 15, 5, magic_resist=2, speed=8, precision=8, evasion=2,
+                               crit_chance=0.05, crit_damage=1.5),
+            gold_min=10, gold_max=14
+        )
         self.has_revived = False
 
-    def take_damage(self, amount: int, defeated_enemies: list | None = None, element: str | None = None) -> int:
+    def take_damage(self, amount: int, defeated_enemies: list | None = None, element: str | None = None,
+                     is_magical: bool = False, armor_penetration: int = 0, magic_penetration: int = 0) -> int:
         # Calculamos el daño normal usando la lógica de la clase padre
-        final_damage = super().take_damage(amount, element=element)
+        final_damage = super().take_damage(amount, element=element, is_magical=is_magical,
+                                            armor_penetration=armor_penetration, magic_penetration=magic_penetration)
 
         # LÓGICA DE REANIMACIÓN
         # Si la vida llega a 0 y aún no ha revivido...

@@ -51,7 +51,10 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             "magic_resist": player.stats.magic_resist,
             "speed": player.stats.speed,
             "precision": player.stats.precision,
-            "evasion": player.stats.evasion
+            "evasion": player.stats.evasion,
+            "armor_penetration": player.stats.armor_penetration,
+            "magic_penetration": player.stats.magic_penetration,
+            "regen": player.stats.regen
         },
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
@@ -135,6 +138,11 @@ def _perform_load(player, path):
     # Compatibilidad con partidas guardadas antes de añadir precisión/evasión.
     player.stats.precision = stats_data.get("precision", 0)
     player.stats.evasion = stats_data.get("evasion", 0)
+    # Compatibilidad con partidas guardadas antes de añadir penetración de armadura/mágica.
+    player.stats.armor_penetration = stats_data.get("armor_penetration", 0)
+    player.stats.magic_penetration = stats_data.get("magic_penetration", 0)
+    # Compatibilidad con partidas guardadas antes de añadir regeneración de salud.
+    player.stats.regen = stats_data.get("regen", 0)
 
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]

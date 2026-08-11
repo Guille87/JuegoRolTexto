@@ -57,7 +57,7 @@ class Armor(Item):
     def __init__(self, name: str, description: str, value: int, slot: str, defense: int = 0,
                  max_health: int = 0, magic_resist: int = 0,
                  crit_chance: float = 0.0, crit_damage: float = 0.0,
-                 damage: int = 0, element: str | None = None):
+                 damage: int = 0, element: str | None = None, regen: int = 0):
         super().__init__(name, description, value)
         self.slot = slot
         self.defense = defense
@@ -67,6 +67,10 @@ class Armor(Item):
         self.crit_damage = crit_damage
         self.damage = damage
         self.element = element
+        # Regeneración de salud: sumada en Player.get_total_regen() y aplicada
+        # cada turno en Player.on_turn_start(), no se consigue de otra forma
+        # (el jugador no sube esta stat al subir de nivel).
+        self.regen = regen
 
     def use(self, player, target_slot: str | None = None) -> bool:
         # target_slot lo indica quien equipa (necesario para los anillos: self.slot
@@ -101,6 +105,8 @@ class Armor(Item):
             parts.append(f"Daño: +{self.damage}")
         if self.element:
             parts.append(f"Elemento: {self.element.capitalize()}")
+        if self.regen:
+            parts.append(f"Regeneración: +{self.regen} HP/turno")
         info = " | ".join(parts) if parts else "Sin bonus"
         return console.colorize(info, console.Fore.BLUE)
 
@@ -115,6 +121,7 @@ class Armor(Item):
             "crit_damage": self.crit_damage,
             "damage": self.damage,
             "element": self.element,
+            "regen": self.regen,
             "type": "Armor"
         })
         return data
@@ -133,5 +140,6 @@ class Armor(Item):
             crit_chance=data.get("crit_chance", 0.0),
             crit_damage=data.get("crit_damage", 0.0),
             damage=data.get("damage", 0),
-            element=data.get("element")
+            element=data.get("element"),
+            regen=data.get("regen", 0)
         )

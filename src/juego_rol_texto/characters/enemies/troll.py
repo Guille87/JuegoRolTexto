@@ -12,12 +12,17 @@ class Troll(Enemy):
     ELEMENTAL_WEAKNESSES = {"fuego": 2.0}
 
     def __init__(self):
-        super().__init__("Troll", Stats(250, 250, 12, 18, 4, speed=5, precision=3, evasion=0), gold_min=42, gold_max=58)
+        super().__init__(
+            "Troll", Stats(250, 250, 12, 18, 4, magic_resist=1, speed=5, precision=3, evasion=0,
+                           crit_chance=0.03, crit_damage=1.5, regen=10),
+            gold_min=42, gold_max=58
+        )
 
     def on_turn_end(self) -> None:
-        """Habilidad especial: Regeneración Aleatoria"""
+        """Habilidad especial: regeneración aleatoria alrededor de su stat de
+        regeneración (el Troll es de los pocos enemigos "aptos" para esto)."""
         if self.is_alive() and self.stats.health < self.stats.max_health:
-            regen = random.randint(5, 15)
+            regen = random.randint(self.stats.regen - 5, self.stats.regen + 5)
 
             self.stats.health = min(self.stats.max_health, self.stats.health + regen)
             console.success(f"✨ El Troll gruñe mientras sus heridas se cierran (+{regen} HP).")

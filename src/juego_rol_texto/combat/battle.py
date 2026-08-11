@@ -249,17 +249,26 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     damage = attacker.get_attack_damage()
     element = attacker.get_equipped_element() if isinstance(attacker, Player) else None
 
-    # Golpe crítico: solo el jugador puede critear (los enemigos no tienen esta stat)
-    is_crit = isinstance(attacker, Player) and random.random() < attacker.get_total_crit_chance()
+    # Golpe crítico: el jugador suma el bonus de su equipo, los enemigos usan su stat base
+    attacker_crit_chance = attacker.get_total_crit_chance() if isinstance(attacker, Player) else attacker.stats.crit_chance
+    attacker_crit_damage = attacker.get_total_crit_damage() if isinstance(attacker, Player) else attacker.stats.crit_damage
+    is_crit = random.random() < attacker_crit_chance
     if is_crit:
-        damage = int(damage * attacker.get_total_crit_damage())
+        damage = int(damage * attacker_crit_damage)
 
     # ¿Es el defensor débil a este elemento? Lo comprobamos antes de aplicar el daño
     # para poder mostrar el mensaje de "supereficaz" (take_damage no expone esa info).
     weaknesses = getattr(type(defender), "ELEMENTAL_WEAKNESSES", {})
     is_super_effective = bool(element) and weaknesses.get(element, 1.0) > 1.0
 
-    final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies, element=element)
+    # Penetración de armadura: solo tiene efecto en ataques físicos (is_magical=False,
+    # el único caso que pasa por aquí hoy), reduce la armadura del defensor antes
+    # de restar el daño.
+    attacker_armor_penetration = (
+        attacker.get_total_armor_penetration() if isinstance(attacker, Player) else attacker.stats.armor_penetration
+    )
+    final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies, element=element,
+                                      armor_penetration=attacker_armor_penetration)
 
     if is_crit:
         print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))

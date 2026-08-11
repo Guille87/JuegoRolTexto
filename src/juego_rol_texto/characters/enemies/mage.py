@@ -9,7 +9,11 @@ from juego_rol_texto.ui import console
 
 class Mago(Enemy):
     def __init__(self):
-        super().__init__("Mago", Stats(400, 400, 10, 15, 6, speed=12, precision=12, evasion=10), gold_min=85, gold_max=115)
+        super().__init__(
+            "Mago", Stats(400, 400, 10, 15, 6, magic_resist=15, speed=12, precision=12, evasion=10,
+                          crit_chance=0.12, crit_damage=1.6, magic_penetration=3),
+            gold_min=85, gold_max=115
+        )
 
     def perform_turn(self, player) -> None:
         # 1. Lógica de Curación (Vida <= 50%)
@@ -54,7 +58,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(15, 25)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Bola de Fuego', console.Fore.RED)}!")
-        player.take_damage(dmg, is_fire=True, is_magical=True)
+        player.take_damage(dmg, is_fire=True, is_magical=True, magic_penetration=self.stats.magic_penetration)
 
         if random.random() < 0.3:
             player.apply_status("quemado", 3)
@@ -68,7 +72,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(10, 30)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
               f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!")
-        player.take_damage(dmg, is_magical=True)
+        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
 
         if random.random() < 0.3:
             player.apply_status("paralizado", 3)
@@ -79,7 +83,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(5, 10)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!")
-        player.take_damage(dmg, is_magical=True)
+        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
 
         if random.random() < 0.3:
             player.apply_status("veneno", 3)
@@ -92,7 +96,7 @@ class Mago(Enemy):
         dmg = atk_base + random.randint(5, 15)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
               f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!")
-        player.take_damage(dmg, is_magical=True)
+        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
 
         if random.random() < 0.1:
             player.apply_status("congelado", 3)

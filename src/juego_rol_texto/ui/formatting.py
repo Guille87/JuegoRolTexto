@@ -17,6 +17,7 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     print(f"  {console.colorize(f'Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}%', console.Fore.YELLOW, bright=True)}")
     print(f"  {console.colorize(f'Velocidad: {player.get_total_speed()}', console.Fore.MAGENTA, bright=True)}")
     print(f"  {console.colorize(f'Precisión: {player.get_total_precision()} | Evasión: {player.get_total_evasion()}', console.Fore.MAGENTA, bright=True)}")
+    print(f"  {console.colorize(f'Penetración de Armadura: {player.get_total_armor_penetration()} | Penetración Mágica: {player.get_total_magic_penetration()}', console.Fore.MAGENTA, bright=True)}")
     print()
 
     # Lógica de información oculta para enemigos
@@ -25,8 +26,10 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
         print(f"  Vida: {enemy.stats.health}/{enemy.stats.max_health}")
         print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
         print(f"  Armadura: {enemy.stats.armor}")
+        print(f"  Resistencia Mágica: {enemy.stats.magic_resist}")
         print(f"  Velocidad: {enemy.stats.speed}")
         print(f"  Precisión: {enemy.stats.precision} | Evasión: {enemy.stats.evasion}")
+        print(f"  Penetración de Armadura: {enemy.stats.armor_penetration} | Penetración Mágica: {enemy.stats.magic_penetration}")
     else:
         print(
             f"Enemigo {console.colorize(enemy.name, console.Fore.RED)}: "

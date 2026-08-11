@@ -11,7 +11,11 @@ from juego_rol_texto.ui import console
 class Goblin(Enemy):
     def __init__(self):
         # health, max_health, min_atk, max_atk, defense
-        super().__init__("Goblin", Stats(40, 40, 8, 12, 2, speed=14, precision=5, evasion=8), gold_min=4, gold_max=6)
+        super().__init__(
+            "Goblin", Stats(40, 40, 8, 12, 2, magic_resist=0, speed=14, precision=5, evasion=8,
+                             crit_chance=0.10, crit_damage=1.6, armor_penetration=1),
+            gold_min=4, gold_max=6
+        )
         self.ambush_done = 0  # Añadimos contador de turnos
 
     def check_ambush(self, player) -> bool:

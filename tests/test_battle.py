@@ -1,4 +1,5 @@
 from juego_rol_texto.characters.enemies.goblin import Goblin
+from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.enemies.troll import Troll
 from juego_rol_texto.combat.battle import ENEMY_PROGRESSION, _attempt_flee, _execute_turn, _run_player_turn, initiate_battle
 from juego_rol_texto.items.equipment import Armor, Weapon
@@ -64,6 +65,76 @@ def test_goblin_is_not_affected_by_fire_element():
     assert fire_dmg == normal_dmg
 
 
+def test_enemy_default_on_turn_end_has_no_regen_by_default():
+    # La mayoría de enemigos no son "aptos" para regenerar: stat base 0, no pasa nada.
+    goblin = Goblin()
+    goblin.stats.health = 10
+    goblin.on_turn_end()
+    assert goblin.stats.health == 10
+
+
+def test_enemy_default_on_turn_end_applies_regen_when_stat_is_set():
+    goblin = Goblin()
+    goblin.stats.regen = 5
+    goblin.stats.health = 10
+
+    goblin.on_turn_end()
+
+    assert goblin.stats.health == 15
+
+
+def test_troll_regen_is_anchored_to_its_regen_stat(monkeypatch):
+    # random.randint(a, b) real (sin mockear) para comprobar el rango exacto usado
+    seen_ranges = []
+    import juego_rol_texto.characters.enemies.troll as troll_module
+    original_randint = troll_module.random.randint
+    monkeypatch.setattr(troll_module.random, "randint", lambda a, b: seen_ranges.append((a, b)) or original_randint(a, b))
+
+    troll = Troll()
+    troll.stats.health = 100  # deja hueco para curar
+    troll.on_turn_end()
+
+    assert seen_ranges == [(troll.stats.regen - 5, troll.stats.regen + 5)]
+
+
+def test_enemy_take_damage_magical_uses_magic_resist_instead_of_armor():
+    mago = Mago()
+    mago.stats.armor = 100  # no debería influir en absoluto en daño mágico
+    mago.stats.magic_resist = 5
+
+    dealt = mago.take_damage(20, is_magical=True)
+
+    assert dealt == 15  # 20 - magic_resist(5), ignora los 100 de armadura
+
+
+def test_enemy_take_damage_physical_still_uses_armor_by_default():
+    mago = Mago()
+    mago.stats.armor = 3
+    mago.stats.magic_resist = 100  # no debería influir en absoluto en daño físico
+
+    dealt = mago.take_damage(20)
+
+    assert dealt == 17  # 20 - armor(3), ignora los 100 de resistencia mágica
+
+
+def test_enemy_take_damage_armor_penetration_reduces_mitigation():
+    mago = Mago()
+    mago.stats.armor = 5
+
+    dealt = mago.take_damage(20, armor_penetration=2)
+
+    assert dealt == 17  # 20 - max(0, armor(5) - penetración(2))
+
+
+def test_enemy_take_damage_magic_penetration_reduces_magic_resist_mitigation():
+    mago = Mago()
+    mago.stats.magic_resist = 5
+
+    dealt = mago.take_damage(20, is_magical=True, magic_penetration=2)
+
+    assert dealt == 17  # 20 - max(0, magic_resist(5) - penetración(2))
+
+
 def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
@@ -100,6 +171,27 @@ def test_execute_turn_applies_crit_multiplier(player, monkeypatch):
     dealt = before - goblin.stats.health
 
     assert dealt == int(10 * player.stats.crit_damage)  # 10 base * 1.5 (multiplicador base)
+
+
+def test_execute_turn_uses_attacker_armor_penetration(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    # random.random() a 0.0 garantiza acierto (resolve_hit); como el jugador
+    # tiene crit_chance=0.0 por defecto, is_crit sigue siendo False (0.0 < 0.0 es falso).
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+
+    player.stats.armor_penetration = 2
+
+    goblin = Goblin()
+    goblin.stats.armor = 3
+    goblin.stats.health = goblin.stats.max_health = 1000
+
+    before = goblin.stats.health
+    _execute_turn(player, goblin, defeated_enemies=[])
+    dealt = before - goblin.stats.health
+
+    assert dealt == 9  # 10 base - max(0, armor(3) - penetración(2))
 
 
 def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player, monkeypatch):
@@ -142,6 +234,21 @@ def test_enemy_default_perform_turn_deals_no_damage_on_a_miss(player, monkeypatc
     goblin.perform_turn(player)
 
     assert player.stats.health == before  # el fallo no llega a restar vida
+
+
+def test_enemy_default_perform_turn_applies_crit_multiplier(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # siempre acierta y critea
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.armor = 0
+
+    goblin = Goblin()
+    before = player.stats.health
+    goblin.perform_turn(player)
+    dealt = before - player.stats.health
+
+    assert dealt == int(10 * goblin.stats.crit_damage)  # 10 base * 1.6 (crítico del Goblin)
+
+
 
 
 def test_attempt_flee_is_always_successful_when_player_is_at_least_as_fast(player):
