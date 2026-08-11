@@ -7,4 +7,6 @@ from .orc import Orc
 from .espiritu_vengativo import EspirituVengativo
 from .troll import Troll
 from .gargola import Gargola
+from .golem import GolemDePiedra
 from .mage import Mago
+from .nigromante import Nigromante

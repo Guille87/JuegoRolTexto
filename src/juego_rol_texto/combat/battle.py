@@ -19,8 +19,10 @@ ENEMY_PROGRESSION = {
     "Orco": "Espíritu Vengativo",
     "Espíritu Vengativo": "Troll",
     "Troll": "Gárgola",
-    "Gárgola": "Mago",
-    "Mago": None  # El resto de tiers superiores (Gólem, Nigromante, Ángel Caído, Demonio, Dragón...) aún no existen
+    "Gárgola": "Gólem de Piedra",
+    "Gólem de Piedra": "Mago",
+    "Mago": "Nigromante",
+    "Nigromante": None  # El resto de tiers superiores (Ángel Caído, Demonio, Dragón...) aún no existen
 }
 
 # Umbral de la barra ATB: cuando el "gauge" de un combatiente llega aquí, actúa

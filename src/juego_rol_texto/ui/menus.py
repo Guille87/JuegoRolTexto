@@ -1,5 +1,7 @@
 from juego_rol_texto.audio.resource_manager import ResourceManager
-from juego_rol_texto.characters.enemies import Bandido, EspirituVengativo, Gargola, Goblin, Huargo, Skeleton, Orc, Troll
+from juego_rol_texto.characters.enemies import (
+    Bandido, EspirituVengativo, Gargola, GolemDePiedra, Goblin, Huargo, Nigromante, Skeleton, Orc, Troll,
+)
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
@@ -64,8 +66,10 @@ def start_new_game() -> None:
         player.inventory.gold = 5000
 
         # Desbloqueamos todo para testear cualquier enemigo
-        unlocked = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola", "Mago"]
-        defeated = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola"]
+        unlocked = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
+                    "Gólem de Piedra", "Mago", "Nigromante"]
+        defeated = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
+                    "Gólem de Piedra", "Mago"]
 
     else:
         initial_stats = Stats(100, 100, 5, 10, 2)
@@ -233,7 +237,9 @@ def _get_enemy_instance(name: str):
         "Espíritu Vengativo": EspirituVengativo,
         "Troll": Troll,
         "Gárgola": Gargola,
-        "Mago": Mago
+        "Gólem de Piedra": GolemDePiedra,
+        "Mago": Mago,
+        "Nigromante": Nigromante
     }
     # Si el nombre no existe, por defecto crea un Goblin para evitar errores
     return enemies.get(name, Goblin)()

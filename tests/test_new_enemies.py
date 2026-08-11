@@ -1,7 +1,9 @@
 from juego_rol_texto.characters.enemies.bandido import Bandido
 from juego_rol_texto.characters.enemies.espiritu_vengativo import EspirituVengativo
 from juego_rol_texto.characters.enemies.gargola import Gargola
+from juego_rol_texto.characters.enemies.golem import GolemDePiedra
 from juego_rol_texto.characters.enemies.huargo import Huargo
+from juego_rol_texto.characters.enemies.nigromante import Nigromante
 from juego_rol_texto.combat.battle import ENEMY_PROGRESSION
 from juego_rol_texto.items.equipment import Weapon
 
@@ -107,6 +109,52 @@ def test_gargola_charges_every_third_turn(player, monkeypatch):
     assert normal_damage == 2 * int(10 * gargola.stats.crit_damage)
 
 
+def test_golem_earthquake_ignores_evasion(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.golem.random.random", lambda: 0.0)  # siempre terremoto
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.evasion = 1000  # no debería importar: el terremoto no se puede esquivar
+    player.stats.armor = 0
+
+    golem = GolemDePiedra()
+    before = player.stats.health
+    golem.perform_turn(player)
+    dealt = before - player.stats.health
+
+    assert dealt == 10
+
+
+def test_nigromante_dark_bolt_uses_magic_resist_not_armor(player, monkeypatch):
+    # Secuencia: [¿invoca esqueleto?, acierto del dardo, crítico del dardo]
+    rolls = iter([0.99, 0.0, 0.99])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.armor = 100  # no debería influir en absoluto en el dardo (es daño mágico)
+    player.stats.magic_resist = 10
+
+    nigromante = Nigromante()
+    before = player.stats.health
+    nigromante.perform_turn(player)
+    dealt = before - player.stats.health
+
+    assert dealt == 10 - max(0, 10 - nigromante.stats.magic_penetration)  # ignora los 100 de armadura
+
+
+def test_nigromante_summon_deals_physical_damage_using_armor(player, monkeypatch):
+    # Secuencia: [¿invoca esqueleto?, acierto del esqueleto invocado]
+    rolls = iter([0.0, 0.0])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.armor = 4
+    player.stats.magic_resist = 100  # no debería influir: el esqueleto invocado pega físico
+
+    nigromante = Nigromante()
+    before = player.stats.health
+    nigromante.perform_turn(player)
+    dealt = before - player.stats.health
+
+    assert dealt == 10 - max(0, 4 - nigromante.stats.armor_penetration)
+
+
 def test_enemy_progression_includes_new_enemies_in_expected_order():
     assert ENEMY_PROGRESSION["Goblin"] == "Huargo"
     assert ENEMY_PROGRESSION["Huargo"] == "Esqueleto"
@@ -115,4 +163,6 @@ def test_enemy_progression_includes_new_enemies_in_expected_order():
     assert ENEMY_PROGRESSION["Orco"] == "Espíritu Vengativo"
     assert ENEMY_PROGRESSION["Espíritu Vengativo"] == "Troll"
     assert ENEMY_PROGRESSION["Troll"] == "Gárgola"
-    assert ENEMY_PROGRESSION["Gárgola"] == "Mago"
+    assert ENEMY_PROGRESSION["Gárgola"] == "Gólem de Piedra"
+    assert ENEMY_PROGRESSION["Gólem de Piedra"] == "Mago"
+    assert ENEMY_PROGRESSION["Mago"] == "Nigromante"
