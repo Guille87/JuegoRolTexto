@@ -86,8 +86,8 @@ class Forge:
                 gold_cost=40,
                 result_template=Armor(
                     "Cinturón de Resistencia",
-                    "Tejido con fragmentos óseos que parecen absorber el dolor.",
-                    value=12, slot="cinturon", max_health=20
+                    "Tejido con fragmentos óseos que parecen absorber el dolor, tanto físico como arcano.",
+                    value=12, slot="cinturon", max_health=15, magic_resist=4
                 )
             ),
             CraftingRecipe(
@@ -97,7 +97,7 @@ class Forge:
                 result_template=Armor(
                     "Perneras de Placa",
                     "Protección rígida para las piernas, forjada con colmillos de orco fundidos.",
-                    value=14, slot="perneras", defense=3
+                    value=14, slot="perneras", defense=3, max_health=12
                 )
             ),
             CraftingRecipe(
