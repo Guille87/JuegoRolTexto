@@ -3,22 +3,20 @@
 ## Descripción
 Este juego te **desafía** a enfrentarte a una **variedad de enemigos** en batallas por turnos. Adquiere **objetos** y derrota a los enemigos para avanzar en tu aventura.  
 ## Instrucciones de instalación
+
+> **Nota:** por ahora el juego solo funciona en **Windows** (el modo auto-batalla depende de `msvcrt`, exclusivo de Windows, para poder cancelarse con la tecla `q`).
+
 Sigue estos pasos para configurar el entorno de desarrollo en tu máquina local:
 1. **Clona** el repositorio:  
-Asegúrate de tener **Python instalado** en tu sistema.  
+Asegúrate de tener **Python 3.10 o superior instalado** en tu sistema.  
     ```bash
    git clone https://github.com/Guille87/JuegoRolTexto.git
    cd JuegoRolTexto
    ```
 2. **Crea y activa un entorno virtual:**
-    ```
-    # Windows
-    python -m venv venv
-    .\venv\Scripts\activate
-    
-    # Linux/macOS
-    python3 -m venv venv
-    source venv/bin/activate
+    ```powershell
+    python -m venv env
+    .\env\Scripts\activate
     ```
 3. **Instala el proyecto y sus dependencias:**
     ```
