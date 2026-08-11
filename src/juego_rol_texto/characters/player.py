@@ -69,7 +69,14 @@ class Player(Character):
     def get_total_armor(self) -> int:
         """Devuelve la armadura total sumando todas las piezas equipadas."""
         bonus = sum(item.defense for item in self.equipped_armor.values() if item)
-        return self.stats.armor + bonus
+        total = self.stats.armor + bonus
+
+        # Maldición (Espíritu Vengativo): resta armadura mientras dure el estado.
+        curse = next((e for e in self.status_effects if e["name"] == "maldicion"), None)
+        if curse:
+            total = max(0, total - curse.get("power", 0))
+
+        return total
 
     def get_total_magic_resist(self) -> int:
         """Devuelve la resistencia mágica total sumando todas las piezas equipadas."""

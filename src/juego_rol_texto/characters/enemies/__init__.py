@@ -4,5 +4,7 @@ from .huargo import Huargo
 from .skeleton import Skeleton
 from .bandido import Bandido
 from .orc import Orc
+from .espiritu_vengativo import EspirituVengativo
 from .troll import Troll
+from .gargola import Gargola
 from .mage import Mago

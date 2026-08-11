@@ -13,7 +13,7 @@ class Troll(Enemy):
 
     def __init__(self):
         super().__init__(
-            "Troll", Stats(250, 250, 12, 18, 4, magic_resist=1, speed=5, precision=3, evasion=0,
+            "Troll", Stats(250, 250, 12, 18, 4, magic_resist=1, speed=10, precision=3, evasion=0,
                            crit_chance=0.03, crit_damage=1.5, regen=10),
             gold_min=42, gold_max=58
         )
