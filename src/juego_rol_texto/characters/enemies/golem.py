@@ -44,4 +44,7 @@ class GolemDePiedra(Enemy):
                                 slot="peto", defense=22, max_health=30))
         if random.random() <= 0.08:
             items.append(Weapon("Mazo de Gólem", "Un fragmento del propio brazo del gólem, todavía duro como la roca.", 30, 20))
+        if random.random() <= 0.15:
+            items.append(Armor("Cinturón de Roca", "Un anillo de piedra tallada que ancla al portador al suelo.", 30,
+                                slot="cinturon", defense=4, max_health=20))
         return items

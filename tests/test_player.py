@@ -89,6 +89,11 @@ def test_get_total_speed_returns_base_stat(player):
     assert player.get_total_speed() == player.stats.speed == 10
 
 
+def test_get_total_speed_sums_equipped_boots(player):
+    player.equipped_armor["botas"] = Armor("Botas Ligeras", "desc", 1, slot="botas", speed=3)
+    assert player.get_total_speed() == 13
+
+
 def test_get_total_regen_is_zero_without_equipment(player):
     # A diferencia del resto de get_total_*, el stat base nunca sube (solo objetos).
     assert player.stats.regen == 0

@@ -79,4 +79,7 @@ class AngelCaido(Enemy):
                                 slot="casco", defense=10, magic_resist=8))
         if random.random() <= 0.08:
             items.append(Weapon("Espada Sagrada Corrupta", "Su filo brilla con una luz que quema al portador equivocado.", 40, 22))
+        if random.random() <= 0.1:
+            items.append(Armor("Anillo de Juicio", "Un aro dorado que pesa más de lo que debería.", 35,
+                                slot="anillo", damage=4, magic_resist=3))
         return items

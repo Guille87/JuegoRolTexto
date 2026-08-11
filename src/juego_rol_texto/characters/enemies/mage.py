@@ -111,4 +111,7 @@ class Mago(Enemy):
                                 slot="peto", defense=9, max_health=25))
         if random.random() <= 0.1:
             items.append(Material("Esencia Arcana", "Energía mágica condensada, inestable pero muy valiosa.", 35, rarity="Raro"))
+        if random.random() <= 0.1:
+            items.append(Armor("Anillo Arcano", "Un aro fino grabado con runas que aún zumban con energía residual.", 30,
+                                slot="anillo", magic_resist=4, crit_chance=0.03))
         return items

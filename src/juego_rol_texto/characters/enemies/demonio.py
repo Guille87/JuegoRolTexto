@@ -77,4 +77,7 @@ class Demonio(Enemy):
                                 slot="peto", defense=18, magic_resist=6, max_health=30))
         if random.random() <= 0.08:
             items.append(Weapon("Garra Infernal", "Arrancada de un demonio menor; sigue chisporroteando.", 45, 24, element="fuego"))
+        if random.random() <= 0.15:
+            items.append(Armor("Perneras Infernales", "Cubiertas de brasas que nunca terminan de apagarse.", 60,
+                                slot="perneras", defense=10, magic_resist=4))
         return items

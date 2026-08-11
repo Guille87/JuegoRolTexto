@@ -2,7 +2,7 @@ import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats
-from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import RegenPotion
 from juego_rol_texto.ui import console
@@ -51,5 +51,12 @@ class Troll(Enemy):
                 "Una piel gruesa y rugosa que parece pulsar con vida propia. Muy valiosa para un sastre.",
                 150,
                 rarity="Legendario"
+            ))
+
+        if random.random() <= 0.15:
+            items.append(Armor(
+                "Hombreras de Troll",
+                "Placas de hueso trolluno unidas a la piel; se regeneran casi tan rápido como su dueño original.",
+                25, slot="hombreras", defense=3, regen=2
             ))
         return items

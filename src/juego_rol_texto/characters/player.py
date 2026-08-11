@@ -94,8 +94,9 @@ class Player(Character):
         return self.stats.crit_damage + bonus
 
     def get_total_speed(self) -> int:
-        """Devuelve la velocidad total (hoy solo el stat base; el equipo no otorga velocidad todavía)."""
-        return self.stats.speed
+        """Devuelve la velocidad total sumando todas las piezas equipadas (en la práctica, solo las botas)."""
+        bonus = sum(item.speed for item in self.equipped_armor.values() if item)
+        return self.stats.speed + bonus
 
     def get_total_precision(self) -> int:
         """Devuelve la precisión total (hoy solo el stat base; el equipo no otorga precisión todavía)."""

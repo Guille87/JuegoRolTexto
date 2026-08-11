@@ -57,7 +57,7 @@ class Armor(Item):
     def __init__(self, name: str, description: str, value: int, slot: str, defense: int = 0,
                  max_health: int = 0, magic_resist: int = 0,
                  crit_chance: float = 0.0, crit_damage: float = 0.0,
-                 damage: int = 0, element: str | None = None, regen: int = 0):
+                 damage: int = 0, element: str | None = None, regen: int = 0, speed: int = 0):
         super().__init__(name, description, value)
         self.slot = slot
         self.defense = defense
@@ -71,6 +71,9 @@ class Armor(Item):
         # cada turno en Player.on_turn_start(), no se consigue de otra forma
         # (el jugador no sube esta stat al subir de nivel).
         self.regen = regen
+        # Velocidad: sumada en Player.get_total_speed(). En la práctica solo las
+        # botas la llevan (decisión de diseño, no una restricción del código).
+        self.speed = speed
 
     def use(self, player, target_slot: str | None = None) -> bool:
         # target_slot lo indica quien equipa (necesario para los anillos: self.slot
@@ -107,6 +110,8 @@ class Armor(Item):
             parts.append(f"Elemento: {self.element.capitalize()}")
         if self.regen:
             parts.append(f"Regeneración: +{self.regen} HP/turno")
+        if self.speed:
+            parts.append(f"Velocidad: +{self.speed}")
         info = " | ".join(parts) if parts else "Sin bonus"
         return console.colorize(info, console.Fore.BLUE)
 
@@ -122,6 +127,7 @@ class Armor(Item):
             "damage": self.damage,
             "element": self.element,
             "regen": self.regen,
+            "speed": self.speed,
             "type": "Armor"
         })
         return data
@@ -141,5 +147,6 @@ class Armor(Item):
             crit_damage=data.get("crit_damage", 0.0),
             damage=data.get("damage", 0),
             element=data.get("element"),
-            regen=data.get("regen", 0)
+            regen=data.get("regen", 0),
+            speed=data.get("speed", 0)
         )

@@ -106,8 +106,8 @@ class Forge:
                 gold_cost=30,
                 result_template=Armor(
                     "Botas Ligeras",
-                    "Suelas flexibles que facilitan golpear en el punto justo.",
-                    value=10, slot="botas", crit_damage=0.10
+                    "Suelas flexibles que facilitan golpear en el punto justo y moverse con más soltura.",
+                    value=10, slot="botas", crit_damage=0.10, speed=3
                 )
             ),
             CraftingRecipe(

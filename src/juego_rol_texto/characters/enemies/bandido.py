@@ -2,7 +2,7 @@ import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats, resolve_hit
-from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import HealingPotion
 from juego_rol_texto.ui import console
@@ -54,4 +54,7 @@ class Bandido(Enemy):
             items.append(Material("Capa de Sombras", "Tela oscura que parece absorber la luz.", 8, rarity="Común"))
         if random.random() <= 0.15:
             items.append(Weapon("Daga Robada", "Ligera y afilada, perfecta para golpear rápido y desaparecer.", 12, 6))
+        if random.random() <= 0.15:
+            items.append(Armor("Guantes de Ladrón", "Sin apenas grosor; perfectos para no perder el tacto al robar.", 18,
+                                slot="guantes", crit_chance=0.04))
         return items
