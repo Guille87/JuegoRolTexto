@@ -9,6 +9,9 @@ from juego_rol_texto.ui import console
 
 
 class Bandido(Enemy):
+    # Humano de carne y hueso: el veneno le afecta igual que a cualquier persona.
+    ELEMENTAL_WEAKNESSES = {"veneno": 2.0}
+
     def __init__(self):
         super().__init__(
             "Bandido", Stats(85, 85, 13, 19, 5, speed=12, precision=10, evasion=6,
@@ -52,9 +55,15 @@ class Bandido(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.25:
             items.append(Material("Capa de Sombras", "Tela oscura que parece absorber la luz.", 8, rarity="Común"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.1:
             items.append(Weapon("Daga Robada", "Ligera y afilada, perfecta para golpear rápido y desaparecer.", 12, 6))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Guantes de Ladrón", "Sin apenas grosor; perfectos para no perder el tacto al robar.", 18,
                                 slot="guantes", crit_chance=0.04))
+        if random.random() <= 0.08:
+            items.append(Armor("Perneras de Bandido", "Cortadas para no estorbar al correr entre callejones.", 14,
+                                slot="perneras", speed=2))
+        if random.random() <= 0.08:
+            items.append(Armor("Capucha de Ladrón", "Oculta el rostro y agudiza los reflejos para el golpe rápido.", 14,
+                                slot="casco", crit_chance=0.03, speed=1))
         return items

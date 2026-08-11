@@ -43,7 +43,12 @@ class Huargo(Enemy):
             items.append(Material("Colmillo de Huargo", "Un colmillo curvo, todavía caliente de la caza.", 5, rarity="Común"))
         if random.random() <= 0.1:
             items.append(Weapon("Garras de Huargo", "Un par de garras montadas en guantelete, aún manchadas de sangre.", 10, 7))
-        if random.random() <= 0.15:
+        if random.random() <= 0.1:
+            items.append(Weapon("Colmillo Venenoso", "Arrancado del propio lobo; sigue goteando un veneno espeso.", 14, 8, element="veneno"))
+        if random.random() <= 0.08:
             items.append(Armor("Botas de Huargo", "Cosidas con las patas del propio lobo; todavía conservan su agilidad.", 15,
                                 slot="botas", speed=2))
+        if random.random() <= 0.08:
+            items.append(Armor("Cinturón de Manada", "Trenzado con tiras de cuero de varios lobos; imita su ritmo de carrera.", 12,
+                                slot="cinturon", speed=2))
         return items

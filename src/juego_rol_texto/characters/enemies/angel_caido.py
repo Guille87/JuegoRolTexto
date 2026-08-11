@@ -74,7 +74,7 @@ class AngelCaido(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.3:
             items.append(Material("Pluma Corrupta", "Una pluma blanca manchada de un negro que no debería existir.", 40, rarity="Raro"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Aureola Rota", "Un fragmento de halo que aún desprende un calor antinatural.", 70,
                                 slot="casco", defense=10, magic_resist=8))
         if random.random() <= 0.08:

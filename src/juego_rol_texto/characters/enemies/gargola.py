@@ -45,9 +45,11 @@ class Gargola(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.25:
             items.append(Material("Fragmento de Gárgola", "Un trozo de piedra tallada que sigue pesando como si estuviera viva.", 20, rarity="Raro"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Placa de Gárgola", "Losas de piedra ajustadas al cuerpo; casi imposible de perforar.", 40,
                                 slot="peto", defense=16, max_health=25))
         if random.random() <= 0.08:
             items.append(Weapon("Puño de Piedra", "Un guantelete macizo arrancado de una gárgola caída.", 22, 16))
+        if random.random() <= 0.08:
+            items.append(Weapon("Garra de Tormenta", "Conserva la carga estática de incontables tormentas sobre el campanario.", 26, 18, element="rayo"))
         return items

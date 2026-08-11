@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
-from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.characters.stats import Stats, resolve_hit
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.ui import console
@@ -54,11 +54,23 @@ class Mago(Enemy):
         from juego_rol_texto.audio.resource_manager import ResourceManager
         ResourceManager().play_sfx("fireball")
 
-        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
-        dmg = atk_base + random.randint(15, 25)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Bola de Fuego', console.Fore.RED)}!")
+
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva las llamas.")
+            return
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(15, 25)
+        is_crit = random.random() < self.stats.crit_chance
+        if is_crit:
+            dmg = int(dmg * self.stats.crit_damage)
+
         player.take_damage(dmg, is_fire=True, is_magical=True, magic_penetration=self.stats.magic_penetration)
+
+        if is_crit:
+            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
         if random.random() < 0.3:
             player.apply_status("quemado", 3)
@@ -68,22 +80,46 @@ class Mago(Enemy):
         from juego_rol_texto.audio.resource_manager import ResourceManager
         ResourceManager().play_sfx("lightning")
 
-        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
-        dmg = atk_base + random.randint(10, 30)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
               f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!")
+
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el rayo.")
+            return
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(10, 30)
+        is_crit = random.random() < self.stats.crit_chance
+        if is_crit:
+            dmg = int(dmg * self.stats.crit_damage)
+
         player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+
+        if is_crit:
+            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
         if random.random() < 0.3:
             player.apply_status("paralizado", 3)
             console.warning("¡El impacto te deja paralizado!")
 
     def _cast_poison(self, player) -> None:
-        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
-        dmg = atk_base + random.randint(5, 10)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
               f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!")
+
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el dardo.")
+            return
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(5, 10)
+        is_crit = random.random() < self.stats.crit_chance
+        if is_crit:
+            dmg = int(dmg * self.stats.crit_damage)
+
         player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+
+        if is_crit:
+            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
         if random.random() < 0.3:
             player.apply_status("veneno", 3)
@@ -92,11 +128,23 @@ class Mago(Enemy):
             print("Por suerte, el veneno no logra entrar en tu organismo.")
 
     def _cast_blizzard(self, player) -> None:
-        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
-        dmg = atk_base + random.randint(5, 15)
         print(f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
               f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!")
+
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva la ventisca.")
+            return
+
+        atk_base = random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = atk_base + random.randint(5, 15)
+        is_crit = random.random() < self.stats.crit_chance
+        if is_crit:
+            dmg = int(dmg * self.stats.crit_damage)
+
         player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+
+        if is_crit:
+            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
         if random.random() < 0.1:
             player.apply_status("congelado", 3)
@@ -104,9 +152,9 @@ class Mago(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Weapon("Bastón Arcano", "Un bastón rematado con un cristal que pulsa con energía arcana.", 18, damage=15))
-        if random.random() <= 0.12:
+        if random.random() <= 0.08:
             items.append(Armor("Túnica Arcana", "Tejida con hilos imbuidos de magia protectora. La mejor protección conocida.", 22,
                                 slot="peto", defense=9, max_health=25))
         if random.random() <= 0.1:

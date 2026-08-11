@@ -61,9 +61,11 @@ class Nigromante(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.3:
             items.append(Material("Polvo de Hueso Negro", "Ceniza ósea impregnada de magia oscura.", 35, rarity="Raro"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Manto del Nigromante", "Tejido con hilos que parecen absorber la luz de alrededor.", 60,
                                 slot="amuleto", magic_resist=10, crit_chance=0.05))
         if random.random() <= 0.08:
             items.append(Weapon("Cetro de Huesos", "Rematado por un cráneo que aún parece susurrar.", 35, 18))
+        if random.random() <= 0.08:
+            items.append(Weapon("Cetro de Escarcha", "El frío del más allá se filtra a través de su empuñadura.", 38, 20, element="hielo"))
         return items

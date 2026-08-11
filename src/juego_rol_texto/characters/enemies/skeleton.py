@@ -48,8 +48,8 @@ class Skeleton(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        # 18% de soltar un casco de hueso
-        if random.random() <= 0.18:
+        # 10% de soltar un casco de hueso
+        if random.random() <= 0.1:
             items.append(Armor("Casco de Hueso", "Hecho con restos de otros guerreros", 8,
                                 slot="casco", max_health=15, crit_chance=0.03))
         # 50% de soltar una poción de salud
@@ -58,4 +58,8 @@ class Skeleton(Enemy):
         # 25% de soltar un fragmento de hueso
         if random.random() <= 0.25:
             items.append(Material("Fragmento de Hueso", "Un resto óseo todavía impregnado de magia residual.", 4, rarity="Común"))
+        # 8% de soltar unos guantes óseos
+        if random.random() <= 0.08:
+            items.append(Armor("Guantes Óseos", "Falanges ajenas ensartadas en un guante de cuero curtido.", 12,
+                                slot="guantes", defense=2, magic_resist=2))
         return items

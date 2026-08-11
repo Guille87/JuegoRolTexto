@@ -9,6 +9,9 @@ from juego_rol_texto.ui import console
 
 
 class Dragon(Enemy):
+    # Un dragón de fuego es el clásico débil al hielo.
+    ELEMENTAL_WEAKNESSES = {"hielo": 2.0}
+
     def __init__(self):
         # Jefe final: vida masiva y mucha evasión ("esquiva volando"), además
         # del aliento de fuego (daño + quemadura, daño a lo largo del tiempo).
@@ -68,9 +71,12 @@ class Dragon(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.35:
             items.append(Material("Escama de Dragón", "Una escama del tamaño de un escudo, todavía caliente.", 60, rarity="Legendario"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Coraza de Escamas de Dragón", "Forjada con escamas superpuestas; repele el fuego tanto como el acero.", 100,
                                 slot="peto", defense=24, magic_resist=8, max_health=40))
         if random.random() <= 0.1:
             items.append(Weapon("Colmillo de Dragón", "Un colmillo curvo tallado en un arma; aún desprende calor.", 55, 30, element="fuego"))
+        if random.random() <= 0.08:
+            items.append(Armor("Amuleto de Escama de Dragón", "Una única escama pulida engarzada en un colgante de oro.", 50,
+                                slot="amuleto", defense=3, damage=3))
         return items

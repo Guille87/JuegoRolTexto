@@ -1,3 +1,4 @@
+from juego_rol_texto.characters.enemies.bandido import Bandido
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.enemies.troll import Troll
@@ -151,6 +152,24 @@ def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeyp
     dealt = before - troll.stats.health
 
     assert dealt == 20  # 10 base * 2.0 (débil al fuego) - 0 armadura
+
+
+def test_execute_turn_applies_elemental_bonus_for_newer_elements(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # siempre acierta
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+
+    bandido = Bandido()
+    bandido.stats.armor = 0
+    bandido.stats.health = bandido.stats.max_health = 1000
+
+    before = bandido.stats.health
+    _execute_turn(player, bandido, defeated_enemies=[])
+    dealt = before - bandido.stats.health
+
+    assert dealt == 20  # 10 base * 2.0 (débil al veneno) - 0 armadura
 
 
 def test_execute_turn_applies_crit_multiplier(player, monkeypatch):

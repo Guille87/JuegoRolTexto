@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
-from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.characters.stats import Stats, resolve_hit
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import StatBuffPotion
@@ -23,18 +23,30 @@ class Orc(Enemy):
         if self.fury_active:
             console.error("¡El Orco está enfurecido!")
 
-            # 1. Obtenemos el daño aleatorio del Orco
-            base_damage = self.get_attack_damage()
+            if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+                print(f"{console.colorize(self.name, console.Fore.RED)} ataca enfurecido, pero "
+                      f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe.")
+                return
 
-            # 2. Calculamos cuánto daño pasaría la defensa del jugador
-            # (Ataque - Defensa, mínimo 0 para no curar al jugador)
-            damage_after_def = max(0, base_damage - player.stats.armor)
+            # 1. Obtenemos el daño aleatorio del Orco (con posibilidad de crítico)
+            base_damage = self.get_attack_damage()
+            is_crit = random.random() < self.stats.crit_chance
+            if is_crit:
+                base_damage = int(base_damage * self.stats.crit_damage)
+
+            # 2. Calculamos cuánto daño pasaría la defensa total del jugador
+            # (Ataque - Defensa, con penetración de armadura, mínimo 0 para no curar al jugador)
+            mitigation = max(0, player.get_total_armor() - self.stats.armor_penetration)
+            damage_after_def = max(0, base_damage - mitigation)
 
             # 3. Multiplicamos el resultado por 2
             final_dmg = damage_after_def * 2
 
             # 4. Aplicamos el daño directamente a la salud del jugador
             player.stats.health -= final_dmg
+
+            if is_crit:
+                print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
             print(f"{console.colorize(self.name, console.Fore.RED)} lanza un golpe devastador y hace "
                   f"{console.colorize(str(final_dmg), console.Fore.RED)} de daño.")
@@ -66,16 +78,19 @@ class Orc(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        if random.random() <= 0.2:
+        if random.random() <= 0.1:
             items.append(Weapon("Hacha de Batalla", "Un arma colosal de doble filo, manchada por mil batallas", 15, 12))
         if random.random() <= 0.6:
             # Usamos StatBuffPotion para la fuerza
             items.append(StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12,
                                 slot="peto", defense=7, max_health=20))
         if random.random() <= 0.2:
             items.append(Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común"))
-        if random.random() <= 0.12:
+        if random.random() <= 0.08:
             items.append(Weapon("Espada Flamígera", "Una hoja que arde con un fuego que nunca se apaga.", 15, 10, element="fuego"))
+        if random.random() <= 0.08:
+            items.append(Armor("Brazales de Guerra", "Pesados brazales de guerra pensados para golpear más fuerte, no para protegerse.", 20,
+                                slot="brazales", damage=3))
         return items

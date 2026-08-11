@@ -9,6 +9,9 @@ from juego_rol_texto.ui import console
 
 
 class GolemDePiedra(Enemy):
+    # La piedra empapada de minerales conduce la electricidad mucho mejor que la carne.
+    ELEMENTAL_WEAKNESSES = {"rayo": 2.0}
+
     def __init__(self):
         # Defensa casi impenetrable: la armadura más alta de todos los enemigos.
         super().__init__(
@@ -39,12 +42,18 @@ class GolemDePiedra(Enemy):
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.25:
             items.append(Material("Núcleo de Gólem", "Un núcleo de piedra pulida que aún retiene calor.", 30, rarity="Raro"))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Coraza de Gólem", "Una plancha de roca maciza tallada para envolver el torso entero.", 55,
                                 slot="peto", defense=22, max_health=30))
         if random.random() <= 0.08:
             items.append(Weapon("Mazo de Gólem", "Un fragmento del propio brazo del gólem, todavía duro como la roca.", 30, 20))
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor("Cinturón de Roca", "Un anillo de piedra tallada que ancla al portador al suelo.", 30,
                                 slot="cinturon", defense=4, max_health=20))
+        if random.random() <= 0.08:
+            items.append(Armor("Hombreras de Gólem", "Bloques de piedra tallados directamente del propio gólem.", 22,
+                                slot="hombreras", defense=4))
+        if random.random() <= 0.08:
+            items.append(Armor("Botas de Gólem", "Pesadas losas de piedra; cambian velocidad por resistencia.", 20,
+                                slot="botas", defense=3, max_health=10))
         return items

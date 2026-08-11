@@ -29,8 +29,8 @@ class Troll(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        # 12% Maza de Piedra (la mejor arma actual, drop más bajo a propósito)
-        if random.random() <= 0.12:
+        # 8% Maza de Piedra (la mejor arma actual, drop más bajo a propósito)
+        if random.random() <= 0.08:
             items.append(Weapon(
                 "Maza de Piedra",
                 "Un bloque de granito atado a un tronco. Pesada y brutal.",
@@ -53,7 +53,7 @@ class Troll(Enemy):
                 rarity="Legendario"
             ))
 
-        if random.random() <= 0.15:
+        if random.random() <= 0.08:
             items.append(Armor(
                 "Hombreras de Troll",
                 "Placas de hueso trolluno unidas a la piel; se regeneran casi tan rápido como su dueño original.",
