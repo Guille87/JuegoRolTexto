@@ -103,7 +103,14 @@ class Player(Character):
 
     def get_total_evasion(self) -> int:
         """Devuelve la evasión total (hoy solo el stat base; el equipo no otorga evasión todavía)."""
-        return self.stats.evasion
+        total = self.stats.evasion
+
+        # Confusión (Demonio): resta evasión mientras dure el estado.
+        confusion = next((e for e in self.status_effects if e["name"] == "confusion"), None)
+        if confusion:
+            total = max(0, total - confusion.get("power", 0))
+
+        return total
 
     def get_total_armor_penetration(self) -> int:
         """Devuelve la penetración de armadura total (hoy solo el stat base; el equipo no otorga todavía)."""

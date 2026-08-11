@@ -1,4 +1,7 @@
+from juego_rol_texto.characters.enemies.angel_caido import AngelCaido
 from juego_rol_texto.characters.enemies.bandido import Bandido
+from juego_rol_texto.characters.enemies.demonio import Demonio
+from juego_rol_texto.characters.enemies.dragon import Dragon
 from juego_rol_texto.characters.enemies.espiritu_vengativo import EspirituVengativo
 from juego_rol_texto.characters.enemies.gargola import Gargola
 from juego_rol_texto.characters.enemies.golem import GolemDePiedra
@@ -155,6 +158,110 @@ def test_nigromante_summon_deals_physical_damage_using_armor(player, monkeypatch
     assert dealt == 10 - max(0, 4 - nigromante.stats.armor_penetration)
 
 
+def test_angel_caido_self_heals_when_health_is_low(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.angel_caido.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.angel_caido.random.randint", lambda a, b: 40)
+
+    angel = AngelCaido()
+    angel.stats.health = int(angel.stats.max_health * 0.4)
+    before = angel.stats.health
+    angel.perform_turn(player)
+
+    assert angel.stats.health == before + 40
+
+
+def test_angel_caido_does_not_self_heal_above_threshold(player, monkeypatch):
+    # random.random()=0.0 provocaría curación si estuviera por debajo del umbral;
+    # como está a vida llena, ese chequeo ni se evalúa (cortocircuito del `and`).
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+
+    angel = AngelCaido()
+    angel.stats.health = angel.stats.max_health
+    before = angel.stats.health
+    angel.perform_turn(player)
+
+    assert angel.stats.health == before
+
+
+def test_angel_caido_divine_judgment_deals_more_damage_than_normal_strike(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.magic_resist = 0
+
+    angel = AngelCaido()
+    angel.stats.health = angel.stats.max_health  # vida llena, evita la autocuración
+
+    # Secuencia: [¿juicio divino? sí, acierto del juicio]
+    rolls = iter([0.0, 0.0])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+
+    before = player.stats.health
+    angel.perform_turn(player)
+    judgment_damage = before - player.stats.health
+
+    assert judgment_damage == int(10 * 1.6)  # x1.6, sin mitigación (magic_resist 0)
+
+
+def test_demonio_confusion_reduces_evasion_until_it_expires(player, monkeypatch):
+    # 0.25 cae en el tramo de "confusión" (0.2 <= x < 0.4) y también sirve como acierto.
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.demonio.random.random", lambda: 0.25)
+    player.stats.evasion = 8
+
+    assert player.get_total_evasion() == 8
+
+    demonio = Demonio()
+    demonio.perform_turn(player)
+
+    assert any(e["name"] == "confusion" for e in player.status_effects)
+    assert player.get_total_evasion() == 3  # 8 - power(5)
+
+    for _ in range(3):  # duración 3 -> 0, el estado desaparece
+        player.on_turn_end()
+
+    assert not any(e["name"] == "confusion" for e in player.status_effects)
+    assert player.get_total_evasion() == 8
+
+
+def test_demonio_summon_deals_magical_damage_using_magic_resist(player, monkeypatch):
+    # Secuencia: [¿invoca demonio menor? sí, acierto del demonio menor]
+    rolls = iter([0.0, 0.0])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+    player.stats.armor = 100  # no debería influir: el demonio menor pega mágico
+    player.stats.magic_resist = 4
+
+    demonio = Demonio()
+    before = player.stats.health
+    demonio.perform_turn(player)
+    dealt = before - player.stats.health
+
+    assert dealt == 10 - max(0, 4 - demonio.stats.magic_penetration)
+
+
+def test_dragon_fire_breath_applies_burn_status(player, monkeypatch):
+    # Secuencia: [¿aliento de fuego? sí, acierto, ¿quema? sí]
+    rolls = iter([0.0, 0.0, 0.0])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+
+    dragon = Dragon()
+    dragon.perform_turn(player)
+
+    assert any(e["name"] == "quemado" for e in player.status_effects)
+
+
+def test_dragon_fire_breath_does_not_always_apply_burn(player, monkeypatch):
+    # Secuencia: [¿aliento de fuego? sí, acierto, ¿quema? no]
+    rolls = iter([0.0, 0.0, 0.99])
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: next(rolls))
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.enemy_base.random.randint", lambda a, b: 10)
+
+    dragon = Dragon()
+    dragon.perform_turn(player)
+
+    assert not any(e["name"] == "quemado" for e in player.status_effects)
+
+
 def test_enemy_progression_includes_new_enemies_in_expected_order():
     assert ENEMY_PROGRESSION["Goblin"] == "Huargo"
     assert ENEMY_PROGRESSION["Huargo"] == "Esqueleto"
@@ -166,3 +273,7 @@ def test_enemy_progression_includes_new_enemies_in_expected_order():
     assert ENEMY_PROGRESSION["Gárgola"] == "Gólem de Piedra"
     assert ENEMY_PROGRESSION["Gólem de Piedra"] == "Mago"
     assert ENEMY_PROGRESSION["Mago"] == "Nigromante"
+    assert ENEMY_PROGRESSION["Nigromante"] == "Ángel Caído"
+    assert ENEMY_PROGRESSION["Ángel Caído"] == "Demonio"
+    assert ENEMY_PROGRESSION["Demonio"] == "Dragón"
+    assert ENEMY_PROGRESSION["Dragón"] is None

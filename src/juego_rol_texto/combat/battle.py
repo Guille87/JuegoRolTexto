@@ -22,7 +22,10 @@ ENEMY_PROGRESSION = {
     "Gárgola": "Gólem de Piedra",
     "Gólem de Piedra": "Mago",
     "Mago": "Nigromante",
-    "Nigromante": None  # El resto de tiers superiores (Ángel Caído, Demonio, Dragón...) aún no existen
+    "Nigromante": "Ángel Caído",
+    "Ángel Caído": "Demonio",
+    "Demonio": "Dragón",
+    "Dragón": None  # Jefe final de la cadena
 }
 
 # Umbral de la barra ATB: cuando el "gauge" de un combatiente llega aquí, actúa

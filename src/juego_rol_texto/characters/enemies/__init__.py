@@ -10,3 +10,6 @@ from .gargola import Gargola
 from .golem import GolemDePiedra
 from .mage import Mago
 from .nigromante import Nigromante
+from .angel_caido import AngelCaido
+from .demonio import Demonio
+from .dragon import Dragon
