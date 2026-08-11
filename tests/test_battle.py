@@ -259,18 +259,18 @@ def test_attempt_flee_is_always_successful_when_player_is_at_least_as_fast(playe
 
 
 def test_attempt_flee_chance_drops_but_never_reaches_zero_when_enemy_is_faster(player, monkeypatch):
-    goblin = Goblin()  # speed 14, jugador speed 10 -> jugador es más lento -> 10/14 = 0.7143
+    mago = Mago()  # speed 12, jugador speed 10 -> jugador es más lento -> 10/12 = 0.8333
 
-    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.7)
-    assert _attempt_flee(player, goblin) is True
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.8)
+    assert _attempt_flee(player, mago) is True
 
-    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.72)
-    assert _attempt_flee(player, goblin) is False
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.84)
+    assert _attempt_flee(player, mago) is False
 
     # Nunca debería ser exactamente 0: random.random() siempre está en [0, 1),
     # así que con un flee_chance positivo (aunque pequeño) sigue siendo posible.
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
-    assert _attempt_flee(player, goblin) is True
+    assert _attempt_flee(player, mago) is True
 
 
 def test_run_player_turn_failed_flee_consumes_turn_without_attacking(player, weak_enemy, monkeypatch):
