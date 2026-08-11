@@ -9,7 +9,7 @@ from juego_rol_texto.ui import console
 
 class Mago(Enemy):
     def __init__(self):
-        super().__init__("Mago", Stats(400, 400, 10, 15, 6), gold_min=85, gold_max=115)
+        super().__init__("Mago", Stats(400, 400, 10, 15, 6, speed=12), gold_min=85, gold_max=115)
 
     def perform_turn(self, player) -> None:
         # 1. Lógica de Curación (Vida <= 50%)

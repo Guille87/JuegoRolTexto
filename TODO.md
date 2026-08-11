@@ -39,13 +39,15 @@
 - [ ] Gárgola: resistente pero lenta, embestidas o golpes de garra poderosos.
 
 ## Estadísticas Extendidas (jugador y enemigos)
-- [ ] Velocidad: determina el orden de turno (mayor velocidad actúa primero).
+- [x] Velocidad + sistema de turnos ATB (barra de "gauge" estilo Final Fantasy X, no una simple alternancia 1 a 1): `Stats.speed`, `Player.get_total_speed()`, y `combat/battle.py` acumula un gauge por combatiente (`ATB_THRESHOLD`) que se llena a un ritmo proporcional a la velocidad, permitiendo que el más rápido actúe varias veces antes de que el más lento tenga su primer turno. Iniciativa se fusionó con Velocidad (no tiene sentido como stat separada en un combate 1 vs 1; revisar si hace falta separarla el día que haya combates con varios enemigos).
+- [x] Huir ahora depende de la velocidad relativa (`_attempt_flee`, fórmula `min(1.0, player_speed / enemy_speed)`: 100% si el jugador iguala o supera la velocidad del enemigo, si no baja pero nunca llega a 0%) y siempre se resuelve antes que cualquier otra acción del enemigo en el mismo tick, sea el jugador más rápido o más lento.
+- [x] Al subir de nivel, `Player._level_up()` ahora también sube `speed` — junto con vida/ataque/armadura, con una curva de crecimiento **determinista pero no uniforme** (`Player._growth_gain`, inspirada en cómo Pokémon calcula stats por nivel: `floor(tasa * nivel) - floor(tasa * (nivel-1))` con una tasa fraccionaria por stat, p.ej. armadura a 1.4/nivel da la secuencia fija 1,2,1,2,1...). Así la progresión varía de nivel en nivel (unos dan más ataque, otros más armadura/velocidad) pero es exactamente igual en todas las partidas, no aleatoria. La resistencia mágica sigue siendo fija (+1, solo niveles pares) porque es un ajuste de balance deliberado contra el Mago, no "crecimiento genérico". Crítico (probabilidad y daño), regeneración de salud y penetración de defensa quedan fuera de la progresión por nivel a propósito: solo se conseguirán vía objetos/equipo.
 - [ ] Precisión: probabilidad de acertar un golpe.
 - [ ] Evasión: probabilidad de esquivar un ataque enemigo.
 - [ ] Crit Chance para enemigos (hoy es solo del jugador — ver `combat/battle.py::_execute_turn`).
 - [ ] Crit Damage para enemigos (mismo caso que arriba).
 - [ ] Resistencia Mágica para enemigos (el jugador ya la tiene vía `get_total_magic_resist()`).
 - [ ] Regeneración de Salud: curación por turno o tras ciertos eventos (más allá del status "regeneración" actual).
-- [ ] Iniciativa: quién inicia la batalla.
 - [ ] Penetración de Defensa: ignora parte de la defensa/armadura del objetivo.
-- Nota: esto implica revisar `Stats`, `Enemy` y el orden de turnos en `combat/battle.py`, que hoy no tiene sistema de velocidad/iniciativa (el jugador siempre actúa primero salvo mecánicas puntuales).
+- Nota: la velocidad hoy es solo el stat base (`Stats.speed`), sin bonus de equipo — igual que hizo `ELEMENTAL_WEAKNESSES` al empezar solo con "fuego", se puede sumar bonus de armadura/anillos más adelante si hace falta equilibrar mejor.
+- [ ] Bonus de velocidad en el slot "botas" (nuevo campo en `Armor`, sumado en `Player.get_total_speed()` igual que `get_total_armor()` etc.) — decidido como la fuente de velocidad vía equipo; crítico/regeneración/penetración de defensa también quedan reservados para objetos, ver arriba.

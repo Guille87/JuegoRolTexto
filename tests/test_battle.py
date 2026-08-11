@@ -1,6 +1,6 @@
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.troll import Troll
-from juego_rol_texto.combat.battle import ENEMY_PROGRESSION, _execute_turn, initiate_battle
+from juego_rol_texto.combat.battle import ENEMY_PROGRESSION, _attempt_flee, _execute_turn, _run_player_turn, initiate_battle
 from juego_rol_texto.items.equipment import Armor, Weapon
 
 
@@ -117,3 +117,47 @@ def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player,
     dealt = before - troll.stats.health
 
     assert dealt == 20  # 10 base * 2.0 (débil al fuego, heredado de los brazales)
+
+
+def test_attempt_flee_is_always_successful_when_player_is_at_least_as_fast(player):
+    troll = Troll()  # speed 5, jugador speed 10 -> jugador es más rápido -> 100%
+    assert player.stats.speed >= troll.stats.speed
+    for _ in range(20):
+        assert _attempt_flee(player, troll) is True
+
+
+def test_attempt_flee_chance_drops_but_never_reaches_zero_when_enemy_is_faster(player, monkeypatch):
+    goblin = Goblin()  # speed 14, jugador speed 10 -> jugador es más lento -> 10/14 = 0.7143
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.7)
+    assert _attempt_flee(player, goblin) is True
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.72)
+    assert _attempt_flee(player, goblin) is False
+
+    # Nunca debería ser exactamente 0: random.random() siempre está en [0, 1),
+    # así que con un flee_chance positivo (aunque pequeño) sigue siendo posible.
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+    assert _attempt_flee(player, goblin) is True
+
+
+def test_run_player_turn_failed_flee_consumes_turn_without_attacking(player, weak_enemy, monkeypatch):
+    weak_enemy.stats.max_health = 50
+    weak_enemy.stats.health = 50
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: False)
+
+    signal, is_auto = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
+
+    assert signal == "ok"
+    assert is_auto is False
+    assert weak_enemy.stats.health == 50  # la huida fallida consume el turno, no ataca
+
+
+def test_run_player_turn_successful_flee_returns_huir_signal(player, weak_enemy, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: True)
+
+    signal, is_auto = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
+
+    assert signal == "huir"

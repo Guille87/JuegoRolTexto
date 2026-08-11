@@ -15,6 +15,13 @@ ENEMY_PROGRESSION = {
     "Mago": None  # El Mago es el último por ahora
 }
 
+# Umbral de la barra ATB: cuando el "gauge" de un combatiente llega aquí, actúa
+# y se le resta el umbral (el sobrante se conserva, no se pierde). Con esto la
+# velocidad no decide solo quién va primero, sino con qué frecuencia actúa cada
+# uno (estilo Final Fantasy X), permitiendo que el más rápido actúe varias
+# veces antes de que el más lento llegue a su primer turno.
+ATB_THRESHOLD = 100
+
 
 def check_for_interrupt() -> bool:
     """Retorna True si el usuario ha pulsado 'q' o 'Q'."""
@@ -61,40 +68,24 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     }
 
     is_auto = False
+    gauge_player = 0.0
+    gauge_enemy = 0.0
     while player.is_alive() and enemy.is_alive():
         rm.update()
-        # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
-        can_act = player.on_turn_start()
-        turn_consumed = False
 
-        # --- COMPROBAR CANCELACIÓN DE AUTO ---
-        if is_auto:
-            if check_for_interrupt():
-                is_auto = False
-                console.warning("\n🛑 ¡Auto-batalla cancelada! Volviendo al menú...")
-                time.sleep(1)  # Pausa para que el usuario lo vea
+        # --- BARRA ATB: avanzamos el "reloj" hasta que alguien esté listo ---
+        while gauge_player < ATB_THRESHOLD and gauge_enemy < ATB_THRESHOLD:
+            gauge_player += player.get_total_speed()
+            gauge_enemy += enemy.stats.speed
 
-        action = None
-        if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
-            if not is_auto:
-                if can_act:
-                    action = _player_menu(player, enemy, defeated_enemies)
-                    if action == "huir":
-                        console.warning("Has huido del combate...")
-                        break
-
-                    if action == "auto":
-                        is_auto = True
-                        print(console.colorize(">>> MODO AUTO: ACTIVADO. (Pulsa 'Q' para detener)", console.Fore.CYAN))
-
-                    if action == "objeto_usado":
-                        turn_consumed = True
-                else:
-                    console.ask(f"\n{console.colorize('Presiona Enter para pasar turno...', console.Fore.YELLOW)}")
-
-            # --- TURNO DEL JUGADOR (Si puede actuar) ---
-            if (is_auto or action == "atacar") and can_act and not turn_consumed:
-                _execute_turn(player, enemy, defeated_enemies)
+        # El turno del jugador (y una posible huida) se resuelve siempre antes que
+        # el del enemigo si ambos gauges están listos en el mismo "tick": así la
+        # huida nunca puede ser interrumpida por un enemigo más rápido.
+        if gauge_player >= ATB_THRESHOLD:
+            gauge_player -= ATB_THRESHOLD
+            signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto)
+            if signal == "huir":
+                break
 
         if not enemy.is_alive():
             # CAPTURAMOS LOS NUEVOS STATS SI SUBE DE NIVEL
@@ -106,21 +97,14 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
                 snapshot["armor"] = new_armor
             break
 
-        # --- TURNO DEL ENEMIGO ---
-        if enemy.is_alive():
-            time.sleep(1)
-            print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
-            enemy.perform_turn(player)
-            print_status(player, enemy, defeated_enemies)
+        # --- TURNO DEL ENEMIGO (solo si su gauge también está lista) ---
+        if player.is_alive() and gauge_enemy >= ATB_THRESHOLD:
+            gauge_enemy -= ATB_THRESHOLD
+            _run_enemy_turn(player, enemy, defeated_enemies)
 
         if not player.is_alive():
             _handle_defeat(player)
             break
-
-        # --- FIN DE TURNO (Reducir duración de efectos) ---
-        player.on_turn_end()
-        if hasattr(enemy, 'on_turn_end'):
-            enemy.on_turn_end()
 
         # Si estamos en modo auto, esperamos para poder leer el resultado
         if is_auto and player.is_alive() and enemy.is_alive():
@@ -159,6 +143,78 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
             return "auto"
         else:
             console.error("Opción no válida.")
+
+
+def _attempt_flee(player, enemy) -> bool:
+    """Probabilidad de huir con éxito.
+
+    Si el jugador es igual o más rápido que el enemigo, la huida es siempre
+    segura (100%). Por debajo de eso, la probabilidad baja junto con la
+    velocidad relativa, pero nunca llega a 0.
+    """
+    player_speed = max(1, player.get_total_speed())
+    enemy_speed = max(1, enemy.stats.speed)
+    flee_chance = min(1.0, player_speed / enemy_speed)
+    return random.random() < flee_chance
+
+
+def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tuple:
+    """Ejecuta el turno del jugador cuando su gauge ATB está lista.
+
+    Devuelve (señal, is_auto actualizado). señal es "huir" si el combate debe
+    terminar, o "ok" en cualquier otro caso.
+    """
+    # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
+    can_act = player.on_turn_start()
+    turn_consumed = False
+
+    # --- COMPROBAR CANCELACIÓN DE AUTO ---
+    if is_auto and check_for_interrupt():
+        is_auto = False
+        console.warning("\n🛑 ¡Auto-batalla cancelada! Volviendo al menú...")
+        time.sleep(1)  # Pausa para que el usuario lo vea
+
+    action = None
+    if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
+        if not is_auto:
+            if can_act:
+                action = _player_menu(player, enemy, defeated_enemies)
+                if action == "huir":
+                    # La huida siempre se resuelve antes que cualquier otra acción,
+                    # sea el jugador más rápido o más lento que el enemigo.
+                    if _attempt_flee(player, enemy):
+                        console.warning("Has huido del combate...")
+                        return "huir", is_auto
+                    else:
+                        console.error(f"¡No has podido escapar de {enemy.name}!")
+                        turn_consumed = True
+
+                if action == "auto":
+                    is_auto = True
+                    print(console.colorize(">>> MODO AUTO: ACTIVADO. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+
+                if action == "objeto_usado":
+                    turn_consumed = True
+            else:
+                console.ask(f"\n{console.colorize('Presiona Enter para pasar turno...', console.Fore.YELLOW)}")
+
+        # --- ATAQUE DEL JUGADOR (Si puede actuar) ---
+        if (is_auto or action == "atacar") and can_act and not turn_consumed:
+            _execute_turn(player, enemy, defeated_enemies)
+
+    player.on_turn_end()
+    return "ok", is_auto
+
+
+def _run_enemy_turn(player, enemy, defeated_enemies: list) -> None:
+    """Ejecuta el turno del enemigo cuando su gauge ATB está lista."""
+    time.sleep(1)
+    print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
+    enemy.perform_turn(player)
+    print_status(player, enemy, defeated_enemies)
+
+    if hasattr(enemy, 'on_turn_end'):
+        enemy.on_turn_end()
 
 
 def _execute_turn(attacker, defender, defeated_enemies: list) -> None:

@@ -80,6 +80,10 @@ class Player(Character):
         bonus = sum(item.crit_damage for item in self.equipped_armor.values() if item)
         return self.stats.crit_damage + bonus
 
+    def get_total_speed(self) -> int:
+        """Devuelve la velocidad total (hoy solo el stat base; el equipo no otorga velocidad todavía)."""
+        return self.stats.speed
+
     def get_equipped_element(self) -> str | None:
         """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
         if self.equipped_weapon and self.equipped_weapon.element:
@@ -179,25 +183,51 @@ class Player(Character):
         lv = float(self.level)
         return int(100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv ** 2 / 50))
 
+    # Ritmo de crecimiento por nivel de cada stat (ganancia media por nivel).
+    # Igual que en Pokémon (stat = floor(base + tasa * nivel / 100 + ...)), la
+    # cantidad exacta que se gana en un nivel concreto sale de redondear hacia
+    # abajo una curva continua, no de un valor fijo ni de una tirada aleatoria:
+    # con una tasa fraccionaria (p. ej. 1.5), el resultado alterna +1/+2 de
+    # forma determinista, así que la progresión varía de nivel en nivel pero es
+    # exactamente la misma en todas las partidas.
+    _HEALTH_GROWTH_RATE = 20.0
+    _MIN_ATK_GROWTH_RATE = 1.5
+    _MAX_ATK_GROWTH_RATE = 2.5
+    _ARMOR_GROWTH_RATE = 1.4
+    _SPEED_GROWTH_RATE = 1.6
+
+    @staticmethod
+    def _growth_gain(rate: float, level: int) -> int:
+        """Ganancia determinista para `level` según una tasa continua por nivel."""
+        return int(rate * level) - int(rate * (level - 1))
+
     def _level_up(self) -> None:
         self.level += 1
         self.just_leveled_up = True
 
-        # Mejora de Stats
-        self.stats.max_health += 20
-        self.stats.health = self.stats.max_health
-        self.stats.min_atk += 2
-        self.stats.max_atk += 3
-        self.stats.armor += 1
+        health_gain = self._growth_gain(self._HEALTH_GROWTH_RATE, self.level)
+        min_atk_gain = self._growth_gain(self._MIN_ATK_GROWTH_RATE, self.level)
+        max_atk_gain = self._growth_gain(self._MAX_ATK_GROWTH_RATE, self.level)
+        armor_gain = self._growth_gain(self._ARMOR_GROWTH_RATE, self.level)
+        speed_gain = self._growth_gain(self._SPEED_GROWTH_RATE, self.level)
 
-        # La resistencia mágica sube más despacio (cada 2 niveles), mientras
-        # no exista equipamiento que la conceda, para no desequilibrar al Mago.
+        self.stats.max_health += health_gain
+        self.stats.health = self.stats.max_health
+        self.stats.min_atk += min_atk_gain
+        self.stats.max_atk += max_atk_gain
+        self.stats.armor += armor_gain
+        self.stats.speed += speed_gain
+
+        # La resistencia mágica sube más despacio (cada 2 niveles) y en cantidad
+        # fija, mientras no exista equipamiento que la conceda, para no
+        # desequilibrar al Mago.
         gained_magic_resist = self.level % 2 == 0
         if gained_magic_resist:
             self.stats.magic_resist += 1
 
         print(f"\n{console.colorize(f'⭐ ¡HAS SUBIDO AL NIVEL {self.level}! ⭐', console.Fore.YELLOW)}")
-        stats_line = "HP Max +20 | Ataque +2-3 | Armadura +1"
+        stats_line = (f"HP Max +{health_gain} | Ataque +{min_atk_gain}-{max_atk_gain} | "
+                      f"Armadura +{armor_gain} | Velocidad +{speed_gain}")
         if gained_magic_resist:
             stats_line += " | Resistencia Mágica +1"
         print(console.colorize(stats_line, console.Fore.WHITE))

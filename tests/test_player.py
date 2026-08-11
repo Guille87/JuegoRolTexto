@@ -67,6 +67,10 @@ def test_get_total_crit_chance_and_damage_sum_equipped_slots(player):
     assert player.get_total_crit_damage() == 1.5 + 0.15 + 0.10  # base(1.5) + guantes + botas
 
 
+def test_get_total_speed_returns_base_stat(player):
+    assert player.get_total_speed() == player.stats.speed == 10
+
+
 def test_get_equipped_element_prefers_weapon_over_bracers(player):
     player.equipped_weapon = Weapon("Espada de Hielo", "desc", 1, damage=3, element="hielo")
     player.equipped_armor["brazales"] = Armor("Brazales", "desc", 1, slot="brazales", element="fuego")
@@ -111,18 +115,42 @@ def test_unequipping_health_bonus_clamps_current_health_down(player):
 
 
 def test_gain_experience_levels_up_and_boosts_stats(player):
-    old_max_health, old_min_atk, old_max_atk, old_armor = (
-        player.stats.max_health, player.stats.min_atk, player.stats.max_atk, player.stats.armor
+    old_max_health, old_min_atk, old_max_atk, old_armor, old_speed = (
+        player.stats.max_health, player.stats.min_atk, player.stats.max_atk,
+        player.stats.armor, player.stats.speed
     )
     player.gain_experience(40)  # required_xp() en nivel 1 es 40
 
     assert player.level == 2
+    # Nivel 1 -> 2: ganancia determinista según _growth_gain (ver Player._level_up).
     assert player.stats.max_health == old_max_health + 20
     assert player.stats.health == player.stats.max_health
     assert player.stats.min_atk == old_min_atk + 2
     assert player.stats.max_atk == old_max_atk + 3
     assert player.stats.armor == old_armor + 1
+    assert player.stats.speed == old_speed + 2
     assert player.stats.magic_resist == 1  # nivel 2 es par -> gana resistencia mágica
+
+
+def test_level_up_growth_is_deterministic_and_varies_between_levels(player):
+    """La progresión no es aleatoria (misma partida siempre igual), pero tampoco
+    es una cantidad fija cada nivel: unos niveles dan más ataque/armadura/velocidad
+    que otros, siguiendo la curva continua de _growth_gain (estilo Pokémon)."""
+    armor_gains = []
+    speed_gains = []
+    for _ in range(5):
+        before_armor, before_speed = player.stats.armor, player.stats.speed
+        player._level_up()
+        armor_gains.append(player.stats.armor - before_armor)
+        speed_gains.append(player.stats.speed - before_speed)
+
+    # Con tasa 1.4/nivel, la armadura sigue el patrón determinista 1,2,1,2,1 (niveles 2-6)
+    assert armor_gains == [1, 2, 1, 2, 1]
+    # Con tasa 1.6/nivel, la velocidad sigue el patrón determinista 2,1,2,2,1 (niveles 2-6)
+    assert speed_gains == [2, 1, 2, 2, 1]
+    # No es una cantidad fija: hay al menos un nivel donde la ganancia varía
+    assert len(set(armor_gains)) > 1
+    assert len(set(speed_gains)) > 1
 
 
 def test_gain_experience_can_trigger_multiple_level_ups():
