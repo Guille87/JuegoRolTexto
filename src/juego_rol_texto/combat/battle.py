@@ -178,12 +178,20 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     damage = attacker.get_attack_damage()
     element = attacker.get_equipped_element() if isinstance(attacker, Player) else None
 
+    # Golpe crítico: solo el jugador puede critear (los enemigos no tienen esta stat)
+    is_crit = isinstance(attacker, Player) and random.random() < attacker.get_total_crit_chance()
+    if is_crit:
+        damage = int(damage * attacker.get_total_crit_damage())
+
     # ¿Es el defensor débil a este elemento? Lo comprobamos antes de aplicar el daño
     # para poder mostrar el mensaje de "supereficaz" (take_damage no expone esa info).
     weaknesses = getattr(type(defender), "ELEMENTAL_WEAKNESSES", {})
     is_super_effective = bool(element) and weaknesses.get(element, 1.0) > 1.0
 
     final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies, element=element)
+
+    if is_crit:
+        print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
     if is_super_effective:
         print(console.colorize(

@@ -68,7 +68,8 @@ class Orc(Enemy):
             # Usamos StatBuffPotion para la fuerza
             items.append(StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3))
         if random.random() <= 0.15:
-            items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12, defense=7))
+            items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12,
+                                slot="peto", defense=7, max_health=20))
         if random.random() <= 0.2:
             items.append(Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común"))
         if random.random() <= 0.12:

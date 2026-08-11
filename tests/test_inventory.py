@@ -33,13 +33,88 @@ def test_equip_menu_equips_selected_weapon(player, monkeypatch):
 
 
 def test_equip_menu_rejects_wrong_category(player, monkeypatch):
-    player.inventory.add_item(Armor("Casco", "desc", value=8, defense=5))
+    player.inventory.add_item(Armor("Casco", "desc", value=8, slot="casco", defense=5))
 
     monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
     used = player.inventory.equip_menu(Weapon)
 
     assert used is False
     assert player.equipped_weapon is None
+
+
+def test_equip_menu_with_filter_slot_equips_into_correct_slot(player, monkeypatch):
+    casco = Armor("Casco de Hueso", "desc", value=8, slot="casco", max_health=15)
+    player.inventory.add_item(casco)
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    used = player.inventory.equip_menu(Armor, filter_slot="casco")
+
+    assert used is True
+    assert player.equipped_armor["casco"] is casco
+
+
+def test_equip_menu_with_filter_slot_rejects_item_from_other_slot(player, monkeypatch):
+    guantes = Armor("Guantes", "desc", value=8, slot="guantes")
+    player.inventory.add_item(guantes)
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    used = player.inventory.equip_menu(Armor, filter_slot="casco")  # el jugador solo tiene guantes
+
+    assert used is False
+    assert player.equipped_armor["casco"] is None
+
+
+def test_sell_item_blocks_any_equipped_armor_slot(player, monkeypatch):
+    peto = Armor("Peto", "desc", value=8, slot="peto")
+    player.inventory.add_item(peto)
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    player.inventory.equip_menu(Armor, filter_slot="peto")
+
+    assert player.inventory.sell_item(peto) is None
+    assert player.equipped_armor["peto"] is peto
+
+
+def test_can_equip_two_different_rings_at_once(player, monkeypatch):
+    anillo1 = Armor("Anillo de Fuerza", "desc", value=16, slot="anillo", damage=3)
+    anillo2 = Armor("Anillo de Precisión", "desc", value=20, slot="anillo", crit_damage=0.12)
+    player.inventory.add_item(anillo1)
+    player.inventory.add_item(anillo2)
+
+    # Ambos anillos siguen apareciendo en el listado tras el primer equipar (no se consumen),
+    # así que elegimos por posición: "1" -> Anillo de Fuerza, "2" -> Anillo de Precisión.
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    used1 = player.inventory.equip_menu(Armor, filter_slot="anillo1")
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "2")
+    used2 = player.inventory.equip_menu(Armor, filter_slot="anillo2")
+
+    assert used1 is True
+    assert used2 is True
+    assert player.equipped_armor["anillo1"] is anillo1
+    assert player.equipped_armor["anillo2"] is anillo2
+
+
+def test_ring_rejected_in_non_ring_slot(player, monkeypatch):
+    anillo = Armor("Anillo de Fuerza", "desc", value=16, slot="anillo", damage=3)
+    player.inventory.add_item(anillo)
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    used = player.inventory.equip_menu(Armor, filter_slot="casco")
+
+    assert used is False
+    assert player.equipped_armor["casco"] is None
+
+
+def test_non_ring_item_rejected_in_ring_slot(player, monkeypatch):
+    casco = Armor("Casco", "desc", value=8, slot="casco")
+    player.inventory.add_item(casco)
+
+    monkeypatch.setattr("juego_rol_texto.inventory.inventory.console.ask", lambda prompt: "1")
+    used = player.inventory.equip_menu(Armor, filter_slot="anillo1")
+
+    assert used is False
+    assert player.equipped_armor["anillo1"] is None
 
 
 def test_using_healing_potion_heals_and_consumes_one(player, monkeypatch):

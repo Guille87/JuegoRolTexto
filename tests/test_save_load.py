@@ -15,7 +15,11 @@ def _build_player(name="Guille"):
     p.inventory.gold = 42
     p.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
     p.equipped_weapon = Weapon("Espada", "desc", 5, damage=4)
-    p.equipped_armor = Armor("Casco", "desc", 8, defense=5)
+    p.equipped_armor["casco"] = Armor("Casco", "desc", 8, slot="casco", defense=5)
+    p.equipped_armor["guantes"] = Armor("Guantes de Combate", "desc", 15, slot="guantes", crit_chance=0.05)
+    p.equipped_armor["anillo1"] = Armor("Anillo de Fuerza", "desc", 16, slot="anillo", damage=3)
+    p.equipped_armor["anillo2"] = Armor("Anillo de Precisión", "desc", 20, slot="anillo", crit_damage=0.12)
+    p.equipped_armor["amuleto"] = Armor("Amuleto de Resistencia", "desc", 28, slot="amuleto", magic_resist=5)
     return p
 
 
@@ -40,7 +44,12 @@ def test_save_and_load_round_trip(tmp_save_dir):
     assert loaded_player.inventory.gold == 42
     assert loaded_player.inventory.quantities["Poción de Salud"] == 1
     assert loaded_player.equipped_weapon.name == "Espada"
-    assert loaded_player.equipped_armor.name == "Casco"
+    assert loaded_player.equipped_armor["casco"].name == "Casco"
+    assert loaded_player.equipped_armor["guantes"].name == "Guantes de Combate"
+    assert loaded_player.equipped_armor["anillo1"].name == "Anillo de Fuerza"
+    assert loaded_player.equipped_armor["anillo2"].name == "Anillo de Precisión"
+    assert loaded_player.equipped_armor["amuleto"].name == "Amuleto de Resistencia"
+    assert loaded_player.equipped_armor["peto"] is None
 
 
 def test_save_creates_backup_of_previous_save(tmp_save_dir):
@@ -110,3 +119,31 @@ def test_load_falls_back_on_legacy_defense_key(tmp_save_dir):
     assert result is not None
     assert loaded_player.stats.armor == 2
     assert loaded_player.stats.magic_resist == 0
+
+
+def test_load_falls_back_on_legacy_single_equipped_armor(tmp_save_dir):
+    """Partidas guardadas antes de los huecos de armadura tenían equipped_armor como un solo objeto."""
+    legacy_save_data = {
+        "player_name": "Guille",
+        "unlocked_enemies": ["Goblin"],
+        "defeated_enemies": [],
+        "gold": 10,
+        "player_stats": {
+            "level": 1, "experience": 0, "health": 100, "max_health": 100,
+            "min_atk": 5, "max_atk": 10, "armor": 2, "magic_resist": 0,
+        },
+        "inventory": [],
+        "inventory_quantities": {},
+        "equipped_weapon": None,
+        # Formato antiguo: un solo objeto de armadura (sin "slot"), no un dict de huecos
+        "equipped_armor": {"type": "Armor", "name": "Casco Viejo", "description": "desc", "value": 8, "defense": 5},
+    }
+    encoded = base64.b64encode(json.dumps(legacy_save_data).encode("utf-8"))
+    (tmp_save_dir / "Guille.sav").write_bytes(encoded)
+
+    loaded_player = Player("Guille", Stats(1, 1, 1, 1, 1))
+    result = load_game(loaded_player)
+
+    assert result is not None
+    assert loaded_player.equipped_armor["peto"].name == "Casco Viejo"
+    assert all(item is None for slot, item in loaded_player.equipped_armor.items() if slot != "peto")

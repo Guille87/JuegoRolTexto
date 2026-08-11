@@ -47,7 +47,97 @@ class Forge:
                 result_template=Armor(
                     "Armadura Regenerativa",
                     "Forjada con la piel imperecedera de un Troll; aún parece palpitar con vida propia.",
-                    value=60, defense=14
+                    value=60, slot="peto", defense=14, max_health=35
+                )
+            ),
+            CraftingRecipe(
+                name="Guantes de Combate",
+                materials={"Colmillo de Goblin": 1, "Colmillo de Orco": 1},
+                gold_cost=60,
+                result_template=Armor(
+                    "Guantes de Combate",
+                    "Refuerzos de cuero y colmillos afilados cosidos en los nudillos.",
+                    value=15, slot="guantes", crit_chance=0.05, crit_damage=0.15
+                )
+            ),
+            CraftingRecipe(
+                name="Brazales Arcanos",
+                materials={"Esencia Arcana": 1},
+                gold_cost=80,
+                result_template=Armor(
+                    "Brazales Arcanos",
+                    "Energía mágica condensada en forma de brazales; arden con un fuego que no quema al portador.",
+                    value=25, slot="brazales", magic_resist=3, element="fuego"
+                )
+            ),
+            CraftingRecipe(
+                name="Hombreras Reforzadas",
+                materials={"Colmillo de Orco": 1, "Fragmento de Hueso": 1},
+                gold_cost=70,
+                result_template=Armor(
+                    "Hombreras Reforzadas",
+                    "Placas de hueso y colmillo unidas con remaches toscos pero efectivos.",
+                    value=18, slot="hombreras", defense=2, max_health=15
+                )
+            ),
+            CraftingRecipe(
+                name="Cinturón de Resistencia",
+                materials={"Fragmento de Hueso": 1},
+                gold_cost=40,
+                result_template=Armor(
+                    "Cinturón de Resistencia",
+                    "Tejido con fragmentos óseos que parecen absorber el dolor.",
+                    value=12, slot="cinturon", max_health=20
+                )
+            ),
+            CraftingRecipe(
+                name="Perneras de Placa",
+                materials={"Colmillo de Orco": 1},
+                gold_cost=50,
+                result_template=Armor(
+                    "Perneras de Placa",
+                    "Protección rígida para las piernas, forjada con colmillos de orco fundidos.",
+                    value=14, slot="perneras", defense=3
+                )
+            ),
+            CraftingRecipe(
+                name="Botas Ligeras",
+                materials={"Colmillo de Goblin": 1},
+                gold_cost=30,
+                result_template=Armor(
+                    "Botas Ligeras",
+                    "Suelas flexibles que facilitan golpear en el punto justo.",
+                    value=10, slot="botas", crit_damage=0.10
+                )
+            ),
+            CraftingRecipe(
+                name="Anillo de Fuerza",
+                materials={"Colmillo de Orco": 1, "Fragmento de Hueso": 1},
+                gold_cost=55,
+                result_template=Armor(
+                    "Anillo de Fuerza",
+                    "Un aro pesado grabado con runas de poder bruto.",
+                    value=16, slot="anillo", damage=3
+                )
+            ),
+            CraftingRecipe(
+                name="Anillo de Precisión",
+                materials={"Colmillo de Goblin": 1, "Esencia Arcana": 1},
+                gold_cost=65,
+                result_template=Armor(
+                    "Anillo de Precisión",
+                    "Un aro fino que agudiza el instinto para encontrar el punto débil.",
+                    value=20, slot="anillo", crit_damage=0.12
+                )
+            ),
+            CraftingRecipe(
+                name="Amuleto de Resistencia",
+                materials={"Esencia Arcana": 1, "Fragmento de Hueso": 1},
+                gold_cost=90,
+                result_template=Armor(
+                    "Amuleto de Resistencia",
+                    "Un talismán que envuelve al portador en una tenue barrera contra la magia.",
+                    value=28, slot="amuleto", defense=2, magic_resist=5
                 )
             ),
         ]

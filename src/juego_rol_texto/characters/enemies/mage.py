@@ -103,7 +103,8 @@ class Mago(Enemy):
         if random.random() <= 0.15:
             items.append(Weapon("Bastón Arcano", "Un bastón rematado con un cristal que pulsa con energía arcana.", 18, damage=15))
         if random.random() <= 0.12:
-            items.append(Armor("Túnica Arcana", "Tejida con hilos imbuidos de magia protectora. La mejor protección conocida.", 22, defense=9))
+            items.append(Armor("Túnica Arcana", "Tejida con hilos imbuidos de magia protectora. La mejor protección conocida.", 22,
+                                slot="peto", defense=9, max_health=25))
         if random.random() <= 0.1:
             items.append(Material("Esencia Arcana", "Energía mágica condensada, inestable pero muy valiosa.", 35, rarity="Raro"))
         return items

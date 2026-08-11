@@ -3,6 +3,7 @@ import random
 from juego_rol_texto.characters.base import Character
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.inventory.inventory import Inventory
+from juego_rol_texto.items.equipment import ARMOR_SLOTS, slot_label
 from juego_rol_texto.ui import console
 
 
@@ -13,7 +14,7 @@ class Player(Character):
         self.experience = 0
         self.inventory = Inventory(self)
         self.equipped_weapon = None
-        self.equipped_armor = None
+        self.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
         self.just_leveled_up = False
         self.in_combat = False
 
@@ -45,8 +46,10 @@ class Player(Character):
         return random.randint(min_atk, max_atk)
 
     def get_attack_range(self) -> tuple[int, int]:
-        """Devuelve el rango de ataque sumando el arma equipada."""
-        bonus = self.equipped_weapon.damage if self.equipped_weapon else 0
+        """Devuelve el rango de ataque sumando el arma y el equipo (p. ej. anillos) equipados."""
+        weapon_bonus = self.equipped_weapon.damage if self.equipped_weapon else 0
+        armor_bonus = sum(item.damage for item in self.equipped_armor.values() if item)
+        bonus = weapon_bonus + armor_bonus
         min_atk = self.stats.min_atk + bonus
         max_atk = self.stats.max_atk + bonus
 
@@ -58,17 +61,31 @@ class Player(Character):
         return min_atk, max_atk
 
     def get_total_armor(self) -> int:
-        """Devuelve la armadura total sumando la pieza equipada."""
-        bonus = self.equipped_armor.defense if self.equipped_armor else 0
+        """Devuelve la armadura total sumando todas las piezas equipadas."""
+        bonus = sum(item.defense for item in self.equipped_armor.values() if item)
         return self.stats.armor + bonus
 
     def get_total_magic_resist(self) -> int:
-        """Devuelve la resistencia mágica total (de momento solo la del stat base)."""
-        return self.stats.magic_resist
+        """Devuelve la resistencia mágica total sumando todas las piezas equipadas."""
+        bonus = sum(item.magic_resist for item in self.equipped_armor.values() if item)
+        return self.stats.magic_resist + bonus
+
+    def get_total_crit_chance(self) -> float:
+        """Devuelve la probabilidad de golpe crítico total sumando todas las piezas equipadas."""
+        bonus = sum(item.crit_chance for item in self.equipped_armor.values() if item)
+        return self.stats.crit_chance + bonus
+
+    def get_total_crit_damage(self) -> float:
+        """Devuelve el multiplicador de daño crítico total sumando todas las piezas equipadas."""
+        bonus = sum(item.crit_damage for item in self.equipped_armor.values() if item)
+        return self.stats.crit_damage + bonus
 
     def get_equipped_element(self) -> str | None:
-        """Devuelve el elemento del arma equipada, si tiene alguno."""
-        return self.equipped_weapon.element if self.equipped_weapon else None
+        """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
+        if self.equipped_weapon and self.equipped_weapon.element:
+            return self.equipped_weapon.element
+        brazales = self.equipped_armor.get("brazales")
+        return brazales.element if brazales else None
 
     def is_alive(self) -> bool:
         return self.stats.health > 0
@@ -190,10 +207,17 @@ class Player(Character):
         print(f"Nombre: {self.name.ljust(15)} Nivel: {self.level}")
         print(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}")
         print(f"Ataque: {self.get_attack_range()} | Armadura: {self.get_total_armor()}")
-        print(f"Resistencia Mágica: {self.stats.magic_resist}")
+        print(f"Resistencia Mágica: {self.get_total_magic_resist()}")
+        print(f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
+              f"Daño Crítico: x{self.get_total_crit_damage():.2f}")
         print(f"XP: {self.experience} / {self.required_xp()}")
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")
-        if self.equipped_armor:
-            print(f"Armadura: {console.colorize(self.equipped_armor.name, console.Fore.BLUE)}")
+
+        print(console.colorize("--- Equipamiento ---", console.Fore.CYAN))
+        for slot in ARMOR_SLOTS:
+            item = self.equipped_armor.get(slot)
+            label = console.colorize(item.name, console.Fore.BLUE) if item else "-- vacío --"
+            print(f"  {slot_label(slot)}: {label}")
+
         print(console.colorize("=" * 34, console.Fore.CYAN))

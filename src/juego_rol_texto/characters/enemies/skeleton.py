@@ -44,7 +44,8 @@ class Skeleton(Enemy):
         items = []
         # 18% de soltar un casco de hueso
         if random.random() <= 0.18:
-            items.append(Armor("Casco de Hueso", "Hecho con restos de otros guerreros", 8, 5))
+            items.append(Armor("Casco de Hueso", "Hecho con restos de otros guerreros", 8,
+                                slot="casco", max_health=15, crit_chance=0.03))
         # 50% de soltar una poción de salud
         if random.random() <= 0.5:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))

@@ -1,7 +1,7 @@
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.troll import Troll
 from juego_rol_texto.combat.battle import ENEMY_PROGRESSION, _execute_turn, initiate_battle
-from juego_rol_texto.items.equipment import Weapon
+from juego_rol_texto.items.equipment import Armor, Weapon
 
 
 def test_victory_unlocks_next_enemy_and_grants_rewards(player, weak_enemy, monkeypatch):
@@ -79,3 +79,41 @@ def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeyp
     dealt = before - troll.stats.health
 
     assert dealt == 20  # 10 base * 2.0 (débil al fuego) - 0 armadura
+
+
+def test_execute_turn_applies_crit_multiplier(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # siempre crítico
+
+    player.equipped_armor["guantes"] = Armor("Guantes", "desc", 1, slot="guantes", crit_chance=1.0)
+    player.stats.armor = 0
+
+    goblin = Goblin()
+    goblin.stats.armor = 0
+    goblin.stats.health = goblin.stats.max_health = 1000
+
+    before = goblin.stats.health
+    _execute_turn(player, goblin, defeated_enemies=[])
+    dealt = before - goblin.stats.health
+
+    assert dealt == int(10 * player.stats.crit_damage)  # 10 base * 1.5 (multiplicador base)
+
+
+def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+
+    player.equipped_weapon = Weapon("Espada de Hierro", "desc", 10, damage=0)  # sin elemento
+    player.equipped_armor["brazales"] = Armor("Brazales Arcanos", "desc", 1, slot="brazales", element="fuego")
+    player.stats.armor = 0
+
+    troll = Troll()
+    troll.stats.armor = 0
+    troll.stats.health = troll.stats.max_health = 1000
+
+    before = troll.stats.health
+    _execute_turn(player, troll, defeated_enemies=[])
+    dealt = before - troll.stats.health
+
+    assert dealt == 20  # 10 base * 2.0 (débil al fuego, heredado de los brazales)

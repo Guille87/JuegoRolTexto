@@ -13,7 +13,8 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     atk_min, atk_max = player.get_attack_range()
     print(f"  {console.colorize(f'Ataque: {atk_min}-{atk_max}', console.Fore.RED, bright=True)}")
     print(f"  {console.colorize(f'Armadura: {player.get_total_armor()}', console.Fore.BLUE, bright=True)}")
-    print(f"  {console.colorize(f'Resistencia Mágica: {player.stats.magic_resist}', console.Fore.CYAN, bright=True)}")
+    print(f"  {console.colorize(f'Resistencia Mágica: {player.get_total_magic_resist()}', console.Fore.CYAN, bright=True)}")
+    print(f"  {console.colorize(f'Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}%', console.Fore.YELLOW, bright=True)}")
     print()
 
     # Lógica de información oculta para enemigos

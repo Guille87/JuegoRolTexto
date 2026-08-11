@@ -6,7 +6,7 @@ from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import settings
 from juego_rol_texto.crafting.forge import Forge
-from juego_rol_texto.items.equipment import Weapon, Armor
+from juego_rol_texto.items.equipment import ARMOR_SLOTS, Weapon, Armor, slot_label
 from juego_rol_texto.persistence.save_load import save_game, load_game
 from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
@@ -173,8 +173,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
 
-            # Pasamos la clase Armor a la opción de equipar armadura
-            ("Equipar Armadura", lambda: player.inventory.equip_menu(Armor)),
+            ("Equipar Armadura", lambda: _equip_armor_flow(player)),
 
             ("Opciones", open_options),
             ("Guardar Partida", lambda: save_game(player, unlocked_enemies, defeated_enemies)),
@@ -196,6 +195,31 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
                 if idx in [1, 4]: console.ask("\nPresiona Enter para continuar...")
             else:
                 console.error("Opción fuera de rango.")
+
+
+def _equip_armor_flow(player) -> None:
+    """Submenú para elegir en qué hueco de armadura equipar algo."""
+    while True:
+        print(console.colorize("\n--- EQUIPAR ARMADURA ---", console.Fore.YELLOW))
+        for idx, slot in enumerate(ARMOR_SLOTS, 1):
+            equipped = player.equipped_armor.get(slot)
+            label = equipped.name if equipped else "-- vacío --"
+            print(f"{idx}. {slot_label(slot)}: {label}")
+        print(f"{len(ARMOR_SLOTS) + 1}. Volver")
+
+        choice = console.ask(f"\nElige un hueco (1-{len(ARMOR_SLOTS) + 1}): ")
+        if not choice.isdigit():
+            console.error("Entrada no válida.")
+            continue
+
+        idx = int(choice) - 1
+        if idx == len(ARMOR_SLOTS):
+            return
+        if not (0 <= idx < len(ARMOR_SLOTS)):
+            console.error("Opción fuera de rango.")
+            continue
+
+        player.inventory.equip_menu(Armor, filter_slot=ARMOR_SLOTS[idx])
 
 
 def _get_enemy_instance(name: str):

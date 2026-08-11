@@ -5,6 +5,7 @@ import os
 import shutil
 
 from juego_rol_texto.config.paths import SAVE_DIR
+from juego_rol_texto.items.equipment import ARMOR_SLOTS
 from juego_rol_texto.items.factory import item_factory
 from juego_rol_texto.ui import console
 
@@ -53,7 +54,10 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         "inventory": [item.to_dict() for item in player.inventory.items],
         "inventory_quantities": player.inventory.quantities,
         "equipped_weapon": player.equipped_weapon.to_dict() if player.equipped_weapon else None,
-        "equipped_armor": player.equipped_armor.to_dict() if player.equipped_armor else None,
+        "equipped_armor": {
+            slot: item.to_dict() if item else None
+            for slot, item in player.equipped_armor.items()
+        },
     }
 
     try:
@@ -130,8 +134,21 @@ def _perform_load(player, path):
 
     if save_data.get("equipped_weapon"):
         player.equipped_weapon = item_factory(save_data["equipped_weapon"])
-    if save_data.get("equipped_armor"):
-        player.equipped_armor = item_factory(save_data["equipped_armor"])
+
+    # Compatibilidad: antes de los huecos de armadura, "equipped_armor" era una
+    # única pieza (o None) en vez de un dict {hueco: pieza-o-None}.
+    player.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
+    equipped_armor_data = save_data.get("equipped_armor")
+    if isinstance(equipped_armor_data, dict) and "type" in equipped_armor_data:
+        # Formato antiguo: una sola pieza -> va al hueco "peto"
+        old_item = item_factory(equipped_armor_data)
+        if old_item:
+            player.equipped_armor[getattr(old_item, "slot", "peto")] = old_item
+    elif isinstance(equipped_armor_data, dict):
+        # Formato nuevo: dict de hueco -> datos del ítem (o None)
+        for slot, item_data in equipped_armor_data.items():
+            if slot in player.equipped_armor and item_data:
+                player.equipped_armor[slot] = item_factory(item_data)
 
     console.info(f"Carga exitosa desde: {os.path.basename(path)}")
     return save_data["player_name"], save_data["unlocked_enemies"], save_data["defeated_enemies"]

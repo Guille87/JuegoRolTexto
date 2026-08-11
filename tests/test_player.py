@@ -36,9 +36,78 @@ def test_get_attack_range_halved_when_quemado(player):
     assert player.get_attack_range() == (4, 6)
 
 
+def test_get_attack_range_includes_ring_damage_bonus(player):
+    player.equipped_weapon = Weapon("Espada", "desc", 1, damage=3)
+    player.equipped_armor["anillo1"] = Armor("Anillo de Fuerza", "desc", 1, slot="anillo", damage=4)
+    assert player.get_attack_range() == (12, 17)  # base(5,10) + arma(3) + anillo(4)
+
+
 def test_get_total_armor_includes_equipped_armor_bonus(player):
-    player.equipped_armor = Armor("Escudo", "desc", 1, defense=5)
+    player.equipped_armor["peto"] = Armor("Escudo", "desc", 1, slot="peto", defense=5)
     assert player.get_total_armor() == 7
+
+
+def test_get_total_armor_sums_multiple_equipped_slots(player):
+    player.equipped_armor["peto"] = Armor("Peto", "desc", 1, slot="peto", defense=5)
+    player.equipped_armor["perneras"] = Armor("Perneras", "desc", 1, slot="perneras", defense=3)
+    assert player.get_total_armor() == 2 + 5 + 3  # base(2) + peto(5) + perneras(3)
+
+
+def test_get_total_magic_resist_sums_equipped_slots(player):
+    player.stats.magic_resist = 1
+    player.equipped_armor["brazales"] = Armor("Brazales", "desc", 1, slot="brazales", magic_resist=3)
+    assert player.get_total_magic_resist() == 4
+
+
+def test_get_total_crit_chance_and_damage_sum_equipped_slots(player):
+    player.equipped_armor["guantes"] = Armor("Guantes", "desc", 1, slot="guantes", crit_chance=0.05, crit_damage=0.15)
+    player.equipped_armor["botas"] = Armor("Botas", "desc", 1, slot="botas", crit_damage=0.10)
+
+    assert player.get_total_crit_chance() == 0.05
+    assert player.get_total_crit_damage() == 1.5 + 0.15 + 0.10  # base(1.5) + guantes + botas
+
+
+def test_get_equipped_element_prefers_weapon_over_bracers(player):
+    player.equipped_weapon = Weapon("Espada de Hielo", "desc", 1, damage=3, element="hielo")
+    player.equipped_armor["brazales"] = Armor("Brazales", "desc", 1, slot="brazales", element="fuego")
+    assert player.get_equipped_element() == "hielo"
+
+
+def test_get_equipped_element_falls_back_to_bracers(player):
+    player.equipped_armor["brazales"] = Armor("Brazales", "desc", 1, slot="brazales", element="fuego")
+    assert player.get_equipped_element() == "fuego"
+
+
+def test_equipping_armor_with_health_bonus_increases_max_health(player):
+    peto = Armor("Peto", "desc", 1, slot="peto", max_health=20)
+    peto.use(player)
+
+    assert player.stats.max_health == 120
+    assert player.equipped_armor["peto"] is peto
+
+
+def test_swapping_armor_in_same_slot_reverses_previous_health_bonus(player):
+    peto_viejo = Armor("Peto Viejo", "desc", 1, slot="peto", max_health=20)
+    peto_viejo.use(player)
+    assert player.stats.max_health == 120
+
+    peto_nuevo = Armor("Peto Nuevo", "desc", 1, slot="peto", max_health=5)
+    peto_nuevo.use(player)
+
+    assert player.stats.max_health == 105  # 100 base - 20 (revertido) + 5 (nuevo)
+    assert player.equipped_armor["peto"] is peto_nuevo
+
+
+def test_unequipping_health_bonus_clamps_current_health_down(player):
+    peto = Armor("Peto", "desc", 1, slot="peto", max_health=20)
+    peto.use(player)
+    player.stats.health = 120  # a tope
+
+    peto_debil = Armor("Peto Débil", "desc", 1, slot="peto", max_health=0)
+    peto_debil.use(player)
+
+    assert player.stats.max_health == 100
+    assert player.stats.health == 100  # se re-clampa al nuevo máximo
 
 
 def test_gain_experience_levels_up_and_boosts_stats(player):

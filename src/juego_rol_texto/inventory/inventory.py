@@ -1,4 +1,4 @@
-from juego_rol_texto.items.equipment import Weapon, Armor
+from juego_rol_texto.items.equipment import Weapon, Armor, slot_accepts, slot_label
 from juego_rol_texto.items.potions.potion_base import Potion
 from juego_rol_texto.ui import console
 
@@ -42,7 +42,7 @@ class Inventory:
                 self.items.append(item)
                 self.quantities[item.name] = 1
 
-    def show_inventory(self, filter_class=None, mode: str = "view") -> bool:
+    def show_inventory(self, filter_class=None, filter_slot: str | None = None, mode: str = "view") -> bool:
         """
         mode "view": Solo lectura
         mode "use": Permite seleccionar número para usar
@@ -50,11 +50,16 @@ class Inventory:
         print("\n" + "=" * 45)
         title = "INVENTARIO COMPLETO"
         if filter_class == Weapon: title = "SELECCIONAR ARMA"
+        elif filter_class == Armor and filter_slot: title = f"SELECCIONAR {slot_label(filter_slot).upper()}"
         elif filter_class == Armor: title = "SELECCIONAR ARMADURA"
 
         print(console.colorize(f"--- {title} ---", console.Fore.CYAN))
 
-        items_to_show = [i for i in self.items if not filter_class or isinstance(i, filter_class)]
+        items_to_show = [
+            i for i in self.items
+            if (not filter_class or isinstance(i, filter_class))
+            and (not filter_slot or slot_accepts(filter_slot, getattr(i, "slot", None)))
+        ]
 
         if not items_to_show:
             print("No hay objetos en esta categoría.")
@@ -67,7 +72,8 @@ class Inventory:
             qty = self.quantities.get(item.name, 1)
 
             # Formato de línea
-            is_eq = f"{console.colorize('(E)', console.Fore.BLUE)} " if (item == self.player.equipped_weapon or item == self.player.equipped_armor) else ""
+            is_equipped = item == self.player.equipped_weapon or item in self.player.equipped_armor.values()
+            is_eq = f"{console.colorize('(E)', console.Fore.BLUE)} " if is_equipped else ""
             qty_str = console.colorize(f" x{qty}", console.Fore.YELLOW) if qty > 1 else ""
 
             print(f"{idx}. {is_eq}{item.name}{qty_str} | {item.description}")
@@ -77,10 +83,10 @@ class Inventory:
         print("=" * 45)
 
         if mode == "use":
-            return self._handle_selection(filter_class=filter_class)
+            return self._handle_selection(filter_class=filter_class, filter_slot=filter_slot)
         return False
 
-    def _handle_selection(self, filter_class=None) -> bool:
+    def _handle_selection(self, filter_class=None, filter_slot: str | None = None) -> bool:
         choice = console.ask("\nSelecciona un número (0 para volver): ")
         if choice == "0" or not choice.isdigit(): return False
 
@@ -99,9 +105,15 @@ class Inventory:
                 if not isinstance(item, filter_class):
                     console.error("No puedes equipar eso aquí.")
                     return False
+                if filter_slot and not slot_accepts(filter_slot, getattr(item, "slot", None)):
+                    console.error("Este objeto no va en ese hueco.")
+                    return False
 
             # Si pasa las validaciones, usamos el objeto
-            success = item.use(self.player)
+            if isinstance(item, Armor):
+                success = item.use(self.player, target_slot=filter_slot)
+            else:
+                success = item.use(self.player)
             if success:
                 # Si es un consumible (Poción), restamos cantidad
                 if not isinstance(item, (Weapon, Armor)):
@@ -112,9 +124,9 @@ class Inventory:
                 return False
         return False
 
-    def equip_menu(self, filter_class=None) -> bool:
-        """Llamado desde las opciones 5 y 6 del menú principal."""
-        return self.show_inventory(filter_class=filter_class, mode="use")
+    def equip_menu(self, filter_class=None, filter_slot: str | None = None) -> bool:
+        """Llamado desde las opciones de equipar arma/armadura del menú principal."""
+        return self.show_inventory(filter_class=filter_class, filter_slot=filter_slot, mode="use")
 
     def _remove_one(self, item) -> None:
         """Descuenta una unidad de un ítem del inventario, eliminándolo si llega a 0."""
@@ -138,7 +150,7 @@ class Inventory:
 
     def sell_item(self, item) -> int | None:
         """Vende una unidad del ítem dado a su valor base. Devuelve el oro obtenido, o None si no se puede vender."""
-        if item == self.player.equipped_weapon or item == self.player.equipped_armor:
+        if item == self.player.equipped_weapon or item in self.player.equipped_armor.values():
             console.error("No puedes vender un objeto equipado.")
             return None
 
