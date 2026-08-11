@@ -123,6 +123,19 @@ class Inventory:
             self.items.remove(item)
             del self.quantities[item.name]
 
+    def has_item(self, name: str, quantity: int = 1) -> bool:
+        """Comprueba si hay al menos `quantity` unidades de un ítem por nombre."""
+        return self.quantities.get(name, 0) >= quantity
+
+    def consume_item(self, name: str, quantity: int = 1) -> bool:
+        """Consume `quantity` unidades de un ítem por nombre. Devuelve False si no hay suficientes."""
+        if not self.has_item(name, quantity):
+            return False
+        item = next(i for i in self.items if i.name == name)
+        for _ in range(quantity):
+            self._remove_one(item)
+        return True
+
     def sell_item(self, item) -> int | None:
         """Vende una unidad del ítem dado a su valor base. Devuelve el oro obtenido, o None si no se puede vender."""
         if item == self.player.equipped_weapon or item == self.player.equipped_armor:

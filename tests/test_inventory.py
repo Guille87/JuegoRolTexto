@@ -66,3 +66,28 @@ def test_using_stat_buff_potion_in_combat_consumes_one_from_stack(player, monkey
     assert "Poción de Fuerza" not in player.inventory.quantities
     assert player.inventory.items == []
     assert len(player.active_effects) == 1
+
+
+def test_has_item_checks_quantity(player):
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+
+    assert player.inventory.has_item("Poción de Salud", 2) is True
+    assert player.inventory.has_item("Poción de Salud", 3) is False
+    assert player.inventory.has_item("Objeto Inexistente") is False
+
+
+def test_consume_item_removes_quantity_and_entry_when_empty(player):
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+
+    assert player.inventory.consume_item("Poción de Salud", 2) is True
+    assert "Poción de Salud" not in player.inventory.quantities
+    assert player.inventory.items == []
+
+
+def test_consume_item_fails_without_enough_quantity(player):
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+
+    assert player.inventory.consume_item("Poción de Salud", 2) is False
+    assert player.inventory.quantities["Poción de Salud"] == 1

@@ -5,6 +5,7 @@ from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import settings
+from juego_rol_texto.crafting.forge import Forge
 from juego_rol_texto.items.equipment import Weapon, Armor
 from juego_rol_texto.persistence.save_load import save_game, load_game
 from juego_rol_texto.shop.shop import Shop
@@ -161,17 +162,18 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         print(console.colorize(f"ESTADO: {player.name} | Nivel: {player.level}", console.Fore.CYAN))
         print("=" * 40)
 
-        # Usamos una lista de tuplas para mantener el orden de tus 10 opciones
+        # Usamos una lista de tuplas para mantener el orden de las opciones
         options = [
             ("Luchar", start_battle_flow),
             ("Inventario", lambda: player.inventory.show_inventory(mode="use")),
             ("Tienda", lambda: Shop().open(player)),
+            ("Herrería", lambda: Forge().open(player)),
             ("Estadísticas", player.show_stats),
 
-            # Pasamos la clase Weapon a la opción 5
+            # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
 
-            # Pasamos la clase Armor a la opción 6
+            # Pasamos la clase Armor a la opción de equipar armadura
             ("Equipar Armadura", lambda: player.inventory.equip_menu(Armor)),
 
             ("Opciones", open_options),
@@ -191,7 +193,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
                 action = options[idx][1]
                 if action == "break": break
                 action()
-                if idx in [1, 3]: console.ask("\nPresiona Enter para continuar...")
+                if idx in [1, 4]: console.ask("\nPresiona Enter para continuar...")
             else:
                 console.error("Opción fuera de rango.")
 
