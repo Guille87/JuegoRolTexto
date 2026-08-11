@@ -11,7 +11,7 @@ from juego_rol_texto.ui import console
 class Skeleton(Enemy):
     def __init__(self):
         # Los esqueletos tienen buena defensa pero poca vida
-        super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5, speed=8), gold_min=10, gold_max=14)
+        super().__init__("Esqueleto", Stats(60, 60, 10, 15, 5, speed=8, precision=8, evasion=2), gold_min=10, gold_max=14)
         self.has_revived = False
 
     def take_damage(self, amount: int, defeated_enemies: list | None = None, element: str | None = None) -> int:

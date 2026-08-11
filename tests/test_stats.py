@@ -1,4 +1,6 @@
-from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.characters.stats import (
+    BASE_HIT_CHANCE, MAX_HIT_CHANCE, MIN_HIT_CHANCE, Stats, resolve_hit,
+)
 
 
 def test_health_is_clamped_to_max_health():
@@ -27,3 +29,30 @@ def test_magic_resist_defaults_to_zero():
 def test_crit_defaults(player):
     assert player.stats.crit_chance == 0.0
     assert player.stats.crit_damage == 1.5
+
+
+def test_speed_precision_evasion_default(player):
+    assert player.stats.speed == 10
+    assert player.stats.precision == 0
+    assert player.stats.evasion == 0
+
+
+def test_resolve_hit_uses_base_chance_when_precision_and_evasion_are_equal(monkeypatch):
+    # BASE_HIT_CHANCE% de acierto: justo por debajo del umbral acierta, justo por encima falla.
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: (BASE_HIT_CHANCE - 1) / 100)
+    assert resolve_hit(0, 0) is True
+
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: (BASE_HIT_CHANCE + 1) / 100)
+    assert resolve_hit(0, 0) is False
+
+
+def test_resolve_hit_chance_is_clamped_between_min_and_max(monkeypatch):
+    # Precisión muy superior a la evasión -> se limita a MAX_HIT_CHANCE, nunca "acierto absoluto" sin tirada
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: (MAX_HIT_CHANCE - 1) / 100)
+    assert resolve_hit(1000, 0) is True
+
+    # Evasión muy superior a la precisión -> se limita a MIN_HIT_CHANCE, nunca 0% de posibilidad
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: (MIN_HIT_CHANCE - 1) / 100)
+    assert resolve_hit(0, 1000) is True
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: (MIN_HIT_CHANCE + 1) / 100)
+    assert resolve_hit(0, 1000) is False

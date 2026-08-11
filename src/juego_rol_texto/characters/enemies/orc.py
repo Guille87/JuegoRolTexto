@@ -10,7 +10,7 @@ from juego_rol_texto.ui import console
 
 class Orc(Enemy):
     def __init__(self):
-        super().__init__("Orco", Stats(150, 150, 15, 20, 6, speed=9), gold_min=21, gold_max=29)
+        super().__init__("Orco", Stats(150, 150, 15, 20, 6, speed=9, precision=10, evasion=3), gold_min=21, gold_max=29)
         self.fury_active = False
         self.total_turns = 0  # Contador de turnos transcurridos
 

@@ -49,7 +49,9 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             "max_atk": player.stats.max_atk,
             "armor": player.stats.armor,
             "magic_resist": player.stats.magic_resist,
-            "speed": player.stats.speed
+            "speed": player.stats.speed,
+            "precision": player.stats.precision,
+            "evasion": player.stats.evasion
         },
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
@@ -130,6 +132,9 @@ def _perform_load(player, path):
     player.stats.magic_resist = stats_data.get("magic_resist", 0)
     # Compatibilidad con partidas guardadas antes de añadir la velocidad (sistema ATB).
     player.stats.speed = stats_data.get("speed", 10)
+    # Compatibilidad con partidas guardadas antes de añadir precisión/evasión.
+    player.stats.precision = stats_data.get("precision", 0)
+    player.stats.evasion = stats_data.get("evasion", 0)
 
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]

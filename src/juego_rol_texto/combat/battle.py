@@ -3,6 +3,7 @@ import random
 import time
 
 from juego_rol_texto.audio.resource_manager import ResourceManager
+from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
 
@@ -229,6 +230,20 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     # Verificación de seguridad: si attacker es una lista, tenemos un problema de lógica previo
     if isinstance(attacker, list):
         console.error("Error Interno: El atacante es una lista, no un objeto.")
+        return
+
+    # Tirada de acierto (precisión del atacante vs evasión del defensor):
+    # un fallo no llega a tocar armadura ni elementos, así que se resuelve
+    # antes que cualquier otro cálculo de daño.
+    attacker_precision = attacker.get_total_precision() if isinstance(attacker, Player) else attacker.stats.precision
+    defender_evasion = defender.get_total_evasion() if isinstance(defender, Player) else defender.stats.evasion
+    if not resolve_hit(attacker_precision, defender_evasion):
+        print(f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
+              f"{console.colorize(defender.name, console.Fore.RED)}, pero falla el golpe.")
+        if isinstance(attacker, Player):
+            print_status(attacker, defender, defeated_enemies)
+        else:
+            print_status(defender, attacker, defeated_enemies)
         return
 
     damage = attacker.get_attack_damage()

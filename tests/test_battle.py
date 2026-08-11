@@ -67,6 +67,7 @@ def test_goblin_is_not_affected_by_fire_element():
 def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # siempre acierta
 
     player.equipped_weapon = Weapon("Espada Flamígera", "desc", 15, damage=0, element="fuego")
 
@@ -85,6 +86,7 @@ def test_execute_turn_applies_crit_multiplier(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # siempre crítico
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # siempre acierta
 
     player.equipped_armor["guantes"] = Armor("Guantes", "desc", 1, slot="guantes", crit_chance=1.0)
     player.stats.armor = 0
@@ -103,6 +105,7 @@ def test_execute_turn_applies_crit_multiplier(player, monkeypatch):
 def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # siempre acierta
 
     player.equipped_weapon = Weapon("Espada de Hierro", "desc", 10, damage=0)  # sin elemento
     player.equipped_armor["brazales"] = Armor("Brazales Arcanos", "desc", 1, slot="brazales", element="fuego")
@@ -117,6 +120,28 @@ def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player,
     dealt = before - troll.stats.health
 
     assert dealt == 20  # 10 base * 2.0 (débil al fuego, heredado de los brazales)
+
+
+def test_execute_turn_deals_no_damage_on_a_miss(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.99)  # siempre falla
+
+    goblin = Goblin()
+    before = goblin.stats.health
+    _execute_turn(player, goblin, defeated_enemies=[])
+
+    assert goblin.stats.health == before  # el fallo no llega a restar vida
+
+
+def test_enemy_default_perform_turn_deals_no_damage_on_a_miss(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.99)  # siempre falla
+
+    goblin = Goblin()
+    before = player.stats.health
+    goblin.perform_turn(player)
+
+    assert player.stats.health == before  # el fallo no llega a restar vida
 
 
 def test_attempt_flee_is_always_successful_when_player_is_at_least_as_fast(player):

@@ -12,7 +12,7 @@ class Troll(Enemy):
     ELEMENTAL_WEAKNESSES = {"fuego": 2.0}
 
     def __init__(self):
-        super().__init__("Troll", Stats(250, 250, 12, 18, 4, speed=5), gold_min=42, gold_max=58)
+        super().__init__("Troll", Stats(250, 250, 12, 18, 4, speed=5, precision=3, evasion=0), gold_min=42, gold_max=58)
 
     def on_turn_end(self) -> None:
         """Habilidad especial: Regeneración Aleatoria"""

@@ -1,6 +1,6 @@
 import random
 
-from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.characters.stats import Stats, resolve_hit
 from juego_rol_texto.ui import console
 
 
@@ -36,6 +36,11 @@ class Enemy:
 
     def perform_turn(self, player) -> None:
         """Lógica por defecto: atacar. Las subclases pueden sobrescribir esto."""
+        if not resolve_hit(self.stats.precision, player.get_total_evasion()):
+            print(f"{console.colorize(self.name, console.Fore.RED)} ataca, pero "
+                  f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe.")
+            return
+
         damage = self.get_attack_damage()
         final_damage = player.take_damage(damage)
         print(f"{console.colorize(self.name, console.Fore.RED)} ataca y hace "

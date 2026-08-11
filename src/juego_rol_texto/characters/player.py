@@ -84,6 +84,14 @@ class Player(Character):
         """Devuelve la velocidad total (hoy solo el stat base; el equipo no otorga velocidad todavía)."""
         return self.stats.speed
 
+    def get_total_precision(self) -> int:
+        """Devuelve la precisión total (hoy solo el stat base; el equipo no otorga precisión todavía)."""
+        return self.stats.precision
+
+    def get_total_evasion(self) -> int:
+        """Devuelve la evasión total (hoy solo el stat base; el equipo no otorga evasión todavía)."""
+        return self.stats.evasion
+
     def get_equipped_element(self) -> str | None:
         """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
         if self.equipped_weapon and self.equipped_weapon.element:
@@ -195,6 +203,8 @@ class Player(Character):
     _MAX_ATK_GROWTH_RATE = 2.5
     _ARMOR_GROWTH_RATE = 1.4
     _SPEED_GROWTH_RATE = 1.6
+    _PRECISION_GROWTH_RATE = 0.7
+    _EVASION_GROWTH_RATE = 0.6
 
     @staticmethod
     def _growth_gain(rate: float, level: int) -> int:
@@ -210,6 +220,8 @@ class Player(Character):
         max_atk_gain = self._growth_gain(self._MAX_ATK_GROWTH_RATE, self.level)
         armor_gain = self._growth_gain(self._ARMOR_GROWTH_RATE, self.level)
         speed_gain = self._growth_gain(self._SPEED_GROWTH_RATE, self.level)
+        precision_gain = self._growth_gain(self._PRECISION_GROWTH_RATE, self.level)
+        evasion_gain = self._growth_gain(self._EVASION_GROWTH_RATE, self.level)
 
         self.stats.max_health += health_gain
         self.stats.health = self.stats.max_health
@@ -217,6 +229,8 @@ class Player(Character):
         self.stats.max_atk += max_atk_gain
         self.stats.armor += armor_gain
         self.stats.speed += speed_gain
+        self.stats.precision += precision_gain
+        self.stats.evasion += evasion_gain
 
         # La resistencia mágica sube más despacio (cada 2 niveles) y en cantidad
         # fija, mientras no exista equipamiento que la conceda, para no
@@ -228,6 +242,10 @@ class Player(Character):
         print(f"\n{console.colorize(f'⭐ ¡HAS SUBIDO AL NIVEL {self.level}! ⭐', console.Fore.YELLOW)}")
         stats_line = (f"HP Max +{health_gain} | Ataque +{min_atk_gain}-{max_atk_gain} | "
                       f"Armadura +{armor_gain} | Velocidad +{speed_gain}")
+        if precision_gain:
+            stats_line += f" | Precisión +{precision_gain}"
+        if evasion_gain:
+            stats_line += f" | Evasión +{evasion_gain}"
         if gained_magic_resist:
             stats_line += " | Resistencia Mágica +1"
         print(console.colorize(stats_line, console.Fore.WHITE))
@@ -240,6 +258,8 @@ class Player(Character):
         print(f"Resistencia Mágica: {self.get_total_magic_resist()}")
         print(f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
               f"Daño Crítico: x{self.get_total_crit_damage():.2f}")
+        print(f"Velocidad: {self.get_total_speed()} | "
+              f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}")
         print(f"XP: {self.experience} / {self.required_xp()}")
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")
