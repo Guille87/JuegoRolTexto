@@ -59,6 +59,7 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
         "inventory_quantities": player.inventory.quantities,
+        "discovered_materials": sorted(player.inventory.discovered_materials),
         "equipped_weapon": player.equipped_weapon.to_dict() if player.equipped_weapon else None,
         "equipped_armor": {
             slot: item.to_dict() if item else None
@@ -147,6 +148,12 @@ def _perform_load(player, path):
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]
     player.inventory.load_saved_inventory(items_reconstructed, save_data.get("inventory_quantities", {}))
+    # Compatibilidad con partidas guardadas antes de añadir el descubrimiento de
+    # materiales: si no hay "discovered_materials" en el guardado, al menos los
+    # materiales que el jugador tiene ahora mismo en el inventario cuentan como
+    # descubiertos (mejor eso que perder recetas ya desbloqueadas al cargar).
+    materials_in_save = {data.get("name") for data in save_data.get("inventory", []) if data.get("type") == "Material"}
+    player.inventory.discovered_materials = set(save_data.get("discovered_materials", [])) | materials_in_save
 
     if save_data.get("equipped_weapon"):
         player.equipped_weapon = item_factory(save_data["equipped_weapon"])

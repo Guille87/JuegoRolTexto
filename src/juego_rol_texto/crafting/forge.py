@@ -1,4 +1,4 @@
-from juego_rol_texto.items.equipment import Armor
+from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.factory import item_factory
 from juego_rol_texto.ui import console
 
@@ -7,7 +7,7 @@ class CraftingRecipe:
     """Una receta: materiales + oro requeridos, y una plantilla del objeto resultante."""
     def __init__(self, name: str, materials: dict, gold_cost: int, result_template):
         self.name = name
-        self.materials = materials  # {"Piel de Troll": 1}
+        self.materials = materials  # {"Piel de Troll": 2}
         self.gold_cost = gold_cost
         self.result_template = result_template
 
@@ -19,6 +19,11 @@ class CraftingRecipe:
         if player.inventory.gold < self.gold_cost:
             return False
         return all(player.inventory.has_item(mat, qty) for mat, qty in self.materials.items())
+
+    def is_discovered(self, player) -> bool:
+        """Solo se muestra en la herrería si el jugador ha conseguido alguna vez
+        (aunque ya no le queden en el inventario) todos los materiales que pide."""
+        return all(mat in player.inventory.discovered_materials for mat in self.materials)
 
     def missing_requirements(self, player) -> list:
         """Lista en texto lo que le falta al jugador para poder craftear esta receta."""
@@ -42,7 +47,10 @@ class Forge:
         self.recipes = [
             CraftingRecipe(
                 name="Armadura Regenerativa",
-                materials={"Piel de Troll": 1},
+                # Piel de Troll cae al 5%, el drop más raro del juego junto con la
+                # Esencia Arcana: con solo 2 unidades ya hacen falta ~40 Trolls de
+                # media, a la altura de ser el mejor peto craftable del juego.
+                materials={"Piel de Troll": 2},
                 gold_cost=200,
                 result_template=Armor(
                     "Armadura Regenerativa",
@@ -51,8 +59,21 @@ class Forge:
                 )
             ),
             CraftingRecipe(
+                name="Daga Envenenada",
+                # Único arma craftable del juego (el resto de recetas son de
+                # armadura); da una segunda vía además del drop del Huargo para
+                # conseguir un arma de veneno.
+                materials={"Colmillo de Huargo": 25, "Capa de Sombras": 25},
+                gold_cost=45,
+                result_template=Weapon(
+                    "Daga Envenenada",
+                    "Forjada con colmillos que todavía destilan un veneno letal.",
+                    value=22, damage=10, element="veneno"
+                )
+            ),
+            CraftingRecipe(
                 name="Guantes de Combate",
-                materials={"Colmillo de Goblin": 1, "Colmillo de Orco": 1},
+                materials={"Colmillo de Goblin": 25, "Colmillo de Orco": 25},
                 gold_cost=60,
                 result_template=Armor(
                     "Guantes de Combate",
@@ -62,7 +83,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Brazales Arcanos",
-                materials={"Esencia Arcana": 1},
+                materials={"Esencia Arcana": 8, "Esencia Espectral": 25},
                 gold_cost=80,
                 result_template=Armor(
                     "Brazales Arcanos",
@@ -72,7 +93,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Hombreras Reforzadas",
-                materials={"Colmillo de Orco": 1, "Fragmento de Hueso": 1},
+                materials={"Colmillo de Orco": 25, "Fragmento de Hueso": 25, "Fragmento de Gárgola": 15},
                 gold_cost=70,
                 result_template=Armor(
                     "Hombreras Reforzadas",
@@ -82,17 +103,17 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Cinturón de Resistencia",
-                materials={"Fragmento de Hueso": 1},
+                materials={"Fragmento de Hueso": 25, "Núcleo de Gólem": 15},
                 gold_cost=40,
                 result_template=Armor(
                     "Cinturón de Resistencia",
-                    "Tejido con fragmentos óseos que parecen absorber el dolor, tanto físico como arcano.",
+                    "Tejido con fragmentos óseos que parecen absorber el dolor arcano.",
                     value=12, slot="cinturon", max_health=15, magic_resist=4
                 )
             ),
             CraftingRecipe(
                 name="Perneras de Placa",
-                materials={"Colmillo de Orco": 1},
+                materials={"Colmillo de Orco": 25, "Capa de Sombras": 25},
                 gold_cost=50,
                 result_template=Armor(
                     "Perneras de Placa",
@@ -102,7 +123,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Botas Ligeras",
-                materials={"Colmillo de Goblin": 1},
+                materials={"Colmillo de Goblin": 25, "Colmillo de Huargo": 25},
                 gold_cost=30,
                 result_template=Armor(
                     "Botas Ligeras",
@@ -112,7 +133,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Anillo de Fuerza",
-                materials={"Colmillo de Orco": 1, "Fragmento de Hueso": 1},
+                materials={"Colmillo de Orco": 25, "Fragmento de Hueso": 25, "Ceniza Infernal": 15},
                 gold_cost=55,
                 result_template=Armor(
                     "Anillo de Fuerza",
@@ -122,7 +143,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Anillo de Precisión",
-                materials={"Colmillo de Goblin": 1, "Esencia Arcana": 1},
+                materials={"Colmillo de Goblin": 25, "Esencia Arcana": 8, "Polvo de Hueso Negro": 15},
                 gold_cost=65,
                 result_template=Armor(
                     "Anillo de Precisión",
@@ -132,7 +153,7 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Amuleto de Resistencia",
-                materials={"Esencia Arcana": 1, "Fragmento de Hueso": 1},
+                materials={"Esencia Arcana": 8, "Fragmento de Hueso": 25, "Pluma Corrupta": 15},
                 gold_cost=90,
                 result_template=Armor(
                     "Amuleto de Resistencia",
@@ -142,7 +163,10 @@ class Forge:
             ),
             CraftingRecipe(
                 name="Anillo de Vitalidad",
-                materials={"Fragmento de Hueso": 2},
+                # Escama de Dragón cae al 35% pero de la pelea más difícil del
+                # juego (el jefe final): 5 unidades ya representan un farmeo real
+                # de postgame, sin llegar a los ~70 Dragones que pedirían 25.
+                materials={"Fragmento de Hueso": 25, "Escama de Dragón": 5},
                 gold_cost=45,
                 result_template=Armor(
                     "Anillo de Vitalidad",
@@ -158,27 +182,35 @@ class Forge:
             print(console.colorize("\n--- HERRERÍA ---", console.Fore.YELLOW))
             print(f"Oro disponible: {console.colorize(str(player.inventory.gold), console.Fore.YELLOW)}")
 
-            if not self.recipes:
-                print("No hay recetas disponibles todavía.")
+            visible_recipes = [r for r in self.recipes if r.is_discovered(player)]
+            hidden_count = len(self.recipes) - len(visible_recipes)
+
+            if not visible_recipes:
+                print("Todavía no has descubierto ningún material craftable. Derrota enemigos y consigue sus materiales.")
+                if hidden_count:
+                    print(console.colorize(f"({hidden_count} recetas más por descubrir)", console.Fore.BLACK, bright=True))
                 return
 
-            for idx, recipe in enumerate(self.recipes, 1):
+            for idx, recipe in enumerate(visible_recipes, 1):
                 print(f"{idx}. {recipe}")
-            print(f"{len(self.recipes) + 1}. Volver")
+            print(f"{len(visible_recipes) + 1}. Volver")
+            if hidden_count:
+                print(console.colorize(f"({hidden_count} recetas más por descubrir consiguiendo nuevos materiales)",
+                                        console.Fore.BLACK, bright=True))
 
-            choice = console.ask(f"\nElige qué craftear (1-{len(self.recipes) + 1}): ")
+            choice = console.ask(f"\nElige qué craftear (1-{len(visible_recipes) + 1}): ")
             if not choice.isdigit():
                 console.error("Entrada no válida.")
                 continue
 
             idx = int(choice) - 1
-            if idx == len(self.recipes):
+            if idx == len(visible_recipes):
                 return
-            if not (0 <= idx < len(self.recipes)):
+            if not (0 <= idx < len(visible_recipes)):
                 console.error("Opción fuera de rango.")
                 continue
 
-            self._craft(player, self.recipes[idx])
+            self._craft(player, visible_recipes[idx])
 
     def _craft(self, player, recipe: CraftingRecipe) -> None:
         if not recipe.can_craft(player):

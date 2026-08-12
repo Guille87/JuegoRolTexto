@@ -1,4 +1,5 @@
 from juego_rol_texto.items.equipment import Weapon, Armor, slot_accepts, slot_label
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions.potion_base import Potion
 from juego_rol_texto.ui import console
 
@@ -10,9 +11,17 @@ class Inventory:
         self.gold = 0
         self.player = player  # Guarda una referencia al objeto Player
         self.item_mapping = {}
+        # Nombres de Material que el jugador ha conseguido alguna vez, aunque ya
+        # no tenga stock (se consuma al craftear). Permanente una vez descubierto;
+        # usado por crafting/forge.py para no mostrar recetas de materiales que
+        # el jugador nunca ha visto todavía.
+        self.discovered_materials = set()
 
     def add_item(self, item) -> None:
         """Añade un ítem gestionando stacks para consumibles y oro para equipo repetido."""
+        if isinstance(item, Material):
+            self.discovered_materials.add(item.name)
+
         # Si es equipo (Arma/Armadura), comprobamos si ya existe por nombre
         if isinstance(item, (Weapon, Armor)):
             existing = next((i for i in self.items if i.name == item.name), None)
