@@ -1,3 +1,5 @@
+import sys
+
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.enemies import (
     AngelCaido, Bandido, Demonio, Dragon, EspirituVengativo, Gargola, GolemDePiedra, Goblin, Huargo, Nigromante,
@@ -34,7 +36,7 @@ def main_menu() -> None:
             "1": ("Nueva Partida", start_new_game),
             "2": ("Cargar Partida", load_saved_game),
             "3": ("Opciones", open_options),
-            "4": ("Salir", exit)
+            "4": ("Salir", sys.exit)
         }
 
         for key, (text, _) in options.items():
@@ -185,7 +187,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             ("Opciones", open_options),
             ("Guardar Partida", lambda: save_game(player, unlocked_enemies, defeated_enemies)),
             ("Volver al Menú Principal", "break"),
-            ("Salir del Juego", exit)
+            ("Salir del Juego", sys.exit)
         ]
 
         for i, (text, _) in enumerate(options, 1):

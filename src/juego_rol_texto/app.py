@@ -1,3 +1,5 @@
+import sys
+
 import pygame
 from colorama import init
 
@@ -29,6 +31,17 @@ def setup_resources() -> None:
 
 
 def main() -> None:
+    # Forzamos stdout/stderr a UTF-8 antes de nada: en una consola de Windows
+    # con code page heredada (cmd.exe por defecto, o el .exe empaquetado fuera
+    # de un IDE) los emojis/tildes de los textos del juego revientan con
+    # UnicodeEncodeError si no se hace esto. Debe ir antes de colorama.init(),
+    # que envuelve stdout/stderr con su propio wrapper.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
     # Inicialización de librerías
     init(autoreset=True)  # Colorama
     pygame.init()
