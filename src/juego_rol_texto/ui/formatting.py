@@ -38,6 +38,28 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     print("\n" + "=" * 60)
 
 
+def print_bestiary_entry(enemy) -> None:
+    """Muestra la ficha completa de un enemigo (llamar solo si ya ha sido derrotado)."""
+    print(f"\n{console.colorize(f'--- {enemy.name} ---', console.Fore.RED, bright=True)}")
+    print(f"  Vida máxima: {enemy.stats.max_health}")
+    print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
+    print(f"  Armadura: {enemy.stats.armor} | Resistencia Mágica: {enemy.stats.magic_resist}")
+    print(f"  Velocidad: {enemy.stats.speed}")
+    print(f"  Precisión: {enemy.stats.precision} | Evasión: {enemy.stats.evasion}")
+    print(f"  Prob. Crítico: {enemy.stats.crit_chance * 100:.0f}% | Daño Crítico: x{enemy.stats.crit_damage:.2f}")
+    print(f"  Penetración de Armadura: {enemy.stats.armor_penetration} | Penetración Mágica: {enemy.stats.magic_penetration}")
+    if enemy.stats.regen:
+        print(f"  Regeneración: {enemy.stats.regen} HP/turno")
+
+    weaknesses = getattr(type(enemy), "ELEMENTAL_WEAKNESSES", {})
+    if weaknesses:
+        weak_str = ", ".join(f"{elem.capitalize()} (x{mult:.1f})" for elem, mult in weaknesses.items())
+        print(f"  {console.colorize(f'Debilidad elemental: {weak_str}', console.Fore.CYAN, bright=True)}")
+
+    print(f"  Oro al derrotarlo: {enemy.gold_min}-{enemy.gold_max}")
+    print("=" * 60)
+
+
 def print_status(player, enemy, defeated_enemies: list) -> None:
     """Muestra las barras de salud gráficas de forma profesional."""
 

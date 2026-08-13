@@ -13,6 +13,7 @@ from juego_rol_texto.items.equipment import ARMOR_SLOTS, Weapon, Armor, slot_lab
 from juego_rol_texto.persistence.save_load import save_game, load_game
 from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
+from juego_rol_texto.ui.formatting import print_bestiary_entry
 
 # Instancia global de ResourceManager
 resource_manager = ResourceManager()
@@ -174,6 +175,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             ("Tienda", lambda: Shop().open(player)),
             ("Herrería", lambda: Forge().open(player)),
             ("Estadísticas", player.show_stats),
+            ("Bestiario", lambda: _bestiary_flow(defeated_enemies)),
 
             # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
@@ -225,6 +227,36 @@ def _equip_armor_flow(player) -> None:
             continue
 
         player.inventory.equip_menu(Armor, filter_slot=ARMOR_SLOTS[idx])
+
+
+def _bestiary_flow(defeated_enemies: list) -> None:
+    """Submenú de solo lectura con la ficha de los enemigos ya derrotados alguna vez."""
+    while True:
+        print(console.colorize("\n--- BESTIARIO ---", console.Fore.YELLOW))
+
+        if not defeated_enemies:
+            print("Todavía no has derrotado a ningún enemigo.")
+            console.ask("\nPresiona Enter para volver...")
+            return
+
+        for idx, name in enumerate(defeated_enemies, 1):
+            print(f"{idx}. {name}")
+        print(f"{len(defeated_enemies) + 1}. Volver")
+
+        choice = console.ask(f"\nElige un enemigo (1-{len(defeated_enemies) + 1}): ")
+        if not choice.isdigit():
+            console.error("Entrada no válida.")
+            continue
+
+        idx = int(choice) - 1
+        if idx == len(defeated_enemies):
+            return
+        if not (0 <= idx < len(defeated_enemies)):
+            console.error("Opción fuera de rango.")
+            continue
+
+        print_bestiary_entry(_get_enemy_instance(defeated_enemies[idx]))
+        console.ask("\nPresiona Enter para continuar...")
 
 
 def _get_enemy_instance(name: str):

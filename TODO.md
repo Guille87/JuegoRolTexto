@@ -1,5 +1,8 @@
 # Próximas Implementaciones 🚀
 
+## Bestiario
+- [x] **Nueva opción de menú "Bestiario"** (a petición del usuario), solo lectura, listada en `game_loop` junto a Tienda/Herrería/Estadísticas. Muestra únicamente los enemigos que ya están en `defeated_enemies` — un enemigo desbloqueado pero no derrotado todavía no aparece en absoluto en la lista, ni siquiera como "???" (así lo pidió el usuario: "solo cuando se han derrotado"). Implementado como `_bestiary_flow()` en `ui/menus.py` (mismo patrón interactivo que `_equip_armor_flow`) + `print_bestiary_entry()` en `ui/formatting.py`, que reutiliza `_get_enemy_instance()` para construir una instancia "limpia" del enemigo (sin arrastrar HP actual de un combate). La ficha muestra stats de combate completos (vida máxima, ataque, armadura/resistencia mágica, velocidad, precisión/evasión, crítico, penetración, regeneración si tiene), la debilidad elemental (`ELEMENTAL_WEAKNESSES`) si la tiene, y el rango de oro que suelta. Deliberadamente **no** incluye la tabla de drops de objetos/materiales (`drop_item()` no expone sus probabilidades de forma estática sin duplicar esa información y arriesgarse a que se desincronice del código real).
+
 ## Sistema de Economía (Tienda)
 - [x] Crear clase `Shop` con inventario propio.
 - [x] Implementar comando `vender` en el menú de la ciudad.
