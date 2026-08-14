@@ -63,6 +63,7 @@ class Inventory:
         elif filter_class == Armor: title = "SELECCIONAR ARMADURA"
 
         print(console.colorize(f"--- {title} ---", console.Fore.CYAN))
+        print(console.colorize(f"Vida: {self.player.stats.health}/{self.player.stats.max_health}", console.Fore.GREEN, bright=True))
 
         items_to_show = [
             i for i in self.items

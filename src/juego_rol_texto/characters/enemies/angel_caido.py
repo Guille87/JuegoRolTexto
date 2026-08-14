@@ -76,10 +76,10 @@ class AngelCaido(Enemy):
             items.append(Material("Pluma Corrupta", "Una pluma blanca manchada de un negro que no debería existir.", 40, rarity="Raro"))
         if random.random() <= 0.08:
             items.append(Armor("Aureola Rota", "Un fragmento de halo que aún desprende un calor antinatural.", 70,
-                                slot="casco", defense=10, magic_resist=8))
+                                slot="casco", max_health=35, defense=10, magic_resist=8))
         if random.random() <= 0.08:
-            items.append(Weapon("Espada Sagrada Corrupta", "Su filo brilla con una luz que quema al portador equivocado.", 40, 22))
+            items.append(Weapon("Espada Sagrada Corrupta", "Su filo brilla con una luz que quema al portador equivocado.", 40, 27))
         if random.random() <= 0.1:
             items.append(Armor("Anillo de Juicio", "Un aro dorado que pesa más de lo que debería.", 35,
-                                slot="anillo", damage=4, magic_resist=3))
+                                slot="anillo", crit_damage=0.14, damage=4, magic_resist=3))
         return items

@@ -60,6 +60,7 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         "inventory": [item.to_dict() for item in player.inventory.items],
         "inventory_quantities": player.inventory.quantities,
         "discovered_materials": sorted(player.inventory.discovered_materials),
+        "enemy_kill_counts": player.enemy_kill_counts,
         "equipped_weapon": player.equipped_weapon.to_dict() if player.equipped_weapon else None,
         "equipped_armor": {
             slot: item.to_dict() if item else None
@@ -154,6 +155,13 @@ def _perform_load(player, path):
     # descubiertos (mejor eso que perder recetas ya desbloqueadas al cargar).
     materials_in_save = {data.get("name") for data in save_data.get("inventory", []) if data.get("type") == "Material"}
     player.inventory.discovered_materials = set(save_data.get("discovered_materials", [])) | materials_in_save
+
+    # Compatibilidad con partidas guardadas antes de contar derrotas: si un
+    # enemigo ya está en defeated_enemies, como mínimo se le ha ganado 1 vez.
+    kill_counts = dict(save_data.get("enemy_kill_counts", {}))
+    for name in save_data.get("defeated_enemies", []):
+        kill_counts.setdefault(name, 1)
+    player.enemy_kill_counts = kill_counts
 
     if save_data.get("equipped_weapon"):
         player.equipped_weapon = item_factory(save_data["equipped_weapon"])

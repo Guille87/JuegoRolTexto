@@ -56,14 +56,14 @@ class Bandido(Enemy):
         if random.random() <= 0.25:
             items.append(Material("Capa de Sombras", "Tela oscura que parece absorber la luz.", 8, rarity="Común"))
         if random.random() <= 0.1:
-            items.append(Weapon("Daga Robada", "Ligera y afilada, perfecta para golpear rápido y desaparecer.", 12, 6))
+            items.append(Weapon("Daga Robada", "Ligera y afilada, perfecta para golpear rápido y desaparecer.", 12, 9))
         if random.random() <= 0.08:
             items.append(Armor("Guantes de Ladrón", "Sin apenas grosor; perfectos para no perder el tacto al robar.", 18,
-                                slot="guantes", crit_chance=0.04))
+                                slot="guantes", crit_damage=0.12, crit_chance=0.04))
         if random.random() <= 0.08:
             items.append(Armor("Perneras de Bandido", "Cortadas para no estorbar al correr entre callejones.", 14,
-                                slot="perneras", speed=2))
+                                slot="perneras", evasion=2, speed=2))
         if random.random() <= 0.08:
             items.append(Armor("Capucha de Ladrón", "Oculta el rostro y agudiza los reflejos para el golpe rápido.", 14,
-                                slot="casco", crit_chance=0.03, speed=1))
+                                slot="casco", max_health=18, crit_chance=0.04))
         return items

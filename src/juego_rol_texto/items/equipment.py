@@ -57,7 +57,8 @@ class Armor(Item):
     def __init__(self, name: str, description: str, value: int, slot: str, defense: int = 0,
                  max_health: int = 0, magic_resist: int = 0,
                  crit_chance: float = 0.0, crit_damage: float = 0.0,
-                 damage: int = 0, element: str | None = None, regen: int = 0, speed: int = 0):
+                 damage: int = 0, element: str | None = None, regen: int = 0, speed: int = 0,
+                 precision: int = 0, evasion: int = 0):
         super().__init__(name, description, value)
         self.slot = slot
         self.defense = defense
@@ -74,6 +75,12 @@ class Armor(Item):
         # Velocidad: sumada en Player.get_total_speed(). En la práctica solo las
         # botas la llevan (decisión de diseño, no una restricción del código).
         self.speed = speed
+        # Precisión/Evasión: sumadas en Player.get_total_precision()/get_total_evasion().
+        # Cada hueco de armadura tiene un "stat base" garantizado que reparte
+        # entre todos sus objetos (ver characters/enemies/*::drop_item()); para
+        # hombreras es precisión y para perneras es evasión.
+        self.precision = precision
+        self.evasion = evasion
 
     def use(self, player, target_slot: str | None = None) -> bool:
         # target_slot lo indica quien equipa (necesario para los anillos: self.slot
@@ -112,6 +119,10 @@ class Armor(Item):
             parts.append(f"Regeneración: +{self.regen} HP/turno")
         if self.speed:
             parts.append(f"Velocidad: +{self.speed}")
+        if self.precision:
+            parts.append(f"Precisión: +{self.precision}")
+        if self.evasion:
+            parts.append(f"Evasión: +{self.evasion}")
         info = " | ".join(parts) if parts else "Sin bonus"
         return console.colorize(info, console.Fore.BLUE)
 
@@ -128,6 +139,8 @@ class Armor(Item):
             "element": self.element,
             "regen": self.regen,
             "speed": self.speed,
+            "precision": self.precision,
+            "evasion": self.evasion,
             "type": "Armor"
         })
         return data
@@ -148,5 +161,7 @@ class Armor(Item):
             damage=data.get("damage", 0),
             element=data.get("element"),
             regen=data.get("regen", 0),
-            speed=data.get("speed", 0)
+            speed=data.get("speed", 0),
+            precision=data.get("precision", 0),
+            evasion=data.get("evasion", 0)
         )

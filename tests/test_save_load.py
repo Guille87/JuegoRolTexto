@@ -20,6 +20,7 @@ def _build_player(name="Guille"):
     p.equipped_armor["anillo1"] = Armor("Anillo de Fuerza", "desc", 16, slot="anillo", damage=3)
     p.equipped_armor["anillo2"] = Armor("Anillo de Precisión", "desc", 20, slot="anillo", crit_damage=0.12)
     p.equipped_armor["amuleto"] = Armor("Amuleto de Resistencia", "desc", 28, slot="amuleto", magic_resist=5)
+    p.enemy_kill_counts = {"Goblin": 3, "Esqueleto": 1}
     return p
 
 
@@ -50,6 +51,34 @@ def test_save_and_load_round_trip(tmp_save_dir):
     assert loaded_player.equipped_armor["anillo2"].name == "Anillo de Precisión"
     assert loaded_player.equipped_armor["amuleto"].name == "Amuleto de Resistencia"
     assert loaded_player.equipped_armor["peto"] is None
+    assert loaded_player.enemy_kill_counts == {"Goblin": 3, "Esqueleto": 1}
+
+
+def test_load_backfills_kill_count_for_legacy_saves_without_the_field(tmp_save_dir):
+    """Partidas guardadas antes de contar derrotas: al menos 1 por cada enemigo ya derrotado."""
+    legacy_save_data = {
+        "player_name": "Guille",
+        "unlocked_enemies": ["Goblin", "Esqueleto"],
+        "defeated_enemies": ["Goblin"],
+        "gold": 10,
+        "player_stats": {
+            "level": 1, "experience": 0, "health": 100, "max_health": 100,
+            "min_atk": 5, "max_atk": 10, "armor": 2, "magic_resist": 0,
+        },
+        "inventory": [],
+        "inventory_quantities": {},
+        "equipped_weapon": None,
+        "equipped_armor": None,
+        # sin "enemy_kill_counts"
+    }
+    encoded = base64.b64encode(json.dumps(legacy_save_data).encode("utf-8"))
+    (tmp_save_dir / "Guille.sav").write_bytes(encoded)
+
+    loaded_player = Player("Guille", Stats(1, 1, 1, 1, 1))
+    result = load_game(loaded_player)
+
+    assert result is not None
+    assert loaded_player.enemy_kill_counts == {"Goblin": 1}
 
 
 def test_save_creates_backup_of_previous_save(tmp_save_dir):

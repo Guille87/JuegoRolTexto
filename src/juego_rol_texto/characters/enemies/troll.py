@@ -29,12 +29,12 @@ class Troll(Enemy):
 
     def drop_item(self) -> list:
         items = []
-        # 8% Maza de Piedra (la mejor arma actual, drop más bajo a propósito)
+        # 8% Maza de Piedra (drop más bajo a propósito)
         if random.random() <= 0.08:
             items.append(Weapon(
                 "Maza de Piedra",
                 "Un bloque de granito atado a un tronco. Pesada y brutal.",
-                15, 20
+                15, 17
             ))
 
         # 70% Poción de Regeneración
@@ -57,6 +57,6 @@ class Troll(Enemy):
             items.append(Armor(
                 "Hombreras de Troll",
                 "Placas de hueso trolluno unidas a la piel; se regeneran casi tan rápido como su dueño original.",
-                25, slot="hombreras", defense=3, regen=2
+                25, slot="hombreras", precision=3, defense=3, regen=2
             ))
         return items

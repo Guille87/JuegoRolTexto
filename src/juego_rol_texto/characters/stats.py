@@ -5,7 +5,7 @@ import random
 # (characters/enemies/enemy_base.py::Enemy.perform_turn). Vive aquí, en un
 # módulo hoja sin dependencias de combate ni de personajes concretos, para que
 # ambos puedan importarla sin crear un ciclo de imports.
-BASE_HIT_CHANCE = 90
+BASE_HIT_CHANCE = 100
 MIN_HIT_CHANCE = 5
 MAX_HIT_CHANCE = 100
 
@@ -13,10 +13,12 @@ MAX_HIT_CHANCE = 100
 def resolve_hit(attacker_precision: int, defender_evasion: int) -> bool:
     """Tirada de acierto: precisión del atacante vs evasión del defensor.
 
-    Parte de un 90% de acierto base; cada punto de diferencia entre precisión
-    y evasión suma o resta un 1%, con un suelo del 5% y un techo del 100% (un
-    ataque nunca falla ni acierta con una probabilidad absoluta del 0%/100%
-    salvo que la diferencia de stats sea muy grande).
+    Parte de un 100% de acierto base: contra evasión 0, el atacante acierta
+    siempre (la evasión es la única fuente de esquivar, no un margen de fallo
+    "de base" que existiera incluso sin evasión). Cada punto de evasión del
+    defensor por encima de la precisión del atacante resta 1% de acierto, con
+    un suelo del 5% (un ataque nunca falla al 100% aunque la evasión sea
+    altísima) y techo del 100%.
     """
     chance = BASE_HIT_CHANCE + attacker_precision - defender_evasion
     chance = max(MIN_HIT_CHANCE, min(MAX_HIT_CHANCE, chance))

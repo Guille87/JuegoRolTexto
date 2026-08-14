@@ -46,14 +46,14 @@ class GolemDePiedra(Enemy):
             items.append(Armor("Coraza de Gólem", "Una plancha de roca maciza tallada para envolver el torso entero.", 55,
                                 slot="peto", defense=22, max_health=30))
         if random.random() <= 0.08:
-            items.append(Weapon("Mazo de Gólem", "Un fragmento del propio brazo del gólem, todavía duro como la roca.", 30, 20))
+            items.append(Weapon("Mazo de Gólem", "Un fragmento del propio brazo del gólem, todavía duro como la roca.", 30, 21))
         if random.random() <= 0.08:
             items.append(Armor("Cinturón de Roca", "Un anillo de piedra tallada que ancla al portador al suelo.", 30,
                                 slot="cinturon", defense=4, max_health=20))
         if random.random() <= 0.08:
             items.append(Armor("Hombreras de Gólem", "Bloques de piedra tallados directamente del propio gólem.", 22,
-                                slot="hombreras", defense=4))
+                                slot="hombreras", precision=4, defense=4))
         if random.random() <= 0.08:
-            items.append(Armor("Botas de Gólem", "Pesadas losas de piedra; cambian velocidad por resistencia.", 20,
-                                slot="botas", defense=3, max_health=10))
+            items.append(Armor("Botas de Gólem", "Pesadas losas de piedra; apenas dejan avanzar, pero casi nada las atraviesa.", 20,
+                                slot="botas", speed=1, defense=3, max_health=10))
         return items

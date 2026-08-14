@@ -49,7 +49,7 @@ class Gargola(Enemy):
             items.append(Armor("Placa de Gárgola", "Losas de piedra ajustadas al cuerpo; casi imposible de perforar.", 40,
                                 slot="peto", defense=16, max_health=25))
         if random.random() <= 0.08:
-            items.append(Weapon("Puño de Piedra", "Un guantelete macizo arrancado de una gárgola caída.", 22, 16))
-        if random.random() <= 0.08:
-            items.append(Weapon("Garra de Tormenta", "Conserva la carga estática de incontables tormentas sobre el campanario.", 26, 18, element="rayo"))
+            items.append(Weapon("Puño de Piedra", "Un guantelete macizo arrancado de una gárgola caída.", 22, 19))
+        if random.random() <= 0.06:
+            items.append(Weapon("Garra de Tormenta", "Conserva la carga estática de incontables tormentas sobre el campanario.", 26, 15, element="rayo"))
         return items

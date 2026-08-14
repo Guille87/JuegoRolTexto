@@ -75,8 +75,8 @@ class Dragon(Enemy):
             items.append(Armor("Coraza de Escamas de Dragón", "Forjada con escamas superpuestas; repele el fuego tanto como el acero.", 100,
                                 slot="peto", defense=24, magic_resist=8, max_health=40))
         if random.random() <= 0.1:
-            items.append(Weapon("Colmillo de Dragón", "Un colmillo curvo tallado en un arma; aún desprende calor.", 55, 30, element="fuego"))
+            items.append(Weapon("Colmillo de Dragón", "Un colmillo curvo tallado en un arma; aún desprende calor.", 55, 32, element="fuego"))
         if random.random() <= 0.08:
             items.append(Armor("Amuleto de Escama de Dragón", "Una única escama pulida engarzada en un colgante de oro.", 50,
-                                slot="amuleto", defense=3, damage=3))
+                                slot="amuleto", magic_resist=12, defense=3, damage=3))
         return items

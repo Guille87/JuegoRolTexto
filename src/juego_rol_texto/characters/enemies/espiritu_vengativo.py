@@ -43,8 +43,8 @@ class EspirituVengativo(Enemy):
         if random.random() <= 0.3:
             items.append(Material("Esencia Espectral", "Un jirón de energía fantasmal que se resiste a disiparse.", 10, rarity="Raro"))
         if random.random() <= 0.1:
-            items.append(Weapon("Daga Espectral", "Fría al tacto; parece atravesar la carne sin apenas resistencia.", 18, 9))
+            items.append(Weapon("Daga Espectral", "Fría al tacto; parece atravesar la carne sin apenas resistencia.", 18, 14))
         if random.random() <= 0.08:
             items.append(Armor("Brazales Espectrales", "Envuelven el brazo en una neblina fría que no se puede tocar del todo.", 22,
-                                slot="brazales", magic_resist=4))
+                                slot="brazales", crit_chance=0.04, magic_resist=4))
         return items

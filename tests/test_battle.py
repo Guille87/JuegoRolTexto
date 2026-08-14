@@ -19,6 +19,29 @@ def test_victory_unlocks_next_enemy_and_grants_rewards(player, weak_enemy, monke
     assert ENEMY_PROGRESSION["Goblin"] in unlocked
     assert weak_enemy.gold_min <= player.inventory.gold <= weak_enemy.gold_max
     assert player.is_alive()
+    assert player.enemy_kill_counts["Goblin"] == 1
+
+
+def test_victory_increments_kill_count_on_repeat_wins(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "1")
+
+    unlocked = ["Goblin"]
+    defeated = ["Goblin"]  # ya derrotado antes: la próxima victoria debe sumar, no reiniciar
+
+    def weak_goblin():
+        g = Goblin()
+        g.stats.health = 1
+        g.stats.max_health = 1
+        g.ambush_done = True
+        return g
+
+    initiate_battle(player, weak_goblin(), defeated, unlocked)
+    initiate_battle(player, weak_goblin(), defeated, unlocked)
+
+    assert player.enemy_kill_counts["Goblin"] == 2
 
 
 def test_defeat_penalizes_gold_and_fully_heals_player(player, monkeypatch):
@@ -247,6 +270,8 @@ def test_execute_turn_deals_no_damage_on_a_miss(player, monkeypatch):
 
 def test_enemy_default_perform_turn_deals_no_damage_on_a_miss(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.99)  # siempre falla
+    # Con acierto base 100%, solo la evasión hace que un ataque pueda fallar.
+    player.stats.evasion = 50
 
     goblin = Goblin()
     before = player.stats.health
@@ -290,6 +315,21 @@ def test_attempt_flee_chance_drops_but_never_reaches_zero_when_enemy_is_faster(p
     # así que con un flee_chance positivo (aunque pequeño) sigue siendo posible.
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
     assert _attempt_flee(player, mago) is True
+
+
+def test_fleeing_does_not_heal_damage_carried_over_from_before_the_battle(player, weak_enemy, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")  # huir
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: True)
+
+    player.stats.max_health = 100
+    player.stats.health = 40  # ya venía dañado de una pelea anterior (missing=60)
+
+    initiate_battle(player, weak_enemy, defeated_enemies=[], unlocked_enemies=["Goblin"])
+
+    # Huir resuelve antes que cualquier turno del enemigo, así que no se pierde
+    # vida EN esta pelea: la curación de después de combate no debe tocar nada.
+    assert player.stats.health == 40
 
 
 def test_run_player_turn_failed_flee_consumes_turn_without_attacking(player, weak_enemy, monkeypatch):

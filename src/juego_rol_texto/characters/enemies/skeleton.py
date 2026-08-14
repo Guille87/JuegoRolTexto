@@ -61,5 +61,5 @@ class Skeleton(Enemy):
         # 8% de soltar unos guantes óseos
         if random.random() <= 0.08:
             items.append(Armor("Guantes Óseos", "Falanges ajenas ensartadas en un guante de cuero curtido.", 12,
-                                slot="guantes", defense=2, magic_resist=2))
+                                slot="guantes", crit_damage=0.10, defense=2))
         return items

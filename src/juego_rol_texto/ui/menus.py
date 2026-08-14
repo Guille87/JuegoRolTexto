@@ -64,7 +64,7 @@ def start_new_game() -> None:
     if name.lower() == "admin":  # Puedes poner el nombre que prefieras
         print(console.colorize("⚠️  MODO DESARROLLADOR ACTIVADO ⚠️", console.Fore.MAGENTA))
         # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
-        initial_stats = Stats(500, 500, 20, 40, 10)
+        initial_stats = Stats(500, 500, 20, 40, 10, crit_chance=0.15)
         player = Player(name, initial_stats)
         player.level = 10
         player.inventory.gold = 5000
@@ -74,9 +74,10 @@ def start_new_game() -> None:
                     "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio", "Dragón"]
         defeated = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
                     "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio"]
+        player.enemy_kill_counts = {name: 1 for name in defeated}
 
     else:
-        initial_stats = Stats(100, 100, 5, 10, 2)
+        initial_stats = Stats(100, 100, 5, 10, 2, crit_chance=0.15)
         player = Player(name, initial_stats)
         unlocked = ["Goblin"]
         defeated = []
@@ -166,6 +167,8 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             console.error("Entrada no válida.")
 
     while True:
+        resource_manager.update()  # Por si la pista de aventura ya ha terminado
+
         print("\n" + "=" * 40)
         print(console.colorize(f"ESTADO: {player.name} | Nivel: {player.level}", console.Fore.CYAN))
         print("=" * 40)
@@ -177,7 +180,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             ("Tienda", lambda: Shop().open(player)),
             ("Herrería", lambda: Forge().open(player)),
             ("Estadísticas", player.show_stats),
-            ("Bestiario", lambda: _bestiary_flow(defeated_enemies)),
+            ("Bestiario", lambda: _bestiary_flow(player, defeated_enemies)),
 
             # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
@@ -231,7 +234,7 @@ def _equip_armor_flow(player) -> None:
         player.inventory.equip_menu(Armor, filter_slot=ARMOR_SLOTS[idx])
 
 
-def _bestiary_flow(defeated_enemies: list) -> None:
+def _bestiary_flow(player, defeated_enemies: list) -> None:
     """Submenú de solo lectura con la ficha de los enemigos ya derrotados alguna vez."""
     while True:
         print(console.colorize("\n--- BESTIARIO ---", console.Fore.YELLOW))
@@ -257,7 +260,8 @@ def _bestiary_flow(defeated_enemies: list) -> None:
             console.error("Opción fuera de rango.")
             continue
 
-        print_bestiary_entry(_get_enemy_instance(defeated_enemies[idx]))
+        enemy_name = defeated_enemies[idx]
+        print_bestiary_entry(_get_enemy_instance(enemy_name), player.enemy_kill_counts.get(enemy_name, 0))
         console.ask("\nPresiona Enter para continuar...")
 
 
@@ -281,9 +285,3 @@ def _get_enemy_instance(name: str):
     }
     # Si el nombre no existe, por defecto crea un Goblin para evitar errores
     return enemies.get(name, Goblin)()
-
-
-def smart_input(prompt: str) -> str:
-    """Llama al gestor de recursos antes de esperar la entrada del usuario."""
-    ResourceManager().update()  # Revisamos la música justo antes de pausar el programa
-    return console.ask(prompt)

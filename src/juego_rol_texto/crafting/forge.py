@@ -88,7 +88,7 @@ class Forge:
                 result_template=Armor(
                     "Brazales Arcanos",
                     "Energía mágica condensada en forma de brazales; arden con un fuego que no quema al portador.",
-                    value=25, slot="brazales", magic_resist=3, element="fuego"
+                    value=25, slot="brazales", crit_chance=0.05, magic_resist=3, element="fuego"
                 )
             ),
             CraftingRecipe(
@@ -98,7 +98,7 @@ class Forge:
                 result_template=Armor(
                     "Hombreras Reforzadas",
                     "Placas de hueso y colmillo unidas con remaches toscos pero efectivos.",
-                    value=18, slot="hombreras", defense=2, max_health=15
+                    value=18, slot="hombreras", precision=3, defense=2, max_health=15
                 )
             ),
             CraftingRecipe(
@@ -107,8 +107,8 @@ class Forge:
                 gold_cost=40,
                 result_template=Armor(
                     "Cinturón de Resistencia",
-                    "Tejido con fragmentos óseos que parecen absorber el dolor arcano.",
-                    value=12, slot="cinturon", max_health=15, magic_resist=4
+                    "Tejido con fragmentos óseos que parecen absorber el dolor, tanto físico como arcano.",
+                    value=12, slot="cinturon", defense=3, max_health=15, magic_resist=4
                 )
             ),
             CraftingRecipe(
@@ -118,7 +118,7 @@ class Forge:
                 result_template=Armor(
                     "Perneras de Placa",
                     "Protección rígida para las piernas, forjada con colmillos de orco fundidos.",
-                    value=14, slot="perneras", defense=3, max_health=12
+                    value=14, slot="perneras", evasion=2, defense=3, max_health=12
                 )
             ),
             CraftingRecipe(
@@ -138,7 +138,7 @@ class Forge:
                 result_template=Armor(
                     "Anillo de Fuerza",
                     "Un aro pesado grabado con runas de poder bruto.",
-                    value=16, slot="anillo", damage=3
+                    value=16, slot="anillo", crit_damage=0.12, damage=3
                 )
             ),
             CraftingRecipe(
@@ -171,7 +171,7 @@ class Forge:
                 result_template=Armor(
                     "Anillo de Vitalidad",
                     "Un aro sencillo grabado con símbolos de sanación; late al mismo ritmo que el corazón.",
-                    value=14, slot="anillo", regen=2
+                    value=14, slot="anillo", crit_damage=0.16, regen=2
                 )
             ),
         ]

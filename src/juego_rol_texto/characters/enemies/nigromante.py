@@ -65,7 +65,7 @@ class Nigromante(Enemy):
             items.append(Armor("Manto del Nigromante", "Tejido con hilos que parecen absorber la luz de alrededor.", 60,
                                 slot="amuleto", magic_resist=10, crit_chance=0.05))
         if random.random() <= 0.08:
-            items.append(Weapon("Cetro de Huesos", "Rematado por un cráneo que aún parece susurrar.", 35, 18))
-        if random.random() <= 0.08:
-            items.append(Weapon("Cetro de Escarcha", "El frío del más allá se filtra a través de su empuñadura.", 38, 20, element="hielo"))
+            items.append(Weapon("Cetro de Huesos", "Rematado por un cráneo que aún parece susurrar.", 35, 25))
+        if random.random() <= 0.06:
+            items.append(Weapon("Cetro de Escarcha", "El frío del más allá se filtra a través de su empuñadura.", 38, 21, element="hielo"))
         return items

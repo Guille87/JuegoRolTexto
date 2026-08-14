@@ -1,4 +1,6 @@
 import sys
+import threading
+import time
 
 import pygame
 from colorama import init
@@ -30,6 +32,21 @@ def setup_resources() -> None:
         rm.load_audio(name, str(full_path), is_music=False)
 
 
+def _music_watchdog() -> None:
+    """Hilo en segundo plano que revisa cada pocos segundos si la música ha
+    terminado y hay que poner la siguiente. Hace falta porque el juego es una
+    consola síncrona: la mayor parte del tiempo está bloqueada en input()
+    esperando al jugador, así que sin este hilo la música se quedaría en
+    silencio en cuanto una pista terminara y el jugador no hiciera nada."""
+    rm = ResourceManager()
+    while True:
+        time.sleep(2)
+        try:
+            rm.update()
+        except Exception:
+            pass  # No queremos tumbar el juego por un fallo de audio en segundo plano
+
+
 def main() -> None:
     # Forzamos stdout/stderr a UTF-8 antes de nada: en una consola de Windows
     # con code page heredada (cmd.exe por defecto, o el .exe empaquetado fuera
@@ -53,6 +70,10 @@ def main() -> None:
         # Iniciar música inicial
         rm = ResourceManager()
         rm.update()
+
+        # Hilo en segundo plano para que la música siga avanzando aunque el
+        # juego esté bloqueado esperando input() del jugador.
+        threading.Thread(target=_music_watchdog, daemon=True).start()
 
         # Lanzar el bucle principal del juego (Menú)
         main_menu()

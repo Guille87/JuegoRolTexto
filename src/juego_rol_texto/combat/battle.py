@@ -50,17 +50,18 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     print("=" * 60)
     print(f"{console.colorize(f'¡Ha comenzado la batalla contra {enemy.name}!', console.Fore.WHITE, bright=True)}")
     player.in_combat = True
+    # Vida justo al entrar en combate: si el jugador huye, solo debe poder
+    # recuperar parte de lo que ha perdido en ESTA pelea, no del total de vida
+    # que le faltase de antes (eso no tendría sentido: huir no es una victoria).
+    health_before_battle = player.stats.health
 
     rm = ResourceManager()
-    # Sincronizamos el manager con la batalla
+    # Sincronizamos el manager con la batalla y forzamos el cambio de música
+    # de inmediato (no basta con update(): solo actúa cuando la pista anterior
+    # ya ha terminado, así que sin esto el tema de aventura seguiría sonando
+    # sobre el combate si todavía no había acabado).
     rm.set_mood("battle", enemy.name)
-    rm.update()  # Forzamos el cambio de música inmediato
-
-    # Música específica según el enemigo
-    if enemy.name == "Orco":
-        rm.play_music("scaring_crows")
-    elif enemy.name == "Mago":
-        rm.play_music("Siege_of_the_Black_Gate")
+    rm.play_battle_music(enemy.name)
 
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
     if hasattr(enemy, 'check_ambush'):
@@ -81,6 +82,8 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     }
 
     is_auto = False
+    player_won = False
+    player_fled = False
     gauge_player = 0.0
     gauge_enemy = 0.0
     while player.is_alive() and enemy.is_alive():
@@ -98,9 +101,11 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             gauge_player -= ATB_THRESHOLD
             signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto)
             if signal == "huir":
+                player_fled = True
                 break
 
         if not enemy.is_alive():
+            player_won = True
             # CAPTURAMOS LOS NUEVOS STATS SI SUBE DE NIVEL
             new_atk, new_armor = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
 
@@ -124,11 +129,21 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             print(console.colorize("(Esperando siguiente turno...)", console.Fore.BLACK, bright=True))
             time.sleep(1)  # Pequeña pausa para asimilar el daño recibido
 
-    _restore_player(player, snapshot)
+    if player_fled:
+        _restore_player(player, snapshot, max_recovery=health_before_battle - player.stats.health)
+    else:
+        _restore_player(player, snapshot)
     player.in_combat = False
     # Al salir, volvemos a modo aventura
     rm.set_mood("adventure")
     rm.play_random_adventure_music()
+
+    if player_won:
+        # Pausa deliberada: victoria, oro, botín y curación tras el combate
+        # imprimen bastante texto seguido; sin esta pausa el menú se
+        # reescribía encima antes de que el jugador pudiera leerlo (podía
+        # pasarle por alto un objeto conseguido, por ejemplo).
+        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
 
 
 def _player_menu(player, enemy, defeated_enemies: list) -> str:
@@ -291,9 +306,12 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
         ))
 
     if final_dmg > 0:
+        # Daño normal en cian; el amarillo en negrita queda reservado para el
+        # crítico (el mensaje "¡Golpe crítico!" de arriba ya usa ese mismo estilo).
+        dmg_color = console.Fore.YELLOW if is_crit else console.Fore.CYAN
         print(f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
               f"{console.colorize(defender.name, console.Fore.RED)} y hace "
-              f"{console.colorize(str(final_dmg), console.Fore.YELLOW)} de daño")
+              f"{console.colorize(str(final_dmg), dmg_color, bright=is_crit)} de daño")
     else:
         print(f"{console.colorize(defender.name, console.Fore.BLUE)} ha bloqueado el ataque.")
 
@@ -306,6 +324,8 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
 
 def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> tuple:
     print(f"\n{console.colorize(f'¡VICTORIA! {enemy.name} ha sido derrotado.', console.Fore.YELLOW, bright=True)}")
+
+    player.enemy_kill_counts[enemy.name] = player.enemy_kill_counts.get(enemy.name, 0) + 1
 
     if enemy.name not in defeated_enemies:
         defeated_enemies.append(enemy.name)
@@ -361,8 +381,13 @@ def _handle_defeat(player) -> None:
     console.ask("\nPresiona Enter para volver...")
 
 
-def _restore_player(player, snapshot: dict) -> None:
-    """Elimina efectos, restaura stats base y cura al jugador."""
+def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> None:
+    """Elimina efectos, restaura stats base y cura al jugador.
+
+    `max_recovery`, si se indica (huida), limita la curación a como mucho la
+    vida perdida durante ESTE combate — huir no es una victoria, así que no
+    debería curar daño acumulado de peleas anteriores.
+    """
     # Restaurar stats base (por si hubo pociones de fuerza/defensa)
     player.stats.min_atk, player.stats.max_atk = snapshot["atk"]
     player.stats.armor = snapshot["armor"]
@@ -381,6 +406,8 @@ def _restore_player(player, snapshot: dict) -> None:
         else:
             # Lógica de curación normal (50% de lo perdido)
             missing_health = player.stats.max_health - player.stats.health
+            if max_recovery is not None:
+                missing_health = max(0, min(missing_health, max_recovery))
             recovery = missing_health // 2
             player.stats.health += recovery
             if recovery > 0:

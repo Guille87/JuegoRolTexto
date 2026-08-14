@@ -22,6 +22,10 @@ class Player(Character):
         self.status_effects = []
         # Sistema de pociones de Stats
         self.active_effects = []
+        # Veces que se ha derrotado a cada enemigo (por nombre), no solo la primera
+        # vez (a diferencia de defeated_enemies, que solo marca "ya visto"). Usado
+        # por el Bestiario.
+        self.enemy_kill_counts: dict[str, int] = {}
 
     # --- LÓGICA DE COMBATE ---
 
@@ -99,12 +103,14 @@ class Player(Character):
         return self.stats.speed + bonus
 
     def get_total_precision(self) -> int:
-        """Devuelve la precisión total (hoy solo el stat base; el equipo no otorga precisión todavía)."""
-        return self.stats.precision
+        """Devuelve la precisión total sumando todas las piezas equipadas (stat base de las hombreras)."""
+        bonus = sum(item.precision for item in self.equipped_armor.values() if item)
+        return self.stats.precision + bonus
 
     def get_total_evasion(self) -> int:
-        """Devuelve la evasión total (hoy solo el stat base; el equipo no otorga evasión todavía)."""
-        total = self.stats.evasion
+        """Devuelve la evasión total sumando todas las piezas equipadas (stat base de las perneras)."""
+        bonus = sum(item.evasion for item in self.equipped_armor.values() if item)
+        total = self.stats.evasion + bonus
 
         # Confusión (Demonio): resta evasión mientras dure el estado.
         confusion = next((e for e in self.status_effects if e["name"] == "confusion"), None)
@@ -233,7 +239,12 @@ class Player(Character):
 
     def required_xp(self) -> int:
         """Fórmula de curva de experiencia escalable."""
-        if self.level == 1: return 40
+        # Nivel 1 -> 2 deliberadamente muy barato (8 XP: el mínimo que da
+        # incluso el primer Goblin, gold_min=4 * 2): la primera victoria del
+        # juego ya sube de nivel siempre, para dar sensación de progreso
+        # rápido nada más empezar. A partir de ahí, la curva normal de abajo
+        # ya se encarga de ir ralentizando el ritmo.
+        if self.level == 1: return 8
         lv = float(self.level)
         return int(100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv ** 2 / 50))
 

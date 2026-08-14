@@ -92,5 +92,5 @@ class Orc(Enemy):
             items.append(Weapon("Espada Flamígera", "Una hoja que arde con un fuego que nunca se apaga.", 15, 10, element="fuego"))
         if random.random() <= 0.08:
             items.append(Armor("Brazales de Guerra", "Pesados brazales de guerra pensados para golpear más fuerte, no para protegerse.", 20,
-                                slot="brazales", damage=3))
+                                slot="brazales", crit_chance=0.03, damage=3))
         return items

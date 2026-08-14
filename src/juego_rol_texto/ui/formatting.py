@@ -38,9 +38,10 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     print("\n" + "=" * 60)
 
 
-def print_bestiary_entry(enemy) -> None:
+def print_bestiary_entry(enemy, kill_count: int = 0) -> None:
     """Muestra la ficha completa de un enemigo (llamar solo si ya ha sido derrotado)."""
     print(f"\n{console.colorize(f'--- {enemy.name} ---', console.Fore.RED, bright=True)}")
+    print(f"  Veces derrotado: {kill_count}")
     print(f"  Vida máxima: {enemy.stats.max_health}")
     print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
     print(f"  Armadura: {enemy.stats.armor} | Resistencia Mágica: {enemy.stats.magic_resist}")

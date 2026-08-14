@@ -94,6 +94,16 @@ def test_get_total_speed_sums_equipped_boots(player):
     assert player.get_total_speed() == 13
 
 
+def test_get_total_precision_sums_equipped_shoulders(player):
+    player.equipped_armor["hombreras"] = Armor("Hombreras", "desc", 1, slot="hombreras", precision=4)
+    assert player.get_total_precision() == player.stats.precision + 4
+
+
+def test_get_total_evasion_sums_equipped_leggings(player):
+    player.equipped_armor["perneras"] = Armor("Perneras", "desc", 1, slot="perneras", evasion=6)
+    assert player.get_total_evasion() == player.stats.evasion + 6
+
+
 def test_get_total_regen_is_zero_without_equipment(player):
     # A diferencia del resto de get_total_*, el stat base nunca sube (solo objetos).
     assert player.stats.regen == 0
@@ -172,7 +182,7 @@ def test_gain_experience_levels_up_and_boosts_stats(player):
         player.stats.max_health, player.stats.min_atk, player.stats.max_atk,
         player.stats.armor, player.stats.speed
     )
-    player.gain_experience(40)  # required_xp() en nivel 1 es 40
+    player.gain_experience(8)  # required_xp() en nivel 1 es 8 (deliberadamente barato)
 
     assert player.level == 2
     # Nivel 1 -> 2: ganancia determinista según _growth_gain (ver Player._level_up).
