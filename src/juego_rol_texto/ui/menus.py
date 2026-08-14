@@ -1,3 +1,7 @@
+import contextlib
+import getpass
+import hashlib
+import random
 import sys
 
 from juego_rol_texto.audio.resource_manager import ResourceManager
@@ -12,6 +16,7 @@ from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import settings
 from juego_rol_texto.crafting.forge import Forge
 from juego_rol_texto.items.equipment import ARMOR_SLOTS, Weapon, Armor, slot_label
+from juego_rol_texto.items.materials import Material
 from juego_rol_texto.persistence.save_load import save_game, load_game
 from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
@@ -19,6 +24,27 @@ from juego_rol_texto.ui.formatting import print_bestiary_entry
 
 # Instancia global de ResourceManager
 resource_manager = ResourceManager()
+
+ALL_ENEMY_NAMES = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
+                    "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio", "Dragón"]
+
+# Hash SHA-256 de la contraseña de administrador (nunca en texto plano aquí ni
+# en ningún otro archivo del repo/juego, para que no se pueda leer buscando
+# entre los archivos instalados). Comparamos hashes, nunca la contraseña real.
+_ADMIN_PASSWORD_HASH = "8b8a67d2a9a6bb428f10e10243b0789f37105779bb5bc2874d25cfb2578aeaec"
+
+
+def _check_admin_password() -> bool:
+    """Pide la contraseña de admin (sin mostrarla en pantalla si la consola lo
+    permite) y compara su hash contra el guardado, sin manejar nunca el texto
+    plano más que en el momento de teclearla."""
+    try:
+        entered = getpass.getpass("Contraseña de administrador: ")
+    except Exception:
+        # getpass puede fallar en consolas sin terminal real (p. ej. algunos
+        # IDEs); recurrimos a una entrada visible antes que bloquear el acceso.
+        entered = console.ask("Contraseña de administrador: ")
+    return hashlib.sha256(entered.encode("utf-8")).hexdigest() == _ADMIN_PASSWORD_HASH
 
 
 def main_menu() -> None:
@@ -54,14 +80,27 @@ def main_menu() -> None:
 def start_new_game() -> None:
     print(console.colorize("\n--- NUEVA AVENTURA ---", console.Fore.CYAN))
     name = ""  # Inicializa el nombre del jugador como una cadena vacía
+    is_admin = False
 
-    # Bucle while para seguir pidiendo al usuario que ingrese un nombre hasta que ingresen al menos un caracter
+    # Bucle while para seguir pidiendo al usuario que ingrese un nombre hasta que ingresen al menos un caracter.
+    # "admin" es un nombre reservado: si se escribe pero la contraseña falla,
+    # no se puede jugar con ese nombre en absoluto, hay que volver a elegir uno.
     while not name:
-        name = console.ask("Introduce tu nombre: ").strip()
+        candidate = console.ask("Introduce tu nombre: ").strip()
+        if not candidate:
+            continue
+
+        if candidate.lower() == "admin":
+            if _check_admin_password():
+                is_admin = True
+                name = candidate
+            else:
+                console.error("Contraseña incorrecta. El nombre \"admin\" está reservado, elige otro nombre.")
+        else:
+            name = candidate
 
     # --- LÓGICA DE CHEATS / ADMIN ---
-    # TODO: eliminar después de hacer pruebas
-    if name.lower() == "admin":  # Puedes poner el nombre que prefieras
+    if is_admin:
         print(console.colorize("⚠️  MODO DESARROLLADOR ACTIVADO ⚠️", console.Fore.MAGENTA))
         # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
         initial_stats = Stats(500, 500, 20, 40, 10, crit_chance=0.15)
@@ -70,10 +109,8 @@ def start_new_game() -> None:
         player.inventory.gold = 5000
 
         # Desbloqueamos todo para testear cualquier enemigo
-        unlocked = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
-                    "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio", "Dragón"]
-        defeated = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
-                    "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio"]
+        unlocked = list(ALL_ENEMY_NAMES)
+        defeated = list(ALL_ENEMY_NAMES)
         player.enemy_kill_counts = {name: 1 for name in defeated}
 
     else:
@@ -83,13 +120,28 @@ def start_new_game() -> None:
         defeated = []
 
     # Datos iniciales del mundo
-    game_loop(player, unlocked, defeated)
+    game_loop(player, unlocked, defeated, is_admin=is_admin)
 
 
 def load_saved_game() -> None:
     name = ""
-    while not name:  # No permitir nombre vacío al cargar
-        name = console.ask("Nombre del personaje a cargar: ").strip()
+    is_admin = False
+
+    # Mismo nombre reservado que en Nueva Partida: cargar una partida guardada
+    # como "admin" tampoco se permite sin acertar la contraseña.
+    while not name:
+        candidate = console.ask("Nombre del personaje a cargar: ").strip()
+        if not candidate:
+            continue
+
+        if candidate.lower() == "admin":
+            if _check_admin_password():
+                is_admin = True
+                name = candidate
+            else:
+                console.error("Contraseña incorrecta. El nombre \"admin\" está reservado, elige otro nombre.")
+        else:
+            name = candidate
 
     # Creamos un player temporal para que load_game lo rellene
     temp_player = Player(name, Stats(1, 1, 1, 1, 1))
@@ -97,7 +149,7 @@ def load_saved_game() -> None:
 
     if data:
         player_name, unlocked, defeated = data
-        game_loop(temp_player, unlocked, defeated)
+        game_loop(temp_player, unlocked, defeated, is_admin=is_admin)
 
 
 def open_options() -> None:
@@ -133,7 +185,7 @@ def open_options() -> None:
             break
 
 
-def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
+def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: bool = False) -> None:
     """Bucle principal de la estancia en el mundo"""
     def start_battle_flow():
         print(console.colorize("\n--- SELECCIONAR ENEMIGO ---", console.Fore.YELLOW))
@@ -192,6 +244,12 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             ("Volver al Menú Principal", "break"),
             ("Salir del Juego", sys.exit)
         ]
+
+        # Panel de control total: requiere el nombre "admin" Y haber acertado
+        # la contraseña al entrar (comprobado una sola vez, en start_new_game()
+        # o load_saved_game(), no en cada vuelta de este bucle).
+        if is_admin:
+            options.insert(-2, ("Panel de Admin", lambda: _admin_panel_flow(player, unlocked_enemies, defeated_enemies)))
 
         for i, (text, _) in enumerate(options, 1):
             print(f"{i}. {text}")
@@ -263,6 +321,208 @@ def _bestiary_flow(player, defeated_enemies: list) -> None:
         enemy_name = defeated_enemies[idx]
         print_bestiary_entry(_get_enemy_instance(enemy_name), player.enemy_kill_counts.get(enemy_name, 0))
         console.ask("\nPresiona Enter para continuar...")
+
+
+# Estadísticas editables desde el Panel de Admin: (atributo en Stats, etiqueta, tipo).
+_ADMIN_STAT_FIELDS = [
+    ("health", "Vida actual", int), ("max_health", "Vida máxima", int),
+    ("min_atk", "Ataque mínimo", int), ("max_atk", "Ataque máximo", int),
+    ("armor", "Armadura", int), ("magic_resist", "Resistencia Mágica", int),
+    ("speed", "Velocidad", int), ("precision", "Precisión", int), ("evasion", "Evasión", int),
+    ("armor_penetration", "Penetración de Armadura", int), ("magic_penetration", "Penetración Mágica", int),
+    ("regen", "Regeneración", int),
+    ("crit_chance", "Prob. Crítico (0.0-1.0)", float), ("crit_damage", "Daño Crítico (multiplicador, ej. 1.5)", float),
+]
+
+
+def _admin_panel_flow(player, unlocked_enemies: list, defeated_enemies: list) -> None:
+    """Control total del personaje de pruebas 'admin': oro, nivel, cualquier
+    estadística y combate directo contra cualquier enemigo sin restricciones."""
+    while True:
+        print(console.colorize("\n--- PANEL DE ADMIN ---", console.Fore.MAGENTA, bright=True))
+        options = [
+            ("Poner oro", lambda: _admin_set_gold(player)),
+            ("Poner nivel", lambda: _admin_set_level(player)),
+            ("Editar estadísticas", lambda: _admin_edit_stats(player)),
+            ("Curación completa", lambda: _admin_full_heal(player)),
+            ("Desbloquear y marcar como derrotados todos los enemigos",
+             lambda: _admin_unlock_all(player, unlocked_enemies, defeated_enemies)),
+            ("Combate directo contra cualquier enemigo",
+             lambda: _admin_direct_battle(player, defeated_enemies, unlocked_enemies)),
+            ("Conseguir todos los materiales (desbloquea también sus recetas)",
+             lambda: _admin_give_all_materials(player)),
+            ("Conseguir todas las armas y armaduras de los enemigos",
+             lambda: _admin_give_all_equipment(player)),
+            ("Volver", "break"),
+        ]
+
+        for i, (text, _) in enumerate(options, 1):
+            print(f"{i}. {text}")
+
+        choice = console.ask(f"\nElige (1-{len(options)}): ")
+        if not choice.isdigit():
+            console.error("Entrada no válida.")
+            continue
+
+        idx = int(choice) - 1
+        if idx == len(options) - 1:
+            return
+        if not (0 <= idx < len(options)):
+            console.error("Opción fuera de rango.")
+            continue
+
+        options[idx][1]()
+
+
+def _admin_set_gold(player) -> None:
+    value = console.ask(f"Nuevo oro (actual {player.inventory.gold}): ")
+    if not value.isdigit():
+        console.error("Entrada no válida.")
+        return
+    player.inventory.gold = int(value)
+    console.success(f"Oro puesto a {player.inventory.gold}.")
+
+
+def _admin_set_level(player) -> None:
+    value = console.ask(f"Nuevo nivel (actual {player.level}): ")
+    if not value.isdigit() or int(value) < 1:
+        console.error("Entrada no válida.")
+        return
+
+    target = int(value)
+    if target > player.level:
+        # Reutiliza la curva de subida de nivel real, así las stats suben de
+        # forma coherente con lo que tocaría a ese nivel en una partida normal.
+        while player.level < target:
+            player._level_up()
+        console.success(f"Nivel subido a {player.level} (estadísticas recalculadas con la curva normal de subida).")
+    elif target < player.level:
+        player.level = target
+        console.warning(f"Nivel bajado a {player.level} — las estadísticas no bajan solas, edítalas a mano si hace falta.")
+    else:
+        console.info("Ya estás en ese nivel.")
+
+
+def _admin_edit_stats(player) -> None:
+    while True:
+        print(console.colorize("\n--- EDITAR ESTADÍSTICAS ---", console.Fore.MAGENTA))
+        for idx, (attr, label, _) in enumerate(_ADMIN_STAT_FIELDS, 1):
+            print(f"{idx}. {label}: {getattr(player.stats, attr)}")
+        print(f"{len(_ADMIN_STAT_FIELDS) + 1}. Volver")
+
+        choice = console.ask(f"\nElige qué editar (1-{len(_ADMIN_STAT_FIELDS) + 1}): ")
+        if not choice.isdigit():
+            console.error("Entrada no válida.")
+            continue
+
+        idx = int(choice) - 1
+        if idx == len(_ADMIN_STAT_FIELDS):
+            return
+        if not (0 <= idx < len(_ADMIN_STAT_FIELDS)):
+            console.error("Opción fuera de rango.")
+            continue
+
+        attr, label, cast = _ADMIN_STAT_FIELDS[idx]
+        raw = console.ask(f"Nuevo valor para {label}: ")
+        try:
+            value = cast(raw)
+        except ValueError:
+            console.error("Entrada no válida.")
+            continue
+
+        setattr(player.stats, attr, value)
+        # Leemos el valor de vuelta en vez de echar el que escribió el usuario:
+        # "health" tiene un setter que lo recorta a max_health, por ejemplo.
+        console.success(f"{label} puesto a {getattr(player.stats, attr)}.")
+
+
+def _admin_full_heal(player) -> None:
+    player.stats.health = player.stats.max_health
+    console.success("Vida restaurada al máximo.")
+
+
+def _admin_unlock_all(player, unlocked_enemies: list, defeated_enemies: list) -> None:
+    for name in ALL_ENEMY_NAMES:
+        if name not in unlocked_enemies:
+            unlocked_enemies.append(name)
+        if name not in defeated_enemies:
+            defeated_enemies.append(name)
+        player.enemy_kill_counts.setdefault(name, 1)
+    console.success("Todos los enemigos desbloqueados y marcados como derrotados (Bestiario incluido).")
+
+
+def _admin_direct_battle(player, defeated_enemies: list, unlocked_enemies: list) -> None:
+    """Combate contra cualquier enemigo, sin importar si está desbloqueado todavía."""
+    print(console.colorize("\n--- COMBATE DIRECTO (ADMIN) ---", console.Fore.MAGENTA))
+    for idx, name in enumerate(ALL_ENEMY_NAMES, 1):
+        print(f"{idx}. {name}")
+    print(f"{len(ALL_ENEMY_NAMES) + 1}. Volver")
+
+    choice = console.ask(f"\nElige un enemigo (1-{len(ALL_ENEMY_NAMES) + 1}): ")
+    if not choice.isdigit():
+        console.error("Entrada no válida.")
+        return
+
+    idx = int(choice) - 1
+    if idx == len(ALL_ENEMY_NAMES):
+        return
+    if not (0 <= idx < len(ALL_ENEMY_NAMES)):
+        console.error("Opción fuera de rango.")
+        return
+
+    enemy = _get_enemy_instance(ALL_ENEMY_NAMES[idx])
+    initiate_battle(player, enemy, defeated_enemies, unlocked_enemies)
+
+
+def _collect_all_possible_drops() -> list:
+    """Fuerza random.random() a 0 mientras se piden los drops de los 14
+    enemigos, para que caigan absolutamente todos los objetos posibles de
+    cada uno (en vez de solo los que la tirada real habría dado)."""
+    original_random = random.random
+    random.random = lambda: 0.0
+    try:
+        drops = []
+        for name in ALL_ENEMY_NAMES:
+            drops.extend(_get_enemy_instance(name).drop_item())
+        return drops
+    finally:
+        random.random = original_random
+
+
+@contextlib.contextmanager
+def _quiet_pickups():
+    """Silencia los 'Obtenido: X' de Inventory.add_item() durante una entrega
+    masiva del panel de admin — si no, imprime cientos de líneas seguidas."""
+    original = console.success
+    console.success = lambda *_a, **_k: None
+    try:
+        yield
+    finally:
+        console.success = original
+
+
+def _admin_give_all_materials(player) -> None:
+    """Da 50 unidades de cada material del juego (y, de paso, descubre las
+    recetas de la herrería que los piden, ya que Inventory.add_item() marca
+    un Material como descubierto la primera vez que se consigue)."""
+    seen = set()
+    with _quiet_pickups():
+        for item in _collect_all_possible_drops():
+            if isinstance(item, Material) and item.name not in seen:
+                seen.add(item.name)
+                for _ in range(50):
+                    player.inventory.add_item(item)
+    console.success(f"Conseguidas 50 unidades de cada uno de los {len(seen)} materiales del juego. "
+                     f"Todas las recetas de la herrería ya deberían estar descubiertas.")
+
+
+def _admin_give_all_equipment(player) -> None:
+    """Da una copia de cada arma y armadura que puede soltar algún enemigo."""
+    equipment = [item for item in _collect_all_possible_drops() if isinstance(item, (Weapon, Armor))]
+    with _quiet_pickups():
+        for item in equipment:
+            player.inventory.add_item(item)
+    console.success(f"Conseguidas {len(equipment)} armas y armaduras: una de cada objeto que puede soltar algún enemigo.")
 
 
 def _get_enemy_instance(name: str):
