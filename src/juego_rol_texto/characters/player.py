@@ -237,16 +237,48 @@ class Player(Character):
         while self.experience >= self.required_xp():
             self._level_up()
 
+    @staticmethod
+    def _required_xp_for_level(level: int) -> int:
+        """Umbral de XP acumulada (no un coste que se descuenta, ver
+        gain_experience()) para pasar de `level` al siguiente.
+
+        Nivel 1 -> 2 deliberadamente muy barato (8 XP: el mínimo que da
+        incluso el primer Goblin, gold_min=4 * 2): la primera victoria del
+        juego ya sube de nivel siempre.
+
+        Los niveles 2-9 aplican un "descuento" sobre la curva normal de abajo
+        que se va cerrando poco a poco: empieza en ~50% del coste normal en
+        el nivel 2 (98.68 * 0.5 ≈ 49, un punto intermedio calculado a
+        propósito entre los 8 XP del nivel 1 y los 98 XP que pedía la curva
+        original sin suavizar) y llega al 100% en el nivel 10 — subir sigue
+        siendo rápido y gratificante justo después de empezar, y se va
+        ralentizando de forma gradual hasta la curva de siempre en vez de dar
+        un salto brusco de golpe (que es lo que pasaba antes de suavizarlo:
+        nivel 1->2 costaba 8 XP y nivel 2->3 ya pedía 375, un frenazo
+        demasiado repentino).
+        """
+        if level == 1:
+            return 8
+
+        lv = float(level)
+        base_cost = 100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv ** 2 / 50)
+        damping = min(1.0, 0.5 + (lv - 2) * 0.0625)
+        return int(base_cost * damping)
+
     def required_xp(self) -> int:
-        """Fórmula de curva de experiencia escalable."""
-        # Nivel 1 -> 2 deliberadamente muy barato (8 XP: el mínimo que da
-        # incluso el primer Goblin, gold_min=4 * 2): la primera victoria del
-        # juego ya sube de nivel siempre, para dar sensación de progreso
-        # rápido nada más empezar. A partir de ahí, la curva normal de abajo
-        # ya se encarga de ir ralentizando el ritmo.
-        if self.level == 1: return 8
-        lv = float(self.level)
-        return int(100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv ** 2 / 50))
+        """Fórmula de curva de experiencia escalable.
+
+        gain_experience() nunca resetea self.experience (es un umbral
+        acumulado, no un coste que se descuenta al subir), así que este valor
+        TIENE que ser no decreciente con el nivel — si no, una sola pelea
+        pequeña podría subir más de un nivel de golpe. El `max()` con el
+        umbral del nivel anterior lo garantiza sin tener que cuadrar a mano
+        la fórmula y el descuento para que ya salgan siempre en orden.
+        """
+        cost = self._required_xp_for_level(self.level)
+        if self.level > 1:
+            cost = max(cost, self._required_xp_for_level(self.level - 1))
+        return cost
 
     # Ritmo de crecimiento por nivel de cada stat (ganancia media por nivel).
     # Igual que en Pokémon (stat = floor(base + tasa * nivel / 100 + ...)), la
