@@ -11,6 +11,11 @@ class Item(ABC):
     def use(self, target):
         pass
 
+    def get_stats_info(self) -> str:
+        """Resumen corto de los valores del objeto. Los objetos sin estadísticas
+        (p. ej. los materiales de crafteo) devuelven cadena vacía."""
+        return ""
+
     def to_dict(self) -> dict:
         return {
             "type": self.__class__.__name__,
