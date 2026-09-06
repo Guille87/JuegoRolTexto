@@ -1,7 +1,10 @@
+import logging
 import os
 import random
 
 import pygame
+
+logger = logging.getLogger("juego_rol_texto.audio")
 
 # "Scaring Crows" (tema inquietante) queda reservado para los combates que son
 # un reto de verdad: el tramo final de la cadena, calibrado en su día al
@@ -34,6 +37,11 @@ class ResourceManager:
 
     def update(self):
         """Se autogestiona según el mood actual: si la pista ya terminó, elige la siguiente."""
+        # El mezclador puede estar ya cerrado (p. ej. el juego está saliendo y el
+        # hilo de música en segundo plano todavía da una última vuelta): sin esta
+        # guarda, pygame lanzaría "Audio device hasn't been opened".
+        if not pygame.mixer.get_init():
+            return
         if not pygame.mixer.music.get_busy():
             if self.mood == "battle":
                 self.play_battle_music(self.target_enemy)
@@ -69,6 +77,7 @@ class ResourceManager:
 
     def load_audio(self, name, path, is_music=False):
         if not os.path.exists(path):
+            logger.warning("Archivo de audio no encontrado: %s (%s)", path, name)
             print(f"Archivo no encontrado: {path}")
             return
 
@@ -84,10 +93,13 @@ class ResourceManager:
             sound.set_volume(self.current_volume_sfx)
             self.sounds[name] = sound
         except Exception as e:
+            logger.warning("Error al cargar audio %s: %s", name, e)
             print(f"Error al cargar audio {name}: {e}")
 
     def play_music(self, name, loops=0):
         if name not in self.music_paths:
+            return
+        if not pygame.mixer.get_init():
             return
         # Si ya está sonando esta misma pista, no la cortamos ni la reiniciamos.
         if self.current_track_name == name and pygame.mixer.music.get_busy():
@@ -98,6 +110,7 @@ class ResourceManager:
             pygame.mixer.music.play(loops=loops)
             self.current_track_name = name
         except Exception as e:
+            logger.warning("Error al reproducir música %s: %s", name, e)
             print(f"Error al reproducir música {name}: {e}")
 
     def play_sfx(self, name):
@@ -105,6 +118,7 @@ class ResourceManager:
         if name in self.sounds:
             self.sounds[name].play()
         else:
+            logger.warning("SFX no encontrado: %s", name)
             print(f"SFX {name} no encontrado.")
 
     def stop_all_music(self):

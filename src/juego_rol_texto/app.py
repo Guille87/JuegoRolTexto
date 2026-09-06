@@ -1,15 +1,21 @@
+import logging
 import sys
 import threading
-import time
 
 import pygame
 from colorama import init
 
 from juego_rol_texto.audio.catalog import AUDIO_ASSETS
 from juego_rol_texto.audio.resource_manager import ResourceManager
-from juego_rol_texto.config import paths, settings
+from juego_rol_texto.config import crash_reporting, paths, settings
+from juego_rol_texto.config.logging_setup import (
+    LOG_FILE,
+    log_session_end,
+    report_crash,
+    setup_logging,
+)
 from juego_rol_texto.ui import console
-from juego_rol_texto.ui.menus import main_menu
+from juego_rol_texto.ui.menus import ask_crash_reporting_opt_in, main_menu
 
 
 def setup_resources() -> None:
@@ -32,6 +38,9 @@ def setup_resources() -> None:
         rm.load_audio(name, str(full_path), is_music=False)
 
 
+_music_watchdog_stop = threading.Event()
+
+
 def _music_watchdog() -> None:
     """Hilo en segundo plano que revisa cada pocos segundos si la música ha
     terminado y hay que poner la siguiente. Hace falta porque el juego es una
@@ -39,12 +48,15 @@ def _music_watchdog() -> None:
     esperando al jugador, así que sin este hilo la música se quedaría en
     silencio en cuanto una pista terminara y el jugador no hiciera nada."""
     rm = ResourceManager()
-    while True:
-        time.sleep(2)
+    while not _music_watchdog_stop.wait(2):
         try:
             rm.update()
         except Exception:
-            pass  # No queremos tumbar el juego por un fallo de audio en segundo plano
+            # No queremos tumbar el juego por un fallo de audio en segundo plano,
+            # pero sí dejar constancia en el log para poder investigarlo luego.
+            logging.getLogger("juego_rol_texto.audio").warning(
+                "Fallo en el watchdog de música", exc_info=True
+            )
 
 
 def main() -> None:
@@ -59,13 +71,25 @@ def main() -> None:
         except (AttributeError, ValueError):
             pass
 
+    # Registro de errores en disco: a partir de aquí cualquier fallo queda
+    # escrito en logs/juego.log (junto al .exe si está empaquetado).
+    setup_logging()
+
     # Inicialización de librerías
     init(autoreset=True)  # Colorama
     pygame.init()
     pygame.mixer.init()
 
+    watchdog = None
+    crashed = False
+    _music_watchdog_stop.clear()
     try:
         setup_resources()
+
+        # Si hay un webhook configurado y el jugador aún no ha decidido, le
+        # preguntamos una sola vez si quiere enviar informes de error.
+        if crash_reporting.is_configured():
+            ask_crash_reporting_opt_in()
 
         # Iniciar música inicial
         rm = ResourceManager()
@@ -73,16 +97,49 @@ def main() -> None:
 
         # Hilo en segundo plano para que la música siga avanzando aunque el
         # juego esté bloqueado esperando input() del jugador.
-        threading.Thread(target=_music_watchdog, daemon=True).start()
+        watchdog = threading.Thread(target=_music_watchdog, daemon=True)
+        watchdog.start()
 
         # Lanzar el bucle principal del juego (Menú)
         main_menu()
 
     except Exception as e:
+        crashed = True
+        crash_path = report_crash(e, context="app.main")
         console.error(f"\nError crítico durante la ejecución: {e}")
+        console.warning(
+            "\nEl juego se ha cerrado por un error inesperado. Se ha guardado un "
+            "informe en:"
+        )
+        print(f"  {crash_path or LOG_FILE}")
+
+        if settings.load_crash_reporting() is True and crash_reporting.is_configured():
+            if crash_reporting.send_crash_report(crash_path, e, context="app.main"):
+                console.info("Se ha enviado un informe automático al desarrollador. ¡Gracias!")
+            else:
+                console.warning("Envíame ese archivo y podré ver exactamente qué ha fallado.")
+        else:
+            console.warning("Envíame ese archivo y podré ver exactamente qué ha fallado.")
+    else:
+        log_session_end()
     finally:
+        # Paramos el hilo de música y esperamos a que acabe su vuelta actual
+        # ANTES de cerrar el mezclador, si no puede intentar reproducir música
+        # con el dispositivo de audio ya cerrado ("Audio device hasn't been opened").
+        _music_watchdog_stop.set()
+        if watchdog is not None:
+            watchdog.join(timeout=3)
         pygame.mixer.quit()
         pygame.quit()
+
+        # La ventana de un .exe se cierra sola al terminar el proceso: si ha
+        # habido un crash, esperamos a que el jugador pueda leer la ruta del
+        # informe antes de que desaparezca todo.
+        if crashed:
+            try:
+                input("\nPulsa Enter para cerrar...")
+            except (EOFError, KeyboardInterrupt):
+                pass
 
 
 if __name__ == "__main__":

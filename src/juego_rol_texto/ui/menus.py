@@ -13,11 +13,11 @@ from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.combat.battle import initiate_battle
-from juego_rol_texto.config import settings
+from juego_rol_texto.config import crash_reporting, secret_store, settings
 from juego_rol_texto.crafting.forge import Forge
 from juego_rol_texto.items.equipment import ARMOR_SLOTS, Weapon, Armor, slot_label
 from juego_rol_texto.items.materials import Material
-from juego_rol_texto.persistence.save_load import save_game, load_game
+from juego_rol_texto.persistence.save_load import save_exists, save_game, load_game
 from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_bestiary_entry
@@ -28,16 +28,19 @@ resource_manager = ResourceManager()
 ALL_ENEMY_NAMES = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
                     "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio", "Dragón"]
 
-# Hash SHA-256 de la contraseña de administrador (nunca en texto plano aquí ni
-# en ningún otro archivo del repo/juego, para que no se pueda leer buscando
-# entre los archivos instalados). Comparamos hashes, nunca la contraseña real.
-_ADMIN_PASSWORD_HASH = "8b8a67d2a9a6bb428f10e10243b0789f37105779bb5bc2874d25cfb2578aeaec"
+# Hash SHA-256 de la contraseña de administrador. Vive en config/secrets.py
+# (no versionado); si no está configurado, el modo admin queda desactivado y el
+# nombre "admin" deja de ser especial. Nunca se maneja la contraseña en texto
+# plano salvo en el instante de teclearla.
+_ADMIN_PASSWORD_HASH = secret_store.get("ADMIN_PASSWORD_HASH")
 
 
 def _check_admin_password() -> bool:
     """Pide la contraseña de admin (sin mostrarla en pantalla si la consola lo
     permite) y compara su hash contra el guardado, sin manejar nunca el texto
     plano más que en el momento de teclearla."""
+    if not _ADMIN_PASSWORD_HASH:
+        return False
     try:
         entered = getpass.getpass("Contraseña de administrador: ")
     except Exception:
@@ -96,6 +99,11 @@ def start_new_game() -> None:
                 name = candidate
             else:
                 console.error("Contraseña incorrecta. El nombre \"admin\" está reservado, elige otro nombre.")
+        elif save_exists(candidate):
+            console.error(
+                f"Ya existe una partida con el nombre \"{candidate}\". "
+                f"Elige otro nombre o carga esa partida desde el menú principal."
+            )
         else:
             name = candidate
 
@@ -152,17 +160,67 @@ def load_saved_game() -> None:
         game_loop(temp_player, unlocked, defeated, is_admin=is_admin)
 
 
+def ask_crash_reporting_opt_in() -> None:
+    """Pregunta una sola vez (al arrancar) si el jugador quiere enviar informes
+    de error automáticamente. Solo se llama si hay un webhook configurado y el
+    jugador todavía no ha decidido."""
+    if settings.load_crash_reporting() != settings.CRASH_REPORTS_UNSET:
+        return
+
+    print(console.colorize("\n--- INFORMES DE ERROR ---", console.Fore.YELLOW))
+    print("¿Enviar automáticamente un informe si el juego se cierra por un fallo?")
+    print("Ayuda a arreglar bugs más rápido.\n")
+    print(console.colorize("Se envía:", console.Fore.CYAN)
+          + " versión del juego, sistema operativo y el detalle técnico del error.")
+    print(console.colorize("NO se envía:", console.Fore.CYAN)
+          + " tu partida, tu nombre de usuario de Windows ni datos personales.\n")
+    print("Puedes cambiarlo cuando quieras en Opciones.")
+    print("1. Sí, enviar informes")
+    print("2. No, gracias")
+
+    choice = console.ask("\nElige (1-2): ").strip()
+    enabled = choice == "1"
+    settings.save_crash_reporting(enabled)
+    console.success("Informes de error activados. ¡Gracias!" if enabled
+                    else "De acuerdo, no se enviará nada.")
+
+
+def _crash_reporting_label() -> str:
+    state = settings.load_crash_reporting()
+    if state is True:
+        return "Activados"
+    if state is False:
+        return "Desactivados"
+    return "Sin configurar"
+
+
 def open_options() -> None:
     # Cargamos volúmenes actuales
     music_vol, sfx_vol = settings.load_config()
+    show_reports = crash_reporting.is_configured()
 
     while True:
-        print(console.colorize("\n--- AJUSTES DE AUDIO ---", console.Fore.YELLOW))
+        print(console.colorize("\n--- AJUSTES ---", console.Fore.YELLOW))
         print(f"1. Música (Actual: {int(music_vol * 10)})")
         print(f"2. Efectos (Actual: {int(sfx_vol * 10)})")
-        print("3. Volver")
+        if show_reports:
+            print(f"3. Informes de error (Actual: {_crash_reporting_label()})")
+            print("4. Volver")
+        else:
+            print("3. Volver")
 
         choice = console.ask("\nSelecciona una opción: ")
+
+        if show_reports and choice == "3":
+            current = settings.load_crash_reporting() is True
+            settings.save_crash_reporting(not current)
+            console.success("Informes de error activados." if not current
+                            else "Informes de error desactivados.")
+            continue
+
+        back_option = "4" if show_reports else "3"
+        if choice == back_option:
+            break
 
         if choice == "1":
             vol = console.ask("Volumen Música (0-10): ")
@@ -180,9 +238,6 @@ def open_options() -> None:
                 settings.save_config(music_vol, sfx_vol)
                 resource_manager.play_sfx("level_up")  # Feedback auditivo
                 console.success("Efectos ajustados.")
-
-        elif choice == "3":
-            break
 
 
 def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: bool = False) -> None:
