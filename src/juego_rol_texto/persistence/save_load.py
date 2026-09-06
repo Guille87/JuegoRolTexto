@@ -84,10 +84,35 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         console.error(f"Error inesperado al guardar: {e}")
 
 
+def _resolve_save_name(name: str) -> str:
+    """Devuelve el nombre real con el que está guardada la partida, buscando sin
+    distinguir mayúsculas/minúsculas: así "guille" carga la partida de "Guille".
+    Si no hay ninguna coincidencia, devuelve el nombre tal cual se escribió."""
+    if os.path.exists(os.path.join(SAVE_DIR, f"{name}.sav")):
+        return name
+    if not os.path.isdir(SAVE_DIR):
+        return name
+    target = f"{name.lower()}.sav"
+    for entry in os.listdir(SAVE_DIR):
+        if entry.lower() == target:
+            return entry[:-len(".sav")]
+    return name
+
+
+def save_exists(name: str) -> bool:
+    """¿Ya hay una partida guardada con este nombre (sin distinguir
+    mayúsculas/minúsculas)? Usado por "Nueva Partida" para no crear dos
+    personajes casi homónimos que compartirían archivo de guardado."""
+    resolved = _resolve_save_name(name)
+    return os.path.exists(os.path.join(SAVE_DIR, f"{resolved}.sav")) or \
+        os.path.exists(os.path.join(SAVE_DIR, f"{resolved}.bak"))
+
+
 def load_game(player):
     """Carga y reconstruye el estado del jugador desde un archivo. Intenta usar backup si el original falla."""
-    file_path = os.path.join(SAVE_DIR, f"{player.name}.sav")
-    backup_path = os.path.join(SAVE_DIR, f"{player.name}.bak")
+    resolved_name = _resolve_save_name(player.name)
+    file_path = os.path.join(SAVE_DIR, f"{resolved_name}.sav")
+    backup_path = os.path.join(SAVE_DIR, f"{resolved_name}.bak")
 
     # Si no existe el principal, pero sí el backup, intentamos restaurar el backup
     if not os.path.exists(file_path) and os.path.exists(backup_path):
@@ -123,6 +148,12 @@ def _perform_load(player, path):
 
     decoded_bytes = base64.b64decode(encoded_data)
     save_data = json.loads(decoded_bytes.decode('utf-8'))
+
+    # Restauramos el nombre canónico (el que se usó al crear/guardar la partida),
+    # no el que el jugador acaba de teclear en el prompt: así "guille" carga la
+    # partida y a partir de ahí el personaje se llama "Guille" en todos lados
+    # (pantallas, guardado posterior, nombre de archivo...).
+    player.name = save_data["player_name"]
 
     stats_data = save_data["player_stats"]
     player.level = stats_data["level"]

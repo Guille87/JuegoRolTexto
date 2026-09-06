@@ -5,7 +5,7 @@ from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
-from juego_rol_texto.persistence.save_load import load_game, save_game
+from juego_rol_texto.persistence.save_load import load_game, save_exists, save_game
 
 
 def _build_player(name="Guille"):
@@ -52,6 +52,32 @@ def test_save_and_load_round_trip(tmp_save_dir):
     assert loaded_player.equipped_armor["amuleto"].name == "Amuleto de Resistencia"
     assert loaded_player.equipped_armor["peto"] is None
     assert loaded_player.enemy_kill_counts == {"Goblin": 3, "Esqueleto": 1}
+
+
+def test_load_recognizes_player_by_registered_name_ignoring_case(tmp_save_dir):
+    """La partida se creó como "Guille"; al cargar escribiendo "guille" debe
+    encontrarla y, además, el personaje pasa a llamarse "Guille" (nombre
+    canónico), no lo que se tecleó en el prompt."""
+    save_game(_build_player("Guille"), unlocked_enemies=["Goblin"], defeated_enemies=[])
+
+    loaded_player = Player("guille", Stats(1, 1, 1, 1, 1))
+    result = load_game(loaded_player)
+
+    assert result is not None
+    assert result[0] == "Guille"
+    assert loaded_player.name == "Guille"
+
+
+def test_save_exists_matches_registered_name_ignoring_case(tmp_save_dir):
+    """start_new_game usa esto para no dejar crear "guille" si ya existe "Guille"."""
+    assert save_exists("Guille") is False
+
+    save_game(_build_player("Guille"), unlocked_enemies=["Goblin"], defeated_enemies=[])
+
+    assert save_exists("Guille") is True
+    assert save_exists("guille") is True
+    assert save_exists("GUILLE") is True
+    assert save_exists("Otro") is False
 
 
 def test_load_backfills_kill_count_for_legacy_saves_without_the_field(tmp_save_dir):
