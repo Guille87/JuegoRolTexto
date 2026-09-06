@@ -45,9 +45,20 @@ pip install pyinstaller
 pyinstaller --onedir --name JuegoRolTexto --add-data "assets;assets" main.py
 ```
 
-El resultado queda en `dist\JuegoRolTexto\` — copia esa carpeta entera (no solo el `.exe`) a donde quieras, ya que necesita los assets y las DLLs que la acompañan. Al ejecutarlo, `config.ini` y `saved_games\` se crean automáticamente junto al `.exe`.
+El resultado queda en `dist\JuegoRolTexto\` — copia esa carpeta entera (no solo el `.exe`) a donde quieras, ya que necesita los assets y las DLLs que la acompañan. Al ejecutarlo, `config.ini`, `saved_games\` y `logs\` se crean automáticamente junto al `.exe`.
 
 > Usa `--onedir` (carpeta), no `--onefile`: en `--onefile` el juego se descomprime en una carpeta temporal distinta en cada arranque, así que las partidas guardadas y los ajustes de volumen no persistirían entre ejecuciones.
+
+### Secretos (`config/secrets.py`)
+
+El webhook de Discord para informes de error y el hash de la contraseña de admin viven en `src/juego_rol_texto/config/secrets.py`, que **no se versiona**. Para tener esas funciones en tu build:
+
+```powershell
+copy src\juego_rol_texto\config\secrets.example.py src\juego_rol_texto\config\secrets.py
+# edita secrets.py y rellena los valores
+```
+
+Si el archivo no existe, el juego funciona igual pero sin envío de crashes a Discord y sin modo admin. PyInstaller lo empaqueta solo si existe al compilar; si por lo que sea no lo incluye, añade `--hidden-import juego_rol_texto.config.secrets`.
 
 ## Contribución
 **¡Contribuciones son bienvenidas!** Si encuentras algún **problema**, tienes **sugerencias** de mejoras o deseas **contribuir** con código, no dudes en abrir un **issue** o enviar un **pull request**.
