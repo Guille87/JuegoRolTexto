@@ -1,33 +1,46 @@
+# Editores / IDEs
 .idea/
+.vscode/
+
+# Python
 __pycache__/
 *.pyc
 venv/
 .venv/
 env/
-*.json
-*.ini
-.sav
-saved_games/
+*.egg-info/
+
+# Herramientas
 .pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+coverage.json
+htmlcov/
+*.cover
+
+# Estado en tiempo de ejecución del juego (se crea junto al ejecutable)
+/config.ini
+saved_games/
+*.sav
 
 # Distribución / Empaquetado
 dist/
 build/
-*.egg-info/
-*.spec
+# JuegoRolTexto.spec SÍ se versiona (build reproducible en CI).
 
 # Variables de entorno
 .env
 
 # Secretos locales (webhook de Discord, hash de admin...). La plantilla
-# secrets.example.py SÍ se versiona.
+# config/secrets.example.py SÍ se versiona.
 src/juego_rol_texto/config/secrets.py
 
-# Archivos específicos de SO (evita subir basura de Windows/Mac)
+# Archivos específicos de SO
 Thumbs.db
 .DS_Store
 
-# Logs de errores
+# Logs de errores (se crean junto al ejecutable)
 *.log
 logs/
 crash_*.txt
