@@ -1,0 +1,10 @@
+# Normaliza los finales de línea en el repositorio (LF almacenado; el checkout
+# respeta core.autocrlf de cada máquina).
+* text=auto
+
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ico binary
