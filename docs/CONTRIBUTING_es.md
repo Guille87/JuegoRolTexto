@@ -30,6 +30,10 @@ Gracias por tu interés. El proyecto es pequeño; estas son las convenciones.
 - **Mensajes de commit**: prefijo `feat:`, `fix:`, `docs:`, `refactor:`,
   `test:`, `ci:`, `build:`, `style:` o `chore:`, y el resto en imperativo.
 - Sin línea `Co-Authored-By` de herramientas de IA en los commits.
+- **Compatibilidad de partidas**: al añadir un campo a `Stats` o al guardado,
+  léelo de vuelta con `.get(clave, valor_por_defecto)` en
+  `persistence/save_load.py` para que las partidas de versiones anteriores sigan
+  cargando. Hay tests que cargan partidas mínimas/antiguas.
 
 ## Añadir un enemigo o un objeto
 
@@ -46,7 +50,9 @@ Todo cambio de lógica va con su test.
 
 ## Publicar una versión
 
-- Sube `version` en `pyproject.toml`.
+- Sube `version` en `pyproject.toml` y vuelve a ejecutar `pip install -e .` para
+  que `juego_rol_texto.__version__` coja el valor nuevo en local (la CI y la
+  build de release siempre instalan desde cero, así que ahí siempre es correcto).
 - Mueve lo que corresponda de *Unreleased* a la nueva versión en
   [`CHANGELOG.md`](../CHANGELOG.md) y [`docs/CHANGELOG_es.md`](CHANGELOG_es.md).
 - Crea el tag y empújalo:

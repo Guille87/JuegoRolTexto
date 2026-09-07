@@ -30,6 +30,9 @@ Thanks for your interest. The project is small; these are the conventions.
 - **Commit messages**: prefix with `feat:`, `fix:`, `docs:`, `refactor:`,
   `test:`, `ci:`, `build:`, `style:` or `chore:`, and the rest in the imperative.
 - No `Co-Authored-By` line from AI tools in commits.
+- **Save compatibility**: when adding a field to `Stats` or the save payload,
+  read it back with `.get(key, default)` in `persistence/save_load.py` so saves
+  from older versions keep loading. There are tests that load minimal/legacy saves.
 
 ## Adding an enemy or an item
 
@@ -46,7 +49,9 @@ Any logic change comes with its test.
 
 ## Releasing a version
 
-- Bump `version` in `pyproject.toml`.
+- Bump `version` in `pyproject.toml`, then re-run `pip install -e .` so
+  `juego_rol_texto.__version__` picks up the new value locally (CI and the
+  release build always install fresh, so they are always correct).
 - Move the relevant entries from *Unreleased* to the new version in
   [`CHANGELOG.md`](CHANGELOG.md) and [`docs/CHANGELOG_es.md`](docs/CHANGELOG_es.md).
 - Tag and push:

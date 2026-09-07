@@ -89,7 +89,7 @@ def _all_armor_drops():
 
 
 def test_every_armor_drop_grants_its_slot_base_stat():
-    for position, enemy, item in _all_armor_drops():
+    for _position, enemy, item in _all_armor_drops():
         base_field = BASE_STAT_BY_SLOT[item.slot]
         assert getattr(item, base_field), (
             f"{item.name} ({enemy.name}, hueco {item.slot}) no da su stat base ({base_field})"
@@ -97,7 +97,7 @@ def test_every_armor_drop_grants_its_slot_base_stat():
 
 
 def test_every_armor_drop_has_between_one_and_four_stats():
-    for position, enemy, item in _all_armor_drops():
+    for _position, enemy, item in _all_armor_drops():
         stat_count = sum(1 for field in STAT_FIELDS if getattr(item, field))
         assert 1 <= stat_count <= 4, f"{item.name} ({enemy.name}) tiene {stat_count} stats, fuera de [1,4]"
 
@@ -106,7 +106,7 @@ def test_base_stat_does_not_decrease_within_the_same_slot_along_the_chain():
     """El stat base de cada hueco no baja respecto al enemigo anterior de ese
     mismo hueco, salvo las excepciones deliberadas ya documentadas."""
     last_value_by_slot = {}
-    for position, enemy, item in sorted(_all_armor_drops(), key=lambda t: t[0]):
+    for _position, enemy, item in sorted(_all_armor_drops(), key=lambda t: t[0]):
         base_field = BASE_STAT_BY_SLOT[item.slot]
         value = getattr(item, base_field)
         previous = last_value_by_slot.get(item.slot)

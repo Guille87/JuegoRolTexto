@@ -1,5 +1,6 @@
 import base64
 import binascii
+import contextlib
 import json
 import os
 import shutil
@@ -115,10 +116,8 @@ def load_game(player):
     # Si no existe el principal, pero sí el backup, intentamos restaurar el backup
     if not os.path.exists(file_path) and os.path.exists(backup_path):
         console.warning("Archivo principal no encontrado. Restaurando desde backup...")
-        try:
+        with contextlib.suppress(OSError):
             shutil.copy2(backup_path, file_path)
-        except OSError:
-            pass
 
     if not os.path.exists(file_path):
         console.error(f"No se encontró ninguna partida guardada para {player.name}.")

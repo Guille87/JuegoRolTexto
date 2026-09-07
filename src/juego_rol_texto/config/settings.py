@@ -7,6 +7,7 @@ borre la preferencia de informes ni al revés.
 """
 
 import configparser
+import contextlib
 
 from juego_rol_texto.config.paths import CONFIG_FILE
 
@@ -22,10 +23,8 @@ CRASH_REPORTS_UNSET = "unset"
 def _read() -> configparser.ConfigParser:
     config = configparser.ConfigParser()
     if CONFIG_FILE.exists():
-        try:
+        with contextlib.suppress(configparser.Error):
             config.read(CONFIG_FILE)
-        except configparser.Error:
-            pass
     return config
 
 
@@ -33,7 +32,7 @@ def _write(config: configparser.ConfigParser) -> None:
     try:
         with open(CONFIG_FILE, "w") as configfile:
             config.write(configfile)
-    except IOError as e:
+    except OSError as e:
         print(f"Error al guardar la configuración: {e}")
 
 

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import sys
 import threading
@@ -64,10 +65,8 @@ def main() -> None:
     # UnicodeEncodeError si no se hace esto. Debe ir antes de colorama.init(),
     # que envuelve stdout/stderr con su propio wrapper.
     for stream in (sys.stdout, sys.stderr):
-        try:
+        with contextlib.suppress(AttributeError, ValueError):
             stream.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, ValueError):
-            pass
 
     # Registro de errores en disco: a partir de aquí cualquier fallo queda
     # escrito en logs/juego.log (junto al .exe si está empaquetado).
@@ -131,10 +130,8 @@ def main() -> None:
         # habido un crash, esperamos a que el jugador pueda leer la ruta del
         # informe antes de que desaparezca todo.
         if crashed:
-            try:
+            with contextlib.suppress(EOFError, KeyboardInterrupt):
                 input("\nPulsa Enter para cerrar...")
-            except (EOFError, KeyboardInterrupt):
-                pass
 
 
 if __name__ == "__main__":
