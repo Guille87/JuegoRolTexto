@@ -12,7 +12,7 @@ rellena los valores.
 from __future__ import annotations
 
 try:  # pragma: no cover - depende de si existe secrets.py en la máquina
-    from juego_rol_texto.config import secrets as _secrets
+    from juego_rol_texto.config import secrets as _secrets  # type: ignore[attr-defined]
 except Exception:  # ImportError o cualquier fallo al cargarlo
     _secrets = None
 

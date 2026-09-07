@@ -16,9 +16,10 @@ A living document of what exists and what is planned. See the
 - Mood-based background music.
 - JSON save/load with backup; case-insensitive player-name recognition.
 - On-disk error logging and optional opt-in Discord crash reports.
-- CI (Ruff + tests on Python 3.10–3.13, Linux + Windows), coverage badge, release workflow (v0.3.0).
+- CI (Ruff, pyright, tests on Python 3.10–3.13 Linux + one Windows job), coverage badge, release workflow (v0.3.0).
 - Branch protection on `main` (PR + `all-green` check); boot smoke test.
 - Cross-platform keyboard input (`ui/keyboard.py`) — the game and test suite no longer need Windows.
+- Ruff `UP`/`B`/`SIM`, `__version__` via `importlib.metadata`, CI `concurrency`.
 
 ## Game — planned
 
@@ -40,11 +41,8 @@ High impact:
 
 Medium / polish:
 
-- **Static type checking** in CI (`pyright` or `ty`), non-blocking at first.
-- **`__version__`** in `src/juego_rol_texto/__init__.py` via `importlib.metadata`.
 - **GitHub repo metadata** — description, topics, social-preview image.
-- Expand the Ruff rule set (`UP`, `B`, `SIM`, …).
-- `concurrency:` in `ci.yml` to cancel superseded runs.
+- Extend `pyright` to also check `tests/`, and step up from `basic` to `standard`.
 - Tidy the auto-generated release notes; link the CHANGELOG.
 - Optional CI job that builds the PyInstaller package without publishing
   (only when the `.spec` changes) so a broken spec is caught before a release.

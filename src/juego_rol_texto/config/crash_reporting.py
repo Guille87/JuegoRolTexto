@@ -117,7 +117,7 @@ def send_crash_report(crash_path: Path | None, exc: BaseException, *, context: s
     header = scrub(header)[:1900]
 
     body_bytes = b""
-    filename = None
+    filename = "crash.txt"
     if crash_path and crash_path.exists():
         try:
             body_bytes = scrub(crash_path.read_text(encoding="utf-8")).encode("utf-8")

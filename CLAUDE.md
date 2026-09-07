@@ -33,16 +33,17 @@ pytest --cov=juego_rol_texto --cov-report=term-missing       # with coverage
 pytest --cov=juego_rol_texto --cov-report=html               # htmlcov/index.html
 ```
 
-Lint / format (Ruff, config in `pyproject.toml` — `F`, `E4/E7/E9`, `W`, `I`, `UP`, `B`, `SIM`):
+Lint / format / types (config in `pyproject.toml`):
 ```bash
-ruff check .
+ruff check .           # lint — F, E4/E7/E9, W, I, UP, B, SIM
 ruff format .          # or `ruff format --check .` in CI
+pyright                 # basic mode, `src` only, must stay at 0 errors
 ```
 
 ## Project meta
 
 - **Docs are bilingual**: English originals at the repo root (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`), Spanish translations under `docs/*_es.md`, each with a language switcher at the top. `CLAUDE.md` and `TODO.md` are not translated (CLAUDE.md is tool-facing; TODO.md is the Spanish balance-tuning log).
-- **CI** (`.github/workflows/ci.yml`): on push to `main` and every PR, runs `ruff check`, `ruff format --check` and `pytest --cov`. The `test` matrix is Python 3.10–3.13 on **Linux** plus one **Windows** job (3.12) for the `msvcrt` path and pygame-on-Windows. The `all-green` job aggregates the test matrix into one status check (that's the one the `main` branch ruleset requires). A `coverage-badge` job (push to `main` only, on Linux) regenerates the coverage SVG with `genbadge` and pushes it to the orphan **`badges` branch** — kept off `main` so it doesn't need a PR through branch protection; the README links `raw.githubusercontent.com/.../badges/coverage.svg`.
+- **CI** (`.github/workflows/ci.yml`): on push to `main` and every PR, runs `ruff check`, `ruff format --check` and `pytest --cov`. The `test` matrix is Python 3.10–3.13 on **Linux** plus one **Windows** job (3.12) for the `msvcrt` path and pygame-on-Windows. A separate `types` job runs `pyright` (basic mode, `src` only — currently 0 errors; `reportIncompatibleMethodOverride` is off because the `Item`/`Player`/`Enemy` hierarchies use deliberate duck typing). The `all-green` job aggregates `test` + `types` into the one status check the `main` branch ruleset requires. A `coverage-badge` job (push to `main` only, on Linux) regenerates the coverage SVG with `genbadge` and pushes it to the orphan **`badges` branch** — kept off `main` so it doesn't need a PR through branch protection; the README links `raw.githubusercontent.com/.../badges/coverage.svg`.
 - **Branch protection**: `main` has a ruleset requiring a PR (0 approvals) with the `all-green` check green. Work on a branch, open a PR, let CI pass, merge.
 - **Coverage** (`[tool.coverage.run]` in `pyproject.toml`): `ui/menus.py` and `app.py` are `omit`ted — they are interactive menu loops / startup orchestration, mostly chained `input()`/`print()` calls; the metric tracks the game logic instead. Target is ≥90% of the measured code.
 - **Release** (`.github/workflows/release.yml`): pushing a `v*` tag builds the PyInstaller package from `JuegoRolTexto.spec` (now version-controlled), zips `dist/JuegoRolTexto`, and attaches it to the GitHub Release. `.github/scripts/write_secrets.py` writes `config/secrets.py` from repo secrets first (skipped if none set). See `CONTRIBUTING.md` for the full release steps.

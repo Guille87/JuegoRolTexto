@@ -66,7 +66,9 @@ def main() -> None:
     # que envuelve stdout/stderr con su propio wrapper.
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(AttributeError, ValueError):
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            # .reconfigure() solo existe en TextIOWrapper, no en el TextIO genérico
+            # de los stubs; el AttributeError capturado cubre el caso contrario.
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
 
     # Registro de errores en disco: a partir de aquí cualquier fallo queda
     # escrito en logs/juego.log (junto al .exe si está empaquetado).

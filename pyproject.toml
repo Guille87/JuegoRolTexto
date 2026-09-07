@@ -17,6 +17,7 @@ dev = [
     "pytest-cov>=5",
     "ruff>=0.6",
     "genbadge[coverage]>=1.1",
+    "pyright>=1.1.400",
 ]
 
 [project.scripts]
@@ -49,6 +50,20 @@ select = ["E4", "E7", "E9", "F", "W", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+venv = "env"
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+# colorama no trae py.typed; el aviso no aporta nada.
+reportMissingModuleSource = false
+# Las jerarquías Item / Player / Enemy usan duck typing a propósito (ver CLAUDE.md):
+# Weapon.use(player, target_slot=...) vs Item.use(target), Skeleton.take_damage con
+# parámetros extra, etc. Forzar LSP aquí sería reescribir firmas estables sin ningún
+# beneficio en tiempo de ejecución.
+reportIncompatibleMethodOverride = false
 
 [tool.coverage.run]
 source = ["juego_rol_texto"]

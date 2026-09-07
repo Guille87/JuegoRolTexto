@@ -17,7 +17,7 @@ Thanks for your interest. The project is small; these are the conventions.
 
 1. Branch from `main`.
 2. One commit per logical unit of change.
-3. Run `ruff format .`, then `ruff check .`, then `pytest`: everything must pass.
+3. Run `ruff format .`, then `ruff check .`, then `pyright`, then `pytest`: everything must pass.
 4. Open a pull request. CI runs Ruff and the tests on Python 3.10–3.13 (Windows)
    and refreshes the coverage badge; it must be green.
 
