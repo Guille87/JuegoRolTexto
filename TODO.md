@@ -1,7 +1,7 @@
 # Próximas Implementaciones 🚀
 
 ## Panel de Admin
-- [x] **Control total para el personaje "admin"** (a petición del usuario, que recordaba una ventana de Tkinter asociada al admin — resultó ser `tools/settings_admin.py`, código muerto que no se llama desde ningún sitio del juego y que además usa nombres de atributos que no coinciden con los reales de `Player`/`Stats`; no se ha tocado, sigue sin usarse). En su lugar, nueva opción "Panel de Admin" en `game_loop()`, con control real dentro del propio juego (consola, no Tkinter, para ser consistente con el resto):
+- [x] **Control total para el personaje "admin"** (a petición del usuario, que recordaba una ventana de Tkinter asociada al admin — resultó ser `tools/settings_admin.py`, código muerto que no se llamaba desde ningún sitio del juego y que además usaba nombres de atributos que no coincidían con los reales de `Player`/`Stats`; se borró más tarde en la pasada de organización del proyecto). En su lugar, nueva opción "Panel de Admin" en `game_loop()`, con control real dentro del propio juego (consola, no Tkinter, para ser consistente con el resto):
   - Poner el oro que se quiera.
   - Poner el nivel que se quiera (subir reutiliza `Player._level_up()` real, así que las estadísticas suben con la curva normal del juego en vez de un número arbitrario; bajar el nivel no baja las estadísticas solo, hay que tocarlas a mano si hace falta).
   - Editar cualquier estadística de `Stats` una a una (vida, ataque, armadura, resistencia mágica, velocidad, precisión, evasión, penetraciones, regeneración, crítico).
