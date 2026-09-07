@@ -1,66 +1,82 @@
-# Juego de Batalla por Turnos
-¡Bienvenido al juego de **Batalla** por **Turnos** en Python! Enfréntate a enemigos, gestiona objetos y mejora habilidades en este emocionante juego de estrategia por turnos.
-## Descripción
-Este juego te **desafía** a enfrentarte a una **variedad de enemigos** en batallas por turnos. Adquiere **objetos** y derrota a los enemigos para avanzar en tu aventura.  
-## Instrucciones de instalación
+# Juego de Rol por Turnos
 
-> **Nota:** por ahora el juego solo funciona en **Windows** (el modo auto-batalla depende de `msvcrt`, exclusivo de Windows, para poder cancelarse con la tecla `q`).
+<p align="center"><a href="README.md">English</a> · <a href="docs/README_es.md">Español</a></p>
 
-Sigue estos pasos para configurar el entorno de desarrollo en tu máquina local:
-1. **Clona** el repositorio:  
-Asegúrate de tener **Python 3.10 o superior instalado** en tu sistema.  
-    ```bash
-   git clone https://github.com/Guille87/JuegoRolTexto.git
-   cd JuegoRolTexto
-   ```
-2. **Crea y activa un entorno virtual:**
-    ```powershell
-    python -m venv env
-    .\env\Scripts\activate
-    ```
-3. **Instala el proyecto y sus dependencias:**
-    ```
-    pip install -e ".[dev]"
-    ```
-    (El extra `[dev]` añade `pytest` para poder correr los tests. Si solo quieres jugar, `pip install -e .` es suficiente.)
-4. **Inicia el juego:**
-    ```
-    python main.py
-    ```
-    También puedes usar `python -m juego_rol_texto` o, tras la instalación, el comando `juego-rol-texto`.
+[![CI](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml/badge.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
+[![Coverage](.github/badges/coverage.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A Spanish-language, terminal-based turn-based RPG written in Python. Fight your way
+through a chain of 14 enemies, manage gear and potions, craft equipment and grow
+your character. It is played entirely in the console — there is no graphical
+window; `colorama` adds colour and `pygame` (mixer only) plays background music.
+
+## Features
+
+- **Active Time Battle** combat: the faster combatant acts more often, not just
+  strict alternation.
+- **14 enemies** with unique mechanics and a fixed unlock chain, ending with the Dragon.
+- **11 Diablo-style equipment slots** with a guaranteed base stat per slot plus random secondaries.
+- **Forge** (12 recipes), **shop** and a **bestiary** that fills in as you win.
+- Physical vs. magical damage, penetration, elemental weaknesses, status effects.
+- JSON save/load with automatic backup; optional on-disk error log and Discord crash report.
+
+## Requirements
+
+- Python **3.10 or newer** (CI runs 3.10–3.13).
+- **Windows only** for now: the auto-battle mode uses `msvcrt` to cancel with `q`.
+
+## Install
+
+```powershell
+git clone https://github.com/Guille87/JuegoRolTexto.git
+cd JuegoRolTexto
+python -m venv env
+.\env\Scripts\activate
+pip install -e ".[dev]"
+```
+
+The `[dev]` extra adds `pytest`, `pytest-cov` and `ruff`. For playing only, `pip install -e .` is enough.
+
+## Run
+
+```bash
+python main.py
+# or: python -m juego_rol_texto
+# or, after install: juego-rol-texto
+```
 
 ## Tests
 
-El proyecto usa `pytest`. Con las dependencias de desarrollo instaladas:
-```
-pytest
+```bash
+pytest                              # run the suite
+pytest --cov=juego_rol_texto        # with coverage
+ruff check . && ruff format --check .
 ```
 
-## Generar un ejecutable (.exe)
-
-Para jugar sin necesidad de tener Python/PyCharm instalado, puedes empaquetar el juego con [PyInstaller](https://pyinstaller.org/):
+## Build a standalone executable
 
 ```powershell
 pip install pyinstaller
-pyinstaller --onedir --name JuegoRolTexto --add-data "assets;assets" main.py
+pyinstaller JuegoRolTexto.spec
 ```
 
-El resultado queda en `dist\JuegoRolTexto\` — copia esa carpeta entera (no solo el `.exe`) a donde quieras, ya que necesita los assets y las DLLs que la acompañan. Al ejecutarlo, `config.ini`, `saved_games\` y `logs\` se crean automáticamente junto al `.exe`.
+The result is in `dist\JuegoRolTexto\` — copy the **whole folder** (it needs the
+bundled assets and DLLs). `config.ini`, `saved_games\` and `logs\` are created
+next to the `.exe`. Use `--onedir` (the spec already does), never `--onefile`.
 
-> Usa `--onedir` (carpeta), no `--onefile`: en `--onefile` el juego se descomprime en una carpeta temporal distinta en cada arranque, así que las partidas guardadas y los ajustes de volumen no persistirían entre ejecuciones.
+Optional error reporting to Discord lives in `src/juego_rol_texto/config/secrets.py`
+(git-ignored). Copy `config/secrets.example.py` to `config/secrets.py` and fill it
+in before building; without it the game runs fine, just without crash reports.
 
-### Secretos (`config/secrets.py`)
+## Documentation
 
-El webhook de Discord para informes de error y el hash de la contraseña de admin viven en `src/juego_rol_texto/config/secrets.py`, que **no se versiona**. Para tener esas funciones en tu build:
+- [Contributing](CONTRIBUTING.md) — workflow and conventions.
+- [Roadmap](ROADMAP.md) — what is done and what is planned.
+- [Changelog](CHANGELOG.md) — version history.
+- [CLAUDE.md](CLAUDE.md) — detailed architecture notes.
+- [TODO.md](TODO.md) — detailed balance-tuning history.
 
-```powershell
-copy src\juego_rol_texto\config\secrets.example.py src\juego_rol_texto\config\secrets.py
-# edita secrets.py y rellena los valores
-```
+## License
 
-Si el archivo no existe, el juego funciona igual pero sin envío de crashes a Discord y sin modo admin. PyInstaller lo empaqueta solo si existe al compilar; si por lo que sea no lo incluye, añade `--hidden-import juego_rol_texto.config.secrets`.
-
-## Contribución
-**¡Contribuciones son bienvenidas!** Si encuentras algún **problema**, tienes **sugerencias** de mejoras o deseas **contribuir** con código, no dudes en abrir un **issue** o enviar un **pull request**.
-# Contacto
-Para cualquier **pregunta** o **comentario**, puedes contactarme en **guillermo_amado@hotmail.es**.
+[MIT](LICENSE) © 2026 Guillermo Amado.
