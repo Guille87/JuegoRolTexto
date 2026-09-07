@@ -3,7 +3,7 @@
 <p align="center"><a href="README.md">English</a> · <a href="docs/README_es.md">Español</a></p>
 
 [![CI](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml/badge.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
-[![Coverage](.github/badges/coverage.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
+[![Coverage](https://raw.githubusercontent.com/Guille87/JuegoRolTexto/badges/coverage.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/graphs/contributors)
 [![Issues](https://img.shields.io/github/issues/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/issues)
