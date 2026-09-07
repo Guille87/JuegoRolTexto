@@ -1,4 +1,3 @@
-import msvcrt
 import random
 import time
 
@@ -6,6 +5,7 @@ from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
+from juego_rol_texto.ui.keyboard import key_pressed
 
 # Mapa de progresión: Al derrotar a la LLAVE, se desbloquea el VALOR.
 # Orden de tiers acordado con el usuario (ver TODO.md): los enemigos nuevos se
@@ -38,11 +38,7 @@ ATB_THRESHOLD = 100
 
 def check_for_interrupt() -> bool:
     """Retorna True si el usuario ha pulsado 'q' o 'Q'."""
-    if msvcrt.kbhit():  # ¿Se ha pulsado alguna tecla?
-        key = msvcrt.getch().decode("utf-8").lower()
-        if key == "q":
-            return True
-    return False
+    return key_pressed() == "q"
 
 
 def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> None:

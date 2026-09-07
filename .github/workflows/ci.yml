@@ -15,14 +15,21 @@ permissions:
 
 jobs:
   test:
-    runs-on: windows-latest
+    # El grueso corre en Linux (rápido y barato) sobre todas las versiones
+    # soportadas; un único job en Windows cubre la rama de msvcrt y pygame en
+    # Windows, que es donde se distribuye el .exe.
+    runs-on: ${{ matrix.os }}
     env:
       SDL_AUDIODRIVER: dummy
       SDL_VIDEODRIVER: dummy
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
     steps:
       - uses: actions/checkout@v7
 
@@ -62,7 +69,7 @@ jobs:
   coverage-badge:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
