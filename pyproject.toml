@@ -53,7 +53,15 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["juego_rol_texto"]
-omit = ["*/__main__.py"]
+# Se excluye la capa de "pegamento": bucles de menú interactivos (ui/menus.py) y
+# la orquestación de arranque (app.py). Son casi todo llamadas a input()/print()
+# encadenadas; testearlas a fondo aporta poco frente a testear la lógica de
+# juego. La cobertura mide así el código que de verdad conviene cubrir.
+omit = [
+    "*/__main__.py",
+    "*/ui/menus.py",
+    "*/app.py",
+]
 
 [tool.coverage.report]
 exclude_also = [

@@ -5,6 +5,7 @@ from juego_rol_texto.characters.player import Player
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
+from juego_rol_texto.persistence import save_load
 from juego_rol_texto.persistence.save_load import load_game, save_exists, save_game
 
 
@@ -148,6 +149,45 @@ def test_load_falls_back_to_backup_when_main_save_fails_unexpectedly(tmp_save_di
 def test_load_returns_none_when_no_save_exists(tmp_save_dir):
     loaded_player = Player("Nadie", Stats(1, 1, 1, 1, 1))
     assert load_game(loaded_player) is None
+
+
+def test_load_restores_from_bak_when_sav_is_missing(tmp_save_dir):
+    """Sin .sav pero con .bak, load_game copia el backup y carga desde él."""
+    save_game(_build_player(), unlocked_enemies=["Goblin"], defeated_enemies=[])
+    save_game(_build_player(), unlocked_enemies=["Goblin"], defeated_enemies=[])  # crea .bak
+    (tmp_save_dir / "Guille.sav").unlink()
+
+    result = load_game(Player("Guille", Stats(1, 1, 1, 1, 1)))
+
+    assert result is not None
+    assert (tmp_save_dir / "Guille.sav").exists()  # restaurado
+
+
+def test_load_returns_none_on_corrupt_base64(tmp_save_dir):
+    (tmp_save_dir / "Guille.sav").write_bytes(b"esto no es base64 valido !!!")
+    assert load_game(Player("Guille", Stats(1, 1, 1, 1, 1))) is None
+
+
+def test_save_game_reports_serialization_error(tmp_save_dir, capsys):
+    player = _build_player()
+    player.enemy_kill_counts = {"Goblin": object()}  # no serializable a JSON
+
+    save_game(player, unlocked_enemies=["Goblin"], defeated_enemies=[])
+
+    assert "serialización" in capsys.readouterr().out.lower()
+    assert not (tmp_save_dir / "Guille.sav").exists()
+
+
+def test_check_save_directory_reports_when_it_cannot_be_created(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(save_load, "SAVE_DIR", tmp_path / "no")
+
+    def boom(*a, **k):
+        raise OSError("permiso denegado")
+
+    monkeypatch.setattr(save_load.os, "makedirs", boom)
+    save_load.check_save_directory()
+
+    assert "No se pudo crear" in capsys.readouterr().out
 
 
 def test_load_falls_back_on_legacy_defense_key(tmp_save_dir):

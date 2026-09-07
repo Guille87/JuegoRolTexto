@@ -40,6 +40,7 @@ ruff format .          # or `ruff format --check .` in CI
 
 - **Docs are bilingual**: English originals at the repo root (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`), Spanish translations under `docs/*_es.md`, each with a language switcher at the top. `CLAUDE.md` and `TODO.md` are not translated (CLAUDE.md is tool-facing; TODO.md is the Spanish balance-tuning log).
 - **CI** (`.github/workflows/ci.yml`): on push to `main` and every PR, runs `ruff check`, `ruff format --check` and `pytest --cov` on **Windows** (forced by `import msvcrt` in `combat/battle.py`) across Python 3.10–3.13. A second job (push to `main` only) regenerates `.github/badges/coverage.svg` with `genbadge` and commits it back — **don't edit that SVG by hand**.
+- **Coverage** (`[tool.coverage.run]` in `pyproject.toml`): `ui/menus.py` and `app.py` are `omit`ted — they are interactive menu loops / startup orchestration, mostly chained `input()`/`print()` calls; the metric tracks the game logic instead. Target is ≥90% of the measured code.
 - **Release** (`.github/workflows/release.yml`): pushing a `v*` tag builds the PyInstaller package from `JuegoRolTexto.spec` (now version-controlled), zips `dist/JuegoRolTexto`, and attaches it to the GitHub Release. `.github/scripts/write_secrets.py` writes `config/secrets.py` from repo secrets first (skipped if none set). See `CONTRIBUTING.md` for the full release steps.
 
 ## Architecture

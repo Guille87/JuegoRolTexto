@@ -61,3 +61,45 @@ def test_handle_uncaught_ignores_keyboard_interrupt(tmp_path, monkeypatch):
     logging_setup._handle_uncaught(KeyboardInterrupt, KeyboardInterrupt(), None)
 
     assert not list(tmp_path.glob("crash_*.txt"))
+
+
+def test_report_crash_returns_none_when_the_dir_cannot_be_written(tmp_path, monkeypatch):
+    monkeypatch.setattr(logging_setup, "LOG_DIR", tmp_path / "no")
+    monkeypatch.setattr(logging_setup, "LOG_FILE", tmp_path / "no" / "juego.log")
+
+    def boom(*a, **k):
+        raise OSError("sin permiso")
+
+    monkeypatch.setattr(logging_setup.Path, "mkdir", boom)
+    assert logging_setup.report_crash(ValueError("x"), context="t") is None
+
+
+def test_setup_logging_survives_a_dir_creation_failure(tmp_path, monkeypatch):
+    monkeypatch.setattr(logging_setup, "LOG_DIR", tmp_path / "no")
+    monkeypatch.setattr(logging_setup, "_configured", False)
+    monkeypatch.setattr(logging_setup.logger, "handlers", [])
+    monkeypatch.setattr(logging_setup.Path, "mkdir", lambda *a, **k: (_ for _ in ()).throw(OSError()))
+
+    logging_setup.setup_logging()  # no lanza
+    assert logging_setup._configured is True
+
+
+def test_handle_thread_exception_logs_and_ignores_system_exit(monkeypatch, caplog):
+    import logging as _logging
+
+    monkeypatch.setattr(logging_setup, "_configured", True)
+
+    class Args:
+        exc_type = RuntimeError
+        exc_value = RuntimeError("hilo roto")
+        exc_traceback = None
+        thread = None
+
+    with caplog.at_level(_logging.ERROR, logger="juego_rol_texto"):
+        logging_setup._handle_thread_exception(Args())
+    assert "Excepción en hilo" in caplog.text
+
+    class SysExitArgs(Args):
+        exc_type = SystemExit
+
+    logging_setup._handle_thread_exception(SysExitArgs())  # no lanza, no registra
