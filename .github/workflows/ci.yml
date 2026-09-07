@@ -74,10 +74,16 @@ jobs:
     needs: [test, types]
     runs-on: ubuntu-latest
     steps:
-      - name: 'test' y 'types' deben haber pasado
+      - name: test y types deben haber pasado
         run: |
-          [ "${{ needs.test.result }}" = "success" ] || { echo "test = ${{ needs.test.result }}"; exit 1; }
-          [ "${{ needs.types.result }}" = "success" ] || { echo "types = ${{ needs.types.result }}"; exit 1; }
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "test = ${{ needs.test.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.types.result }}" != "success" ]; then
+            echo "types = ${{ needs.types.result }}"
+            exit 1
+          fi
 
   coverage-badge:
     needs: test
