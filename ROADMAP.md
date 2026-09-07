@@ -16,7 +16,9 @@ A living document of what exists and what is planned. See the
 - Mood-based background music.
 - JSON save/load with backup; case-insensitive player-name recognition.
 - On-disk error logging and optional opt-in Discord crash reports.
-- CI (Ruff + tests on Python 3.10–3.13), coverage badge, release workflow (v0.3.0).
+- CI (Ruff + tests on Python 3.10–3.13, Linux + Windows), coverage badge, release workflow (v0.3.0).
+- Branch protection on `main` (PR + `all-green` check); boot smoke test.
+- Cross-platform keyboard input (`ui/keyboard.py`) — the game and test suite no longer need Windows.
 
 ## Game — planned
 
@@ -31,16 +33,10 @@ A living document of what exists and what is planned. See the
 
 High impact:
 
-- **Cross-platform support** — abstract the one `msvcrt` call (auto-battle
-  cancel with `q`) behind a small helper so the game, the test suite and CI can
-  also run on Linux/macOS.
 - **README screenshot / gameplay recording** — the repo currently shows only
   badges and text.
-- **Branch protection on `main`** — require CI green (and optionally one review)
-  before merge.
-- **Boot smoke test** — a single test that runs `app.main()` with mocked input
-  and exits, so wiring/import errors are caught (both `app.py` and `ui/menus.py`
-  are excluded from coverage).
+- **Auto-updater** — a distributed `.exe` pulls and applies a new version
+  without a reinstall and without touching `saved_games/` / `config.ini`.
 
 Medium / polish:
 
@@ -55,7 +51,5 @@ Medium / polish:
 
 ## Ideas (no commitment)
 
-- **In-place updates** — let a distributed build pull a new version without a
-  full reinstall and without touching `saved_games/` / `config.ini`.
 - In-game feedback channel (a menu option that posts to Discord, like the crash report).
 - Localisation / multi-language support in the game itself.

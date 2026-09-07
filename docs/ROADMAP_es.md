@@ -17,7 +17,9 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 - Guardado/carga en JSON con copia de seguridad; reconocimiento del jugador por
   nombre sin distinguir mayúsculas/minúsculas.
 - Registro de errores en disco e informe opcional (opt-in) a Discord.
-- CI (Ruff + tests en Python 3.10–3.13), badge de cobertura, workflow de release (v0.3.0).
+- CI (Ruff + tests en Python 3.10–3.13, Linux + Windows), badge de cobertura, workflow de release (v0.3.0).
+- Protección de la rama `main` (PR + check `all-green`); smoke test de arranque.
+- Entrada de teclado multiplataforma (`ui/keyboard.py`) — el juego y los tests ya no necesitan Windows.
 
 ## Juego — planeado
 
@@ -32,16 +34,10 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 
 Impacto alto:
 
-- **Soporte multiplataforma** — aislar la única llamada a `msvcrt` (cancelar la
-  auto-batalla con `q`) tras un pequeño helper para que el juego, los tests y el
-  CI puedan correr también en Linux/macOS.
 - **Captura / grabación de partida en el README** — ahora mismo el repo solo
   muestra badges y texto.
-- **Protección de la rama `main`** — exigir el CI en verde (y opcionalmente una
-  review) antes de fusionar.
-- **Test de arranque (smoke test)** — un único test que ejecute `app.main()` con
-  el input mockeado y salga, para cazar errores de wiring/imports (tanto `app.py`
-  como `ui/menus.py` están excluidos de la cobertura).
+- **Auto-updater** — que una build repartida (`.exe`) descargue y aplique una
+  versión nueva sin reinstalar y sin tocar `saved_games/` / `config.ini`.
 
 Medio / pulido:
 
@@ -56,8 +52,6 @@ Medio / pulido:
 
 ## Ideas (sin compromiso)
 
-- **Actualizaciones in situ** — que una build repartida pueda descargar una nueva
-  versión sin reinstalar y sin tocar `saved_games/` / `config.ini`.
 - Canal de feedback dentro del juego (una opción de menú que publique en Discord,
   como el informe de errores).
 - Localización / soporte multi-idioma en el propio juego.
