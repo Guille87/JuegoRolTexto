@@ -40,7 +40,7 @@ jobs:
           Compress-Archive -Path dist/JuegoRolTexto -DestinationPath "JuegoRolTexto-$tag-windows.zip"
 
       - name: Publicar en el GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: JuegoRolTexto-*-windows.zip
           generate_release_notes: true
