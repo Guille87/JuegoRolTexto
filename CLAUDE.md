@@ -27,7 +27,10 @@ python main.py
 Run tests:
 ```bash
 pytest
-pytest --cov=juego_rol_texto --cov-report=term-missing   # with coverage
+pytest tests/test_battle.py::test_defeat_penalizes_gold_and_fully_heals_player   # a single test
+pytest -k "mago and heal"                                                        # by keyword
+pytest --cov=juego_rol_texto --cov-report=term-missing       # with coverage
+pytest --cov=juego_rol_texto --cov-report=html               # htmlcov/index.html
 ```
 
 Lint / format (Ruff, config in `pyproject.toml`, conservative rule set — `F`, `E4/E7/E9`, `W`, `I`):
@@ -106,7 +109,14 @@ ruff format .          # or `ruff format --check .` in CI
 
 ## Tests (`tests/`)
 
-`pytest`-based. `tests/conftest.py` sets `SDL_AUDIODRIVER=dummy` and initializes `pygame.mixer` headlessly (session-scoped autouse fixture) so `ResourceManager`/`battle.py` can run without real audio hardware, and provides a `tmp_save_dir` fixture that monkeypatches `juego_rol_texto.persistence.save_load.SAVE_DIR` so save/load tests never touch the real `saved_games/` directory. Coverage: `Stats` clamping, `Player` combat math/status effects/leveling, `Inventory` stacking/equip/use/sell/craft-support flows, `Shop` buy/sell flows, `Forge` crafting flows, item `to_dict()`/`from_dict()` round-trips through `item_factory`, save/load round-trip + backup fallback, and `initiate_battle()` victory/defeat outcomes (enemy unlock progression, gold penalty on defeat, elemental weakness bonus) using deterministic fixtures (`weak_enemy`) and `monkeypatch` for `input()`/`time.sleep()`/`random`.
+`pytest`-based, ~240 tests, coverage ≥90% of the measured code (see the Coverage note above). `tests/conftest.py` provides the shared fixtures: `_headless_audio` (session-scoped autouse — sets `SDL_AUDIODRIVER=dummy` and inits `pygame.mixer` so `ResourceManager`/`battle.py` run without audio hardware), `player` (a fresh `Player` used by almost every test), `weak_enemy` (a 1-HP Goblin for deterministic combat outcomes), and `tmp_save_dir` (monkeypatches `save_load.SAVE_DIR` to a tmp dir).
+
+Testing conventions:
+- **Interactive code is driven by monkeypatching `console.ask`** at the module under test, e.g. `monkeypatch.setattr("juego_rol_texto.shop.shop.console.ask", ...)`; queue a sequence of answers with an `iter(...)` when a flow asks more than once.
+- **`random.random`/`randint`/`choice` are one shared stdlib object process-wide** — `characters/stats.py::resolve_hit`, `enemy_base.py` and each enemy module all call the same function, so a monkeypatch of `"random.random"` affects every roll in that turn. Tests fix an extreme value (`0.0` → everything hits/procs, `0.99` → misses) and assert *effects* (health dropped, status applied), not exact damage numbers. The one enemy test file that needs per-roll control (`test_new_enemies.py`) documents the real roll order in a comment.
+- Enemy `perform_turn()` / `_cast_*` / `_claw_attack` helpers are tested directly (call the helper, don't route through a whole battle).
+
+Which file tests what: `test_stats` (clamping, `resolve_hit`), `test_player` (combat math / status / leveling), `test_battle` (`initiate_battle` outcomes, elemental bonus), `test_new_enemies` + `test_original_enemies` + `test_enemy_attacks` (per-enemy `perform_turn` mechanics), `test_inventory` / `test_items` / `test_potions` / `test_shop` / `test_crafting` / `test_armor_progression`, `test_save_load`, `test_formatting`, `test_audio`, `test_settings`, `test_secret_store`, `test_crash_logging`, `test_crash_reporting`.
 
 ## Known incomplete/dead areas (see TODO.md)
 
