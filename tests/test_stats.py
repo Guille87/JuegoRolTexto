@@ -1,5 +1,9 @@
 from juego_rol_texto.characters.stats import (
-    BASE_HIT_CHANCE, MAX_HIT_CHANCE, MIN_HIT_CHANCE, Stats, resolve_hit,
+    BASE_HIT_CHANCE,
+    MAX_HIT_CHANCE,
+    MIN_HIT_CHANCE,
+    Stats,
+    resolve_hit,
 )
 
 
@@ -16,8 +20,9 @@ def test_health_is_clamped_to_zero():
 
 
 def test_str_representation():
-    stats = Stats(health=10, max_health=20, min_atk=1, max_atk=5, armor=3, magic_resist=1,
-                   crit_chance=0.1, crit_damage=1.75)
+    stats = Stats(
+        health=10, max_health=20, min_atk=1, max_atk=5, armor=3, magic_resist=1, crit_chance=0.1, crit_damage=1.75
+    )
     assert str(stats) == "HP: 10/20 | ATK: 1-5 | ARM: 3 | RES.MAG: 1 | CRIT: 10% x1.75"
 
 

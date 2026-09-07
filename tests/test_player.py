@@ -179,8 +179,11 @@ def test_unequipping_health_bonus_clamps_current_health_down(player):
 
 def test_gain_experience_levels_up_and_boosts_stats(player):
     old_max_health, old_min_atk, old_max_atk, old_armor, old_speed = (
-        player.stats.max_health, player.stats.min_atk, player.stats.max_atk,
-        player.stats.armor, player.stats.speed
+        player.stats.max_health,
+        player.stats.min_atk,
+        player.stats.max_atk,
+        player.stats.armor,
+        player.stats.speed,
     )
     player.gain_experience(8)  # required_xp() en nivel 1 es 8 (deliberadamente barato)
 

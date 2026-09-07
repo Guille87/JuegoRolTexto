@@ -1,4 +1,5 @@
 """Rutas centralizadas del proyecto, resueltas de forma absoluta."""
+
 import sys
 from pathlib import Path
 

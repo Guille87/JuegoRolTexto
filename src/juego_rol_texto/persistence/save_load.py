@@ -54,7 +54,7 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             "evasion": player.stats.evasion,
             "armor_penetration": player.stats.armor_penetration,
             "magic_penetration": player.stats.magic_penetration,
-            "regen": player.stats.regen
+            "regen": player.stats.regen,
         },
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
@@ -62,15 +62,12 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         "discovered_materials": sorted(player.inventory.discovered_materials),
         "enemy_kill_counts": player.enemy_kill_counts,
         "equipped_weapon": player.equipped_weapon.to_dict() if player.equipped_weapon else None,
-        "equipped_armor": {
-            slot: item.to_dict() if item else None
-            for slot, item in player.equipped_armor.items()
-        },
+        "equipped_armor": {slot: item.to_dict() if item else None for slot, item in player.equipped_armor.items()},
     }
 
     try:
         json_str = json.dumps(save_data)
-        encoded_data = base64.b64encode(json_str.encode('utf-8'))
+        encoded_data = base64.b64encode(json_str.encode("utf-8"))
 
         file_path = os.path.join(SAVE_DIR, f"{player.name}.sav")
         with open(file_path, "wb") as f:
@@ -95,7 +92,7 @@ def _resolve_save_name(name: str) -> str:
     target = f"{name.lower()}.sav"
     for entry in os.listdir(SAVE_DIR):
         if entry.lower() == target:
-            return entry[:-len(".sav")]
+            return entry[: -len(".sav")]
     return name
 
 
@@ -104,8 +101,9 @@ def save_exists(name: str) -> bool:
     mayúsculas/minúsculas)? Usado por "Nueva Partida" para no crear dos
     personajes casi homónimos que compartirían archivo de guardado."""
     resolved = _resolve_save_name(name)
-    return os.path.exists(os.path.join(SAVE_DIR, f"{resolved}.sav")) or \
-        os.path.exists(os.path.join(SAVE_DIR, f"{resolved}.bak"))
+    return os.path.exists(os.path.join(SAVE_DIR, f"{resolved}.sav")) or os.path.exists(
+        os.path.join(SAVE_DIR, f"{resolved}.bak")
+    )
 
 
 def load_game(player):
@@ -147,7 +145,7 @@ def _perform_load(player, path):
         encoded_data = f.read()
 
     decoded_bytes = base64.b64decode(encoded_data)
-    save_data = json.loads(decoded_bytes.decode('utf-8'))
+    save_data = json.loads(decoded_bytes.decode("utf-8"))
 
     # Restauramos el nombre canónico (el que se usó al crear/guardar la partida),
     # no el que el jugador acaba de teclear en el prompt: así "guille" carga la

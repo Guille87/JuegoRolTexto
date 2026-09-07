@@ -2,7 +2,13 @@ from juego_rol_texto.characters.enemies.bandido import Bandido
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.enemies.troll import Troll
-from juego_rol_texto.combat.battle import ENEMY_PROGRESSION, _attempt_flee, _execute_turn, _run_player_turn, initiate_battle
+from juego_rol_texto.combat.battle import (
+    ENEMY_PROGRESSION,
+    _attempt_flee,
+    _execute_turn,
+    _run_player_turn,
+    initiate_battle,
+)
 from juego_rol_texto.items.equipment import Armor, Weapon
 
 
@@ -111,8 +117,11 @@ def test_troll_regen_is_anchored_to_its_regen_stat(monkeypatch):
     # random.randint(a, b) real (sin mockear) para comprobar el rango exacto usado
     seen_ranges = []
     import juego_rol_texto.characters.enemies.troll as troll_module
+
     original_randint = troll_module.random.randint
-    monkeypatch.setattr(troll_module.random, "randint", lambda a, b: seen_ranges.append((a, b)) or original_randint(a, b))
+    monkeypatch.setattr(
+        troll_module.random, "randint", lambda a, b: seen_ranges.append((a, b)) or original_randint(a, b)
+    )
 
     troll = Troll()
     troll.stats.health = 100  # deja hueco para curar
@@ -291,8 +300,6 @@ def test_enemy_default_perform_turn_applies_crit_multiplier(player, monkeypatch)
     dealt = before - player.stats.health
 
     assert dealt == int(10 * goblin.stats.crit_damage)  # 10 base * 1.6 (crítico del Goblin)
-
-
 
 
 def test_attempt_flee_is_always_successful_when_player_is_at_least_as_fast(player):

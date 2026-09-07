@@ -69,7 +69,7 @@ def test_send_posts_multipart_with_scrubbed_file(monkeypatch, tmp_path):
     assert sent["ua"] and "Python-urllib" not in sent["ua"]
     body = sent["body"].decode("utf-8", "replace")
     assert 'filename="crash_x.txt"' in body
-    assert "pepito" not in body            # el fichero va scrubeado
+    assert "pepito" not in body  # el fichero va scrubeado
     assert "<usuario>" in body
 
 
@@ -77,13 +77,15 @@ def _capture_urlopen(sent):
     def fake_urlopen(req, timeout=None):
         sent["body"] = req.data
         return io.BytesIO(b"")
+
     return fake_urlopen
 
 
 def test_mention_prefix_added_when_user_id_configured(monkeypatch):
     monkeypatch.setattr(crash_reporting, "WEBHOOK_URL", "http://example.invalid/webhook")
     monkeypatch.setattr(
-        crash_reporting.secret_store, "get",
+        crash_reporting.secret_store,
+        "get",
         lambda name, default="": "123456789012345678" if name == "CRASH_MENTION_USER_ID" else default,
     )
     sent = {}

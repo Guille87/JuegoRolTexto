@@ -21,5 +21,5 @@ class Item(ABC):
             "type": self.__class__.__name__,
             "name": self.name,
             "description": self.description,
-            "value": self.value
+            "value": self.value,
         }

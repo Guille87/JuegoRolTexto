@@ -25,7 +25,7 @@ ENEMY_PROGRESSION = {
     "Nigromante": "Ángel Caído",
     "Ángel Caído": "Demonio",
     "Demonio": "Dragón",
-    "Dragón": None  # Jefe final de la cadena
+    "Dragón": None,  # Jefe final de la cadena
 }
 
 # Umbral de la barra ATB: cuando el "gauge" de un combatiente llega aquí, actúa
@@ -39,8 +39,8 @@ ATB_THRESHOLD = 100
 def check_for_interrupt() -> bool:
     """Retorna True si el usuario ha pulsado 'q' o 'Q'."""
     if msvcrt.kbhit():  # ¿Se ha pulsado alguna tecla?
-        key = msvcrt.getch().decode('utf-8').lower()
-        if key == 'q':
+        key = msvcrt.getch().decode("utf-8").lower()
+        if key == "q":
             return True
     return False
 
@@ -64,7 +64,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     rm.play_battle_music(enemy.name)
 
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
-    if hasattr(enemy, 'check_ambush'):
+    if hasattr(enemy, "check_ambush"):
         if enemy.check_ambush(player):
             # Mostramos el estado inmediatamente después del daño de emboscada
             print_status(player, enemy, defeated_enemies)
@@ -76,10 +76,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             return
 
     # Guardamos estado inicial para restaurar después
-    snapshot = {
-        "atk": (player.stats.min_atk, player.stats.max_atk),
-        "armor": player.stats.armor
-    }
+    snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
 
     is_auto = False
     player_won = False
@@ -241,13 +238,14 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list) -> None:
     enemy.perform_turn(player)
     print_status(player, enemy, defeated_enemies)
 
-    if hasattr(enemy, 'on_turn_end'):
+    if hasattr(enemy, "on_turn_end"):
         enemy.on_turn_end()
 
 
 def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     """Ejecuta un ataque estándar calculando daño y stats."""
     from juego_rol_texto.characters.player import Player
+
     if isinstance(attacker, Player):
         rm = ResourceManager()
         # Elegimos al azar entre los nombres en AUDIO_ASSETS
@@ -265,8 +263,10 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     attacker_precision = attacker.get_total_precision() if isinstance(attacker, Player) else attacker.stats.precision
     defender_evasion = defender.get_total_evasion() if isinstance(defender, Player) else defender.stats.evasion
     if not resolve_hit(attacker_precision, defender_evasion):
-        print(f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
-              f"{console.colorize(defender.name, console.Fore.RED)}, pero falla el golpe.")
+        print(
+            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
+            f"{console.colorize(defender.name, console.Fore.RED)}, pero falla el golpe."
+        )
         if isinstance(attacker, Player):
             print_status(attacker, defender, defeated_enemies)
         else:
@@ -277,8 +277,12 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     element = attacker.get_equipped_element() if isinstance(attacker, Player) else None
 
     # Golpe crítico: el jugador suma el bonus de su equipo, los enemigos usan su stat base
-    attacker_crit_chance = attacker.get_total_crit_chance() if isinstance(attacker, Player) else attacker.stats.crit_chance
-    attacker_crit_damage = attacker.get_total_crit_damage() if isinstance(attacker, Player) else attacker.stats.crit_damage
+    attacker_crit_chance = (
+        attacker.get_total_crit_chance() if isinstance(attacker, Player) else attacker.stats.crit_chance
+    )
+    attacker_crit_damage = (
+        attacker.get_total_crit_damage() if isinstance(attacker, Player) else attacker.stats.crit_damage
+    )
     is_crit = random.random() < attacker_crit_chance
     if is_crit:
         damage = int(damage * attacker_crit_damage)
@@ -294,28 +298,34 @@ def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
     attacker_armor_penetration = (
         attacker.get_total_armor_penetration() if isinstance(attacker, Player) else attacker.stats.armor_penetration
     )
-    final_dmg = defender.take_damage(damage, defeated_enemies=defeated_enemies, element=element,
-                                      armor_penetration=attacker_armor_penetration)
+    final_dmg = defender.take_damage(
+        damage, defeated_enemies=defeated_enemies, element=element, armor_penetration=attacker_armor_penetration
+    )
 
     if is_crit:
         print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
     if is_super_effective:
-        print(console.colorize(
-            f"¡Es supereficaz! El {element} causa estragos en {defender.name}.", console.Fore.RED, bright=True
-        ))
+        print(
+            console.colorize(
+                f"¡Es supereficaz! El {element} causa estragos en {defender.name}.", console.Fore.RED, bright=True
+            )
+        )
 
     if final_dmg > 0:
         # Daño normal en cian; el amarillo en negrita queda reservado para el
         # crítico (el mensaje "¡Golpe crítico!" de arriba ya usa ese mismo estilo).
         dmg_color = console.Fore.YELLOW if is_crit else console.Fore.CYAN
-        print(f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
-              f"{console.colorize(defender.name, console.Fore.RED)} y hace "
-              f"{console.colorize(str(final_dmg), dmg_color, bright=is_crit)} de daño")
+        print(
+            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
+            f"{console.colorize(defender.name, console.Fore.RED)} y hace "
+            f"{console.colorize(str(final_dmg), dmg_color, bright=is_crit)} de daño"
+        )
     else:
         print(f"{console.colorize(defender.name, console.Fore.BLUE)} ha bloqueado el ataque.")
 
     from juego_rol_texto.characters.player import Player
+
     if isinstance(attacker, Player):
         print_status(attacker, defender, defeated_enemies)
     else:
@@ -395,7 +405,7 @@ def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> 
     # Limpiar estados alterados
     player.status_effects = []
 
-    if hasattr(player, 'active_effects'):
+    if hasattr(player, "active_effects"):
         player.active_effects = []
 
     # Recuperar Salud al finalizar
@@ -411,5 +421,11 @@ def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> 
             recovery = missing_health // 2
             player.stats.health += recovery
             if recovery > 0:
-                print(f"\n{console.colorize(f'Tras el combate, descansas y recuperas {recovery} HP.', console.Fore.GREEN)}")
-                print(console.colorize(f"Vida actual: {player.stats.health}/{player.stats.max_health}", console.Fore.GREEN))
+                print(
+                    f"\n{console.colorize(f'Tras el combate, descansas y recuperas {recovery} HP.', console.Fore.GREEN)}"
+                )
+                print(
+                    console.colorize(
+                        f"Vida actual: {player.stats.health}/{player.stats.max_health}", console.Fore.GREEN
+                    )
+                )

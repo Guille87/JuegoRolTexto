@@ -18,8 +18,15 @@ class Enemy:
     def get_gold_drop(self) -> int:
         return random.randint(self.gold_min, self.gold_max)
 
-    def take_damage(self, damage: int, defeated_enemies: list | None = None, element: str | None = None,
-                     is_magical: bool = False, armor_penetration: int = 0, magic_penetration: int = 0) -> int:
+    def take_damage(
+        self,
+        damage: int,
+        defeated_enemies: list | None = None,
+        element: str | None = None,
+        is_magical: bool = False,
+        armor_penetration: int = 0,
+        magic_penetration: int = 0,
+    ) -> int:
         # Multiplicador elemental (si el ataque tiene elemento y el enemigo es débil a él)
         multiplier = self.ELEMENTAL_WEAKNESSES.get(element, 1.0) if element else 1.0
         damage = int(damage * multiplier)
@@ -44,8 +51,10 @@ class Enemy:
     def perform_turn(self, player) -> None:
         """Lógica por defecto: atacar. Las subclases pueden sobrescribir esto."""
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-            print(f"{console.colorize(self.name, console.Fore.RED)} ataca, pero "
-                  f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe.")
+            print(
+                f"{console.colorize(self.name, console.Fore.RED)} ataca, pero "
+                f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe."
+            )
             return
 
         damage = self.get_attack_damage()
@@ -59,8 +68,10 @@ class Enemy:
         if is_crit:
             print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
-        print(f"{console.colorize(self.name, console.Fore.RED)} ataca y hace "
-              f"{console.colorize(str(final_damage), console.Fore.RED)} de daño.")
+        print(
+            f"{console.colorize(self.name, console.Fore.RED)} ataca y hace "
+            f"{console.colorize(str(final_damage), console.Fore.RED)} de daño."
+        )
 
     def on_turn_end(self) -> None:
         """Regeneración de salud pasiva por defecto (self.stats.regen == 0 para

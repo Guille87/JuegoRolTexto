@@ -1,8 +1,19 @@
 from juego_rol_texto.items.item_base import Item
 from juego_rol_texto.ui import console
 
-ARMOR_SLOTS = ["casco", "hombreras", "peto", "brazales", "guantes", "cinturon", "perneras", "botas",
-               "anillo1", "anillo2", "amuleto"]
+ARMOR_SLOTS = [
+    "casco",
+    "hombreras",
+    "peto",
+    "brazales",
+    "guantes",
+    "cinturon",
+    "perneras",
+    "botas",
+    "anillo1",
+    "anillo2",
+    "amuleto",
+]
 RING_SLOTS = ["anillo1", "anillo2"]
 SLOT_LABELS = {"anillo1": "Anillo 1", "anillo2": "Anillo 2", "amuleto": "Amuleto"}
 
@@ -49,16 +60,29 @@ class Weapon(Item):
             description=data["description"],
             value=data["value"],
             damage=data.get("damage", 0),  # Parámetro extra de Weapon
-            element=data.get("element")
+            element=data.get("element"),
         )
 
 
 class Armor(Item):
-    def __init__(self, name: str, description: str, value: int, slot: str, defense: int = 0,
-                 max_health: int = 0, magic_resist: int = 0,
-                 crit_chance: float = 0.0, crit_damage: float = 0.0,
-                 damage: int = 0, element: str | None = None, regen: int = 0, speed: int = 0,
-                 precision: int = 0, evasion: int = 0):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        value: int,
+        slot: str,
+        defense: int = 0,
+        max_health: int = 0,
+        magic_resist: int = 0,
+        crit_chance: float = 0.0,
+        crit_damage: float = 0.0,
+        damage: int = 0,
+        element: str | None = None,
+        regen: int = 0,
+        speed: int = 0,
+        precision: int = 0,
+        evasion: int = 0,
+    ):
         super().__init__(name, description, value)
         self.slot = slot
         self.defense = defense
@@ -128,21 +152,23 @@ class Armor(Item):
 
     def to_dict(self) -> dict:
         data = super().to_dict()
-        data.update({
-            "slot": self.slot,
-            "defense": self.defense,
-            "max_health": self.max_health,
-            "magic_resist": self.magic_resist,
-            "crit_chance": self.crit_chance,
-            "crit_damage": self.crit_damage,
-            "damage": self.damage,
-            "element": self.element,
-            "regen": self.regen,
-            "speed": self.speed,
-            "precision": self.precision,
-            "evasion": self.evasion,
-            "type": "Armor"
-        })
+        data.update(
+            {
+                "slot": self.slot,
+                "defense": self.defense,
+                "max_health": self.max_health,
+                "magic_resist": self.magic_resist,
+                "crit_chance": self.crit_chance,
+                "crit_damage": self.crit_damage,
+                "damage": self.damage,
+                "element": self.element,
+                "regen": self.regen,
+                "speed": self.speed,
+                "precision": self.precision,
+                "evasion": self.evasion,
+                "type": "Armor",
+            }
+        )
         return data
 
     @classmethod
@@ -163,5 +189,5 @@ class Armor(Item):
             regen=data.get("regen", 0),
             speed=data.get("speed", 0),
             precision=data.get("precision", 0),
-            evasion=data.get("evasion", 0)
+            evasion=data.get("evasion", 0),
         )

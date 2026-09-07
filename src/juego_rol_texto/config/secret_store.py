@@ -8,6 +8,7 @@ modo admin), en vez de reventar al importar.
 Para activarlo: copia ``config/secrets.example.py`` a ``config/secrets.py`` y
 rellena los valores.
 """
+
 from __future__ import annotations
 
 try:  # pragma: no cover - depende de si existe secrets.py en la máquina

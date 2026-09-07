@@ -12,9 +12,10 @@ class Huargo(Enemy):
     def __init__(self):
         # Lobo salvaje: rápido y evasivo, pero frágil (poca vida y armadura).
         super().__init__(
-            "Huargo", Stats(42, 42, 9, 13, 1, speed=13, precision=6, evasion=4,
-                             crit_chance=0.05, crit_damage=1.5),
-            gold_min=6, gold_max=9
+            "Huargo",
+            Stats(42, 42, 9, 13, 1, speed=13, precision=6, evasion=4, crit_chance=0.05, crit_damage=1.5),
+            gold_min=6,
+            gold_max=9,
         )
 
     def perform_turn(self, player) -> None:
@@ -40,15 +41,42 @@ class Huargo(Enemy):
         if random.random() <= 0.7:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.3:
-            items.append(Material("Colmillo de Huargo", "Un colmillo curvo, todavía caliente de la caza.", 5, rarity="Común"))
+            items.append(
+                Material("Colmillo de Huargo", "Un colmillo curvo, todavía caliente de la caza.", 5, rarity="Común")
+            )
         if random.random() <= 0.1:
-            items.append(Weapon("Garras de Huargo", "Un par de garras montadas en guantelete, aún manchadas de sangre.", 10, 7))
+            items.append(
+                Weapon("Garras de Huargo", "Un par de garras montadas en guantelete, aún manchadas de sangre.", 10, 7)
+            )
         if random.random() <= 0.08:
-            items.append(Weapon("Colmillo Venenoso", "Arrancado del propio lobo; sigue goteando un veneno espeso.", 14, 6, element="veneno"))
+            items.append(
+                Weapon(
+                    "Colmillo Venenoso",
+                    "Arrancado del propio lobo; sigue goteando un veneno espeso.",
+                    14,
+                    6,
+                    element="veneno",
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Botas de Huargo", "Cosidas con las patas del propio lobo; todavía conservan su agilidad.", 15,
-                                slot="botas", speed=2))
+            items.append(
+                Armor(
+                    "Botas de Huargo",
+                    "Cosidas con las patas del propio lobo; todavía conservan su agilidad.",
+                    15,
+                    slot="botas",
+                    speed=2,
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Cinturón de Manada", "Trenzado con tiras de cuero de varios lobos; imita su ritmo de carrera.", 12,
-                                slot="cinturon", defense=2, speed=2))
+            items.append(
+                Armor(
+                    "Cinturón de Manada",
+                    "Trenzado con tiras de cuero de varios lobos; imita su ritmo de carrera.",
+                    12,
+                    slot="cinturon",
+                    defense=2,
+                    speed=2,
+                )
+            )
         return items

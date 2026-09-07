@@ -29,8 +29,14 @@ class Player(Character):
 
     # --- LÓGICA DE COMBATE ---
 
-    def take_damage(self, amount: int, is_fire: bool = False, is_magical: bool = False,
-                     armor_penetration: int = 0, magic_penetration: int = 0) -> int:
+    def take_damage(
+        self,
+        amount: int,
+        is_fire: bool = False,
+        is_magical: bool = False,
+        armor_penetration: int = 0,
+        magic_penetration: int = 0,
+    ) -> int:
         """Calcula el daño final tras aplicar armadura o resistencia mágica y lo resta de la vida."""
         if is_magical:
             mitigation = max(0, self.get_total_magic_resist() - magic_penetration)
@@ -204,10 +210,12 @@ class Player(Character):
                 self.status_effects.remove(effect)
             else:
                 # Esto ayuda al jugador a planificar (Estilo Raid/RPG moderno)
-                print(console.colorize(
-                    f"⏳ {effect['name'].capitalize()} persistirá por {effect['duration']} turnos más.",
-                    console.Fore.WHITE
-                ))
+                print(
+                    console.colorize(
+                        f"⏳ {effect['name'].capitalize()} persistirá por {effect['duration']} turnos más.",
+                        console.Fore.WHITE,
+                    )
+                )
 
         for buff in self.active_effects[:]:
             buff.duration -= 1
@@ -223,11 +231,7 @@ class Player(Character):
                 effect["duration"] = max(effect["duration"], duration)
                 return
 
-        self.status_effects.append({
-            "name": name,
-            "duration": duration,
-            "power": power
-        })
+        self.status_effects.append({"name": name, "duration": duration, "power": power})
 
     # --- PROGRESIÓN ---
 
@@ -261,7 +265,7 @@ class Player(Character):
             return 8
 
         lv = float(level)
-        base_cost = 100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv ** 2 / 50)
+        base_cost = 100 * ((lv - 1) ** 0.95) * lv * (lv + 1) / (6 + lv**2 / 50)
         damping = min(1.0, 0.5 + (lv - 2) * 0.0625)
         return int(base_cost * damping)
 
@@ -329,8 +333,10 @@ class Player(Character):
             self.stats.magic_resist += 1
 
         print(f"\n{console.colorize(f'⭐ ¡HAS SUBIDO AL NIVEL {self.level}! ⭐', console.Fore.YELLOW)}")
-        stats_line = (f"HP Max +{health_gain} | Ataque +{min_atk_gain}-{max_atk_gain} | "
-                      f"Armadura +{armor_gain} | Velocidad +{speed_gain}")
+        stats_line = (
+            f"HP Max +{health_gain} | Ataque +{min_atk_gain}-{max_atk_gain} | "
+            f"Armadura +{armor_gain} | Velocidad +{speed_gain}"
+        )
         if precision_gain:
             stats_line += f" | Precisión +{precision_gain}"
         if evasion_gain:
@@ -345,12 +351,18 @@ class Player(Character):
         print(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}")
         print(f"Ataque: {self.get_attack_range()} | Armadura: {self.get_total_armor()}")
         print(f"Resistencia Mágica: {self.get_total_magic_resist()}")
-        print(f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
-              f"Daño Crítico: x{self.get_total_crit_damage():.2f}")
-        print(f"Velocidad: {self.get_total_speed()} | "
-              f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}")
-        print(f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
-              f"Penetración Mágica: {self.get_total_magic_penetration()}")
+        print(
+            f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
+            f"Daño Crítico: x{self.get_total_crit_damage():.2f}"
+        )
+        print(
+            f"Velocidad: {self.get_total_speed()} | "
+            f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}"
+        )
+        print(
+            f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
+            f"Penetración Mágica: {self.get_total_magic_penetration()}"
+        )
         print(f"XP: {self.experience} / {self.required_xp()}")
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")

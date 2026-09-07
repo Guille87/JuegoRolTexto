@@ -16,9 +16,23 @@ class Dragon(Enemy):
         # Jefe final: vida masiva y mucha evasión ("esquiva volando"), además
         # del aliento de fuego (daño + quemadura, daño a lo largo del tiempo).
         super().__init__(
-            "Dragón", Stats(700, 700, 45, 62, 14, magic_resist=10, speed=26, precision=14, evasion=6,
-                             crit_chance=0.10, crit_damage=1.8, armor_penetration=6),
-            gold_min=250, gold_max=320
+            "Dragón",
+            Stats(
+                700,
+                700,
+                45,
+                62,
+                14,
+                magic_resist=10,
+                speed=26,
+                precision=14,
+                evasion=6,
+                crit_chance=0.10,
+                crit_damage=1.8,
+                armor_penetration=6,
+            ),
+            gold_min=250,
+            gold_max=320,
         )
 
     def perform_turn(self, player) -> None:
@@ -30,8 +44,10 @@ class Dragon(Enemy):
 
     def _claw_attack(self, player) -> None:
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-            print(f"{console.colorize(self.name, console.Fore.RED)} ataca, pero "
-                  f"{console.colorize(player.name, console.Fore.GREEN)} logra esquivarlo.")
+            print(
+                f"{console.colorize(self.name, console.Fore.RED)} ataca, pero "
+                f"{console.colorize(player.name, console.Fore.GREEN)} logra esquivarlo."
+            )
             return
 
         damage = self.get_attack_damage()
@@ -43,18 +59,23 @@ class Dragon(Enemy):
 
         if is_crit:
             print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
-        print(f"{console.colorize(self.name, console.Fore.RED)} zarpazo/mordisco: "
-              f"{console.colorize(str(final_damage), console.Fore.RED)} de daño.")
+        print(
+            f"{console.colorize(self.name, console.Fore.RED)} zarpazo/mordisco: "
+            f"{console.colorize(str(final_damage), console.Fore.RED)} de daño."
+        )
 
     def _fire_breath(self, player) -> None:
         from juego_rol_texto.audio.resource_manager import ResourceManager
+
         ResourceManager().play_sfx("fireball")
 
         print(console.colorize(f"¡{self.name} inhala profundamente...!", console.Fore.RED, bright=True))
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-            print(f"El aliento de fuego arrasa el suelo, pero {console.colorize(player.name, console.Fore.GREEN)} "
-                  f"logra apartarse a tiempo.")
+            print(
+                f"El aliento de fuego arrasa el suelo, pero {console.colorize(player.name, console.Fore.GREEN)} "
+                f"logra apartarse a tiempo."
+            )
             return
 
         damage = self.get_attack_damage()
@@ -70,13 +91,43 @@ class Dragon(Enemy):
         if random.random() <= 0.6:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.35:
-            items.append(Material("Escama de Dragón", "Una escama del tamaño de un escudo, todavía caliente.", 60, rarity="Legendario"))
+            items.append(
+                Material(
+                    "Escama de Dragón", "Una escama del tamaño de un escudo, todavía caliente.", 60, rarity="Legendario"
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Coraza de Escamas de Dragón", "Forjada con escamas superpuestas; repele el fuego tanto como el acero.", 100,
-                                slot="peto", defense=24, magic_resist=8, max_health=40))
+            items.append(
+                Armor(
+                    "Coraza de Escamas de Dragón",
+                    "Forjada con escamas superpuestas; repele el fuego tanto como el acero.",
+                    100,
+                    slot="peto",
+                    defense=24,
+                    magic_resist=8,
+                    max_health=40,
+                )
+            )
         if random.random() <= 0.1:
-            items.append(Weapon("Colmillo de Dragón", "Un colmillo curvo tallado en un arma; aún desprende calor.", 55, 32, element="fuego"))
+            items.append(
+                Weapon(
+                    "Colmillo de Dragón",
+                    "Un colmillo curvo tallado en un arma; aún desprende calor.",
+                    55,
+                    32,
+                    element="fuego",
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Amuleto de Escama de Dragón", "Una única escama pulida engarzada en un colgante de oro.", 50,
-                                slot="amuleto", magic_resist=12, defense=3, damage=3))
+            items.append(
+                Armor(
+                    "Amuleto de Escama de Dragón",
+                    "Una única escama pulida engarzada en un colgante de oro.",
+                    50,
+                    slot="amuleto",
+                    magic_resist=12,
+                    defense=3,
+                    damage=3,
+                )
+            )
         return items

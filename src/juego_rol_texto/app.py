@@ -54,9 +54,7 @@ def _music_watchdog() -> None:
         except Exception:
             # No queremos tumbar el juego por un fallo de audio en segundo plano,
             # pero sí dejar constancia en el log para poder investigarlo luego.
-            logging.getLogger("juego_rol_texto.audio").warning(
-                "Fallo en el watchdog de música", exc_info=True
-            )
+            logging.getLogger("juego_rol_texto.audio").warning("Fallo en el watchdog de música", exc_info=True)
 
 
 def main() -> None:
@@ -107,10 +105,7 @@ def main() -> None:
         crashed = True
         crash_path = report_crash(e, context="app.main")
         console.error(f"\nError crítico durante la ejecución: {e}")
-        console.warning(
-            "\nEl juego se ha cerrado por un error inesperado. Se ha guardado un "
-            "informe en:"
-        )
+        console.warning("\nEl juego se ha cerrado por un error inesperado. Se ha guardado un informe en:")
         print(f"  {crash_path or LOG_FILE}")
 
         if settings.load_crash_reporting() is True and crash_reporting.is_configured():

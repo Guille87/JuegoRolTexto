@@ -12,9 +12,23 @@ class Goblin(Enemy):
     def __init__(self):
         # health, max_health, min_atk, max_atk, defense
         super().__init__(
-            "Goblin", Stats(40, 40, 8, 12, 2, magic_resist=0, speed=11, precision=5, evasion=3,
-                             crit_chance=0.05, crit_damage=1.6, armor_penetration=1),
-            gold_min=4, gold_max=6
+            "Goblin",
+            Stats(
+                40,
+                40,
+                8,
+                12,
+                2,
+                magic_resist=0,
+                speed=11,
+                precision=5,
+                evasion=3,
+                crit_chance=0.05,
+                crit_damage=1.6,
+                armor_penetration=1,
+            ),
+            gold_min=4,
+            gold_max=6,
         )
         self.ambush_done = 0  # Añadimos contador de turnos
 
@@ -24,8 +38,10 @@ class Goblin(Enemy):
             self.ambush_done = True
             damage = self.get_attack_damage() + 5
             final_dmg = player.take_damage(damage)
-            print(f"\n¡{console.colorize('EMBOSCADA!', console.Fore.YELLOW)} El {self.name} sale de los "
-                  f"arbustos y te hace {console.colorize(str(final_dmg), console.Fore.RED)} de daño.")
+            print(
+                f"\n¡{console.colorize('EMBOSCADA!', console.Fore.YELLOW)} El {self.name} sale de los "
+                f"arbustos y te hace {console.colorize(str(final_dmg), console.Fore.RED)} de daño."
+            )
             return True
         return False
 
@@ -40,5 +56,9 @@ class Goblin(Enemy):
         if random.random() <= 0.8:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.25:
-            items.append(Material("Colmillo de Goblin", "Un colmillo curvo y afilado, típico de estas criaturas.", 3, rarity="Común"))
+            items.append(
+                Material(
+                    "Colmillo de Goblin", "Un colmillo curvo y afilado, típico de estas criaturas.", 3, rarity="Común"
+                )
+            )
         return items

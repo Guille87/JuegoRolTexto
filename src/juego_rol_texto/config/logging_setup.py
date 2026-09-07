@@ -12,6 +12,7 @@ ventana se cierra y no queda ni rastro de qué pasó. Este módulo:
 
 No envía nada por red: todo se queda en el equipo del jugador.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -56,12 +57,8 @@ def setup_logging() -> None:
         _configured = True
         return
 
-    handler = logging.handlers.RotatingFileHandler(
-        LOG_FILE, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
-    )
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    )
+    handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     logger.propagate = False

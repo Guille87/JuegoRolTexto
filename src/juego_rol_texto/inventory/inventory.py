@@ -1,4 +1,4 @@
-from juego_rol_texto.items.equipment import Weapon, Armor, slot_accepts, slot_label
+from juego_rol_texto.items.equipment import Armor, Weapon, slot_accepts, slot_label
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions.potion_base import Potion
 from juego_rol_texto.ui import console
@@ -58,15 +58,23 @@ class Inventory:
         """
         print("\n" + "=" * 45)
         title = "INVENTARIO COMPLETO"
-        if filter_class == Weapon: title = "SELECCIONAR ARMA"
-        elif filter_class == Armor and filter_slot: title = f"SELECCIONAR {slot_label(filter_slot).upper()}"
-        elif filter_class == Armor: title = "SELECCIONAR ARMADURA"
+        if filter_class == Weapon:
+            title = "SELECCIONAR ARMA"
+        elif filter_class == Armor and filter_slot:
+            title = f"SELECCIONAR {slot_label(filter_slot).upper()}"
+        elif filter_class == Armor:
+            title = "SELECCIONAR ARMADURA"
 
         print(console.colorize(f"--- {title} ---", console.Fore.CYAN))
-        print(console.colorize(f"Vida: {self.player.stats.health}/{self.player.stats.max_health}", console.Fore.GREEN, bright=True))
+        print(
+            console.colorize(
+                f"Vida: {self.player.stats.health}/{self.player.stats.max_health}", console.Fore.GREEN, bright=True
+            )
+        )
 
         items_to_show = [
-            i for i in self.items
+            i
+            for i in self.items
             if (not filter_class or isinstance(i, filter_class))
             and (not filter_slot or slot_accepts(filter_slot, getattr(i, "slot", None)))
         ]
@@ -100,7 +108,8 @@ class Inventory:
 
     def _handle_selection(self, filter_class=None, filter_slot: str | None = None) -> bool:
         choice = console.ask("\nSelecciona un número (0 para volver): ")
-        if choice == "0" or not choice.isdigit(): return False
+        if choice == "0" or not choice.isdigit():
+            return False
 
         idx = int(choice)
         item = self.item_mapping.get(idx)

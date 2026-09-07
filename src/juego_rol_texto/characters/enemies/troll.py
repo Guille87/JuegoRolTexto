@@ -13,9 +13,23 @@ class Troll(Enemy):
 
     def __init__(self):
         super().__init__(
-            "Troll", Stats(250, 250, 12, 18, 4, magic_resist=1, speed=10, precision=3, evasion=0,
-                           crit_chance=0.03, crit_damage=1.5, regen=10),
-            gold_min=42, gold_max=58
+            "Troll",
+            Stats(
+                250,
+                250,
+                12,
+                18,
+                4,
+                magic_resist=1,
+                speed=10,
+                precision=3,
+                evasion=0,
+                crit_chance=0.03,
+                crit_damage=1.5,
+                regen=10,
+            ),
+            gold_min=42,
+            gold_max=58,
         )
 
     def on_turn_end(self) -> None:
@@ -31,32 +45,36 @@ class Troll(Enemy):
         items = []
         # 8% Maza de Piedra (drop más bajo a propósito)
         if random.random() <= 0.08:
-            items.append(Weapon(
-                "Maza de Piedra",
-                "Un bloque de granito atado a un tronco. Pesada y brutal.",
-                15, 17
-            ))
+            items.append(Weapon("Maza de Piedra", "Un bloque de granito atado a un tronco. Pesada y brutal.", 15, 17))
 
         # 70% Poción de Regeneración
         if random.random() <= 0.7:
-            items.append(RegenPotion(
-                "Poción de Regeneración",
-                "Un brebaje verde que burbujea. Cura 10 HP durante 3 turnos.",
-                8, 10, 3
-            ))
+            items.append(
+                RegenPotion(
+                    "Poción de Regeneración", "Un brebaje verde que burbujea. Cura 10 HP durante 3 turnos.", 8, 10, 3
+                )
+            )
 
         if random.random() <= 0.05:
-            items.append(Material(
-                "Piel de Troll",
-                "Una piel gruesa y rugosa que parece pulsar con vida propia. Muy valiosa para un sastre.",
-                150,
-                rarity="Legendario"
-            ))
+            items.append(
+                Material(
+                    "Piel de Troll",
+                    "Una piel gruesa y rugosa que parece pulsar con vida propia. Muy valiosa para un sastre.",
+                    150,
+                    rarity="Legendario",
+                )
+            )
 
         if random.random() <= 0.08:
-            items.append(Armor(
-                "Hombreras de Troll",
-                "Placas de hueso trolluno unidas a la piel; se regeneran casi tan rápido como su dueño original.",
-                25, slot="hombreras", precision=3, defense=3, regen=2
-            ))
+            items.append(
+                Armor(
+                    "Hombreras de Troll",
+                    "Placas de hueso trolluno unidas a la piel; se regeneran casi tan rápido como su dueño original.",
+                    25,
+                    slot="hombreras",
+                    precision=3,
+                    defense=3,
+                    regen=2,
+                )
+            )
         return items

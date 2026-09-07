@@ -8,6 +8,7 @@ from juego_rol_texto.ui import console
 
 class ShopItem:
     """Una entrada del catálogo: una plantilla de ítem y su precio de compra."""
+
     def __init__(self, template, buy_price: int):
         self.template = template
         self.buy_price = buy_price
@@ -17,19 +18,33 @@ class ShopItem:
         return item_factory(self.template.to_dict())
 
     def __str__(self) -> str:
-        return (f"{self.template.name} - Compra: {self.buy_price} oro | {self.template.description} "
-                f"| [{self.template.get_stats_info()}]")
+        return (
+            f"{self.template.name} - Compra: {self.buy_price} oro | {self.template.description} "
+            f"| [{self.template.get_stats_info()}]"
+        )
 
 
 class Shop:
     def __init__(self):
         self.catalog = [
             ShopItem(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20), buy_price=5),
-            ShopItem(RegenPotion("Poción de Regeneración", "Un brebaje verde que burbujea. Cura 10 HP durante 3 turnos.", 8, 10, 3), buy_price=18),
-            ShopItem(StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3), buy_price=12),
-            ShopItem(Weapon("Espada de Hierro", "Una espada bien forjada, superior a las improvisadas", 10, damage=6), buy_price=25),
-            ShopItem(Armor("Armadura de Cuero", "Protección ligera pero fiable", 10,
-                            slot="peto", defense=4, max_health=10), buy_price=25),
+            ShopItem(
+                RegenPotion(
+                    "Poción de Regeneración", "Un brebaje verde que burbujea. Cura 10 HP durante 3 turnos.", 8, 10, 3
+                ),
+                buy_price=18,
+            ),
+            ShopItem(
+                StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3), buy_price=12
+            ),
+            ShopItem(
+                Weapon("Espada de Hierro", "Una espada bien forjada, superior a las improvisadas", 10, damage=6),
+                buy_price=25,
+            ),
+            ShopItem(
+                Armor("Armadura de Cuero", "Protección ligera pero fiable", 10, slot="peto", defense=4, max_health=10),
+                buy_price=25,
+            ),
         ]
 
     def open(self, player) -> None:

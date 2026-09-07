@@ -1,5 +1,6 @@
 """Reconstrucción de ítems a partir de datos serializados (JSON de guardado)."""
-from juego_rol_texto.items.equipment import Weapon, Armor
+
+from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
@@ -12,7 +13,7 @@ _ITEM_CLASSES = {
     "RegenPotion": RegenPotion,
     "Material": Material,
     "Weapon": Weapon,
-    "Armor": Armor
+    "Armor": Armor,
 }
 
 

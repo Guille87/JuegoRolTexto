@@ -10,9 +10,23 @@ from juego_rol_texto.ui import console
 class Mago(Enemy):
     def __init__(self):
         super().__init__(
-            "Mago", Stats(400, 400, 10, 15, 6, magic_resist=15, speed=15, precision=12, evasion=10,
-                          crit_chance=0.12, crit_damage=1.6, magic_penetration=4),
-            gold_min=85, gold_max=115
+            "Mago",
+            Stats(
+                400,
+                400,
+                10,
+                15,
+                6,
+                magic_resist=15,
+                speed=15,
+                precision=12,
+                evasion=10,
+                crit_chance=0.12,
+                crit_damage=1.6,
+                magic_penetration=4,
+            ),
+            gold_min=85,
+            gold_max=115,
         )
 
     def perform_turn(self, player) -> None:
@@ -27,8 +41,10 @@ class Mago(Enemy):
         # 3. Inteligencia Táctica: Intentar aplicar lo que el jugador NO tenga
         posibles_hechizos = []
 
-        if "veneno" not in active_statuses: posibles_hechizos.append("poison")
-        if "paralizado" not in active_statuses: posibles_hechizos.append("thunder")
+        if "veneno" not in active_statuses:
+            posibles_hechizos.append("poison")
+        if "paralizado" not in active_statuses:
+            posibles_hechizos.append("thunder")
         if "congelado" not in active_statuses and "quemado" not in active_statuses:
             posibles_hechizos.append("blizzard")
 
@@ -47,15 +63,20 @@ class Mago(Enemy):
     def _cast_heal(self) -> None:
         heal = random.randint(40, 60)
         self.stats.health = min(self.stats.max_health, self.stats.health + heal)
-        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} susurra palabras antiguas y se cura "
-              f"{console.colorize(f'{heal} HP', console.Fore.GREEN)}.")
+        print(
+            f"{console.colorize(self.name, console.Fore.MAGENTA)} susurra palabras antiguas y se cura "
+            f"{console.colorize(f'{heal} HP', console.Fore.GREEN)}."
+        )
 
     def _cast_fireball(self, player) -> None:
         from juego_rol_texto.audio.resource_manager import ResourceManager
+
         ResourceManager().play_sfx("fireball")
 
-        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
-              f"{console.colorize('Bola de Fuego', console.Fore.RED)}!")
+        print(
+            f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
+            f"{console.colorize('Bola de Fuego', console.Fore.RED)}!"
+        )
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
             print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva las llamas.")
@@ -78,10 +99,13 @@ class Mago(Enemy):
 
     def _cast_thunder(self, player) -> None:
         from juego_rol_texto.audio.resource_manager import ResourceManager
+
         ResourceManager().play_sfx("lightning")
 
-        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
-              f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!")
+        print(
+            f"{console.colorize(self.name, console.Fore.MAGENTA)} invoca un "
+            f"{console.colorize('Rayo', console.Fore.YELLOW)} del cielo!"
+        )
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
             print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el rayo.")
@@ -103,8 +127,10 @@ class Mago(Enemy):
             console.warning("¡El impacto te deja paralizado!")
 
     def _cast_poison(self, player) -> None:
-        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
-              f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!")
+        print(
+            f"{console.colorize(self.name, console.Fore.MAGENTA)} lanza una "
+            f"{console.colorize('Dardo de Veneno', console.Fore.GREEN)}!"
+        )
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
             print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el dardo.")
@@ -128,8 +154,10 @@ class Mago(Enemy):
             print("Por suerte, el veneno no logra entrar en tu organismo.")
 
     def _cast_blizzard(self, player) -> None:
-        print(f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
-              f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!")
+        print(
+            f"{console.colorize(self.name, console.Fore.MAGENTA)} conjura una "
+            f"{console.colorize('Ventisca', console.Fore.CYAN)} helada!"
+        )
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
             print(f"{console.colorize(player.name, console.Fore.GREEN)} esquiva la ventisca.")
@@ -153,13 +181,37 @@ class Mago(Enemy):
     def drop_item(self) -> list:
         items = []
         if random.random() <= 0.08:
-            items.append(Weapon("Bastón Arcano", "Un bastón rematado con un cristal que pulsa con energía arcana.", 18, damage=23))
+            items.append(
+                Weapon(
+                    "Bastón Arcano", "Un bastón rematado con un cristal que pulsa con energía arcana.", 18, damage=23
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Túnica Arcana", "Tejida con hilos imbuidos de magia protectora, más arcana que resistente.", 22,
-                                slot="peto", defense=9, max_health=25, magic_resist=6))
+            items.append(
+                Armor(
+                    "Túnica Arcana",
+                    "Tejida con hilos imbuidos de magia protectora, más arcana que resistente.",
+                    22,
+                    slot="peto",
+                    defense=9,
+                    max_health=25,
+                    magic_resist=6,
+                )
+            )
         if random.random() <= 0.1:
-            items.append(Material("Esencia Arcana", "Energía mágica condensada, inestable pero muy valiosa.", 35, rarity="Raro"))
+            items.append(
+                Material("Esencia Arcana", "Energía mágica condensada, inestable pero muy valiosa.", 35, rarity="Raro")
+            )
         if random.random() <= 0.1:
-            items.append(Armor("Anillo Arcano", "Un aro fino grabado con runas que aún zumban con energía residual.", 30,
-                                slot="anillo", crit_damage=0.10, magic_resist=4, crit_chance=0.03))
+            items.append(
+                Armor(
+                    "Anillo Arcano",
+                    "Un aro fino grabado con runas que aún zumban con energía residual.",
+                    30,
+                    slot="anillo",
+                    crit_damage=0.10,
+                    magic_resist=4,
+                    crit_chance=0.03,
+                )
+            )
         return items

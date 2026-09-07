@@ -9,7 +9,7 @@ class RegenPotion(Potion):
         self.is_combat_only = True
 
     def use(self, player) -> bool:
-        if getattr(player, 'in_combat', False):
+        if getattr(player, "in_combat", False):
             # Usamos el método apply_status que ya tienes en Player
             player.apply_status("regeneración", self.duration, power=self.regen_amount)
             console.success("¡Te sientes revitalizado! Recuperarás vida cada turno.")
@@ -28,5 +28,4 @@ class RegenPotion(Potion):
 
     @classmethod
     def from_dict(cls, data: dict) -> "RegenPotion":
-        return cls(data["name"], data["description"], data["value"],
-                    data["regen_amount"], data["duration"])
+        return cls(data["name"], data["description"], data["value"], data["regen_amount"], data["duration"])

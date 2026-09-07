@@ -1,4 +1,5 @@
 """Capa de presentación: centraliza el uso de colorama en toda la aplicación."""
+
 from colorama import Fore, Style
 
 __all__ = ["Fore", "Style", "success", "error", "warning", "info", "title", "colorize", "ask"]

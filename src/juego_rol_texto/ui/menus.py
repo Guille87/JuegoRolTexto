@@ -6,8 +6,19 @@ import sys
 
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.enemies import (
-    AngelCaido, Bandido, Demonio, Dragon, EspirituVengativo, Gargola, GolemDePiedra, Goblin, Huargo, Nigromante,
-    Skeleton, Orc, Troll,
+    AngelCaido,
+    Bandido,
+    Demonio,
+    Dragon,
+    EspirituVengativo,
+    Gargola,
+    Goblin,
+    GolemDePiedra,
+    Huargo,
+    Nigromante,
+    Orc,
+    Skeleton,
+    Troll,
 )
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.player import Player
@@ -15,9 +26,9 @@ from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import crash_reporting, secret_store, settings
 from juego_rol_texto.crafting.forge import Forge
-from juego_rol_texto.items.equipment import ARMOR_SLOTS, Weapon, Armor, slot_label
+from juego_rol_texto.items.equipment import ARMOR_SLOTS, Armor, Weapon, slot_label
 from juego_rol_texto.items.materials import Material
-from juego_rol_texto.persistence.save_load import save_exists, save_game, load_game
+from juego_rol_texto.persistence.save_load import load_game, save_exists, save_game
 from juego_rol_texto.shop.shop import Shop
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_bestiary_entry
@@ -25,8 +36,22 @@ from juego_rol_texto.ui.formatting import print_bestiary_entry
 # Instancia global de ResourceManager
 resource_manager = ResourceManager()
 
-ALL_ENEMY_NAMES = ["Goblin", "Huargo", "Esqueleto", "Bandido", "Orco", "Espíritu Vengativo", "Troll", "Gárgola",
-                    "Gólem de Piedra", "Mago", "Nigromante", "Ángel Caído", "Demonio", "Dragón"]
+ALL_ENEMY_NAMES = [
+    "Goblin",
+    "Huargo",
+    "Esqueleto",
+    "Bandido",
+    "Orco",
+    "Espíritu Vengativo",
+    "Troll",
+    "Gárgola",
+    "Gólem de Piedra",
+    "Mago",
+    "Nigromante",
+    "Ángel Caído",
+    "Demonio",
+    "Dragón",
+]
 
 # Hash SHA-256 de la contraseña de administrador. Vive en config/secrets.py
 # (no versionado); si no está configurado, el modo admin queda desactivado y el
@@ -65,7 +90,7 @@ def main_menu() -> None:
             "1": ("Nueva Partida", start_new_game),
             "2": ("Cargar Partida", load_saved_game),
             "3": ("Opciones", open_options),
-            "4": ("Salir", sys.exit)
+            "4": ("Salir", sys.exit),
         }
 
         for key, (text, _) in options.items():
@@ -74,7 +99,8 @@ def main_menu() -> None:
         choice = console.ask(f"\nSelecciona (1-{len(options)}): ")
 
         if choice in options:
-            if choice == "4": break
+            if choice == "4":
+                break
             options[choice][1]()  # Ejecuta la función asociada
         else:
             console.error("Opción inválida.")
@@ -98,10 +124,10 @@ def start_new_game() -> None:
                 is_admin = True
                 name = candidate
             else:
-                console.error("Contraseña incorrecta. El nombre \"admin\" está reservado, elige otro nombre.")
+                console.error('Contraseña incorrecta. El nombre "admin" está reservado, elige otro nombre.')
         elif save_exists(candidate):
             console.error(
-                f"Ya existe una partida con el nombre \"{candidate}\". "
+                f'Ya existe una partida con el nombre "{candidate}". '
                 f"Elige otro nombre o carga esa partida desde el menú principal."
             )
         else:
@@ -147,7 +173,7 @@ def load_saved_game() -> None:
                 is_admin = True
                 name = candidate
             else:
-                console.error("Contraseña incorrecta. El nombre \"admin\" está reservado, elige otro nombre.")
+                console.error('Contraseña incorrecta. El nombre "admin" está reservado, elige otro nombre.')
         else:
             name = candidate
 
@@ -170,10 +196,14 @@ def ask_crash_reporting_opt_in() -> None:
     print(console.colorize("\n--- INFORMES DE ERROR ---", console.Fore.YELLOW))
     print("¿Enviar automáticamente un informe si el juego se cierra por un fallo?")
     print("Ayuda a arreglar bugs más rápido.\n")
-    print(console.colorize("Se envía:", console.Fore.CYAN)
-          + " versión del juego, sistema operativo y el detalle técnico del error.")
-    print(console.colorize("NO se envía:", console.Fore.CYAN)
-          + " tu partida, tu nombre de usuario de Windows ni datos personales.\n")
+    print(
+        console.colorize("Se envía:", console.Fore.CYAN)
+        + " versión del juego, sistema operativo y el detalle técnico del error."
+    )
+    print(
+        console.colorize("NO se envía:", console.Fore.CYAN)
+        + " tu partida, tu nombre de usuario de Windows ni datos personales.\n"
+    )
     print("Puedes cambiarlo cuando quieras en Opciones.")
     print("1. Sí, enviar informes")
     print("2. No, gracias")
@@ -181,8 +211,7 @@ def ask_crash_reporting_opt_in() -> None:
     choice = console.ask("\nElige (1-2): ").strip()
     enabled = choice == "1"
     settings.save_crash_reporting(enabled)
-    console.success("Informes de error activados. ¡Gracias!" if enabled
-                    else "De acuerdo, no se enviará nada.")
+    console.success("Informes de error activados. ¡Gracias!" if enabled else "De acuerdo, no se enviará nada.")
 
 
 def _crash_reporting_label() -> str:
@@ -214,8 +243,7 @@ def open_options() -> None:
         if show_reports and choice == "3":
             current = settings.load_crash_reporting() is True
             settings.save_crash_reporting(not current)
-            console.success("Informes de error activados." if not current
-                            else "Informes de error desactivados.")
+            console.success("Informes de error activados." if not current else "Informes de error desactivados.")
             continue
 
         back_option = "4" if show_reports else "3"
@@ -242,6 +270,7 @@ def open_options() -> None:
 
 def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: bool = False) -> None:
     """Bucle principal de la estancia en el mundo"""
+
     def start_battle_flow():
         print(console.colorize("\n--- SELECCIONAR ENEMIGO ---", console.Fore.YELLOW))
 
@@ -288,23 +317,22 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
             ("Herrería", lambda: Forge().open(player)),
             ("Estadísticas", player.show_stats),
             ("Bestiario", lambda: _bestiary_flow(player, defeated_enemies)),
-
             # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
-
             ("Equipar Armadura", lambda: _equip_armor_flow(player)),
-
             ("Opciones", open_options),
             ("Guardar Partida", lambda: save_game(player, unlocked_enemies, defeated_enemies)),
             ("Volver al Menú Principal", "break"),
-            ("Salir del Juego", sys.exit)
+            ("Salir del Juego", sys.exit),
         ]
 
         # Panel de control total: requiere el nombre "admin" Y haber acertado
         # la contraseña al entrar (comprobado una sola vez, en start_new_game()
         # o load_saved_game(), no en cada vuelta de este bucle).
         if is_admin:
-            options.insert(-2, ("Panel de Admin", lambda: _admin_panel_flow(player, unlocked_enemies, defeated_enemies)))
+            options.insert(
+                -2, ("Panel de Admin", lambda: _admin_panel_flow(player, unlocked_enemies, defeated_enemies))
+            )
 
         for i, (text, _) in enumerate(options, 1):
             print(f"{i}. {text}")
@@ -315,9 +343,11 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
             idx = int(choice) - 1
             if 0 <= idx < len(options):
                 action = options[idx][1]
-                if action == "break": break
+                if action == "break":
+                    break
                 action()
-                if idx in [1, 4]: console.ask("\nPresiona Enter para continuar...")
+                if idx in [1, 4]:
+                    console.ask("\nPresiona Enter para continuar...")
             else:
                 console.error("Opción fuera de rango.")
 
@@ -380,13 +410,20 @@ def _bestiary_flow(player, defeated_enemies: list) -> None:
 
 # Estadísticas editables desde el Panel de Admin: (atributo en Stats, etiqueta, tipo).
 _ADMIN_STAT_FIELDS = [
-    ("health", "Vida actual", int), ("max_health", "Vida máxima", int),
-    ("min_atk", "Ataque mínimo", int), ("max_atk", "Ataque máximo", int),
-    ("armor", "Armadura", int), ("magic_resist", "Resistencia Mágica", int),
-    ("speed", "Velocidad", int), ("precision", "Precisión", int), ("evasion", "Evasión", int),
-    ("armor_penetration", "Penetración de Armadura", int), ("magic_penetration", "Penetración Mágica", int),
+    ("health", "Vida actual", int),
+    ("max_health", "Vida máxima", int),
+    ("min_atk", "Ataque mínimo", int),
+    ("max_atk", "Ataque máximo", int),
+    ("armor", "Armadura", int),
+    ("magic_resist", "Resistencia Mágica", int),
+    ("speed", "Velocidad", int),
+    ("precision", "Precisión", int),
+    ("evasion", "Evasión", int),
+    ("armor_penetration", "Penetración de Armadura", int),
+    ("magic_penetration", "Penetración Mágica", int),
     ("regen", "Regeneración", int),
-    ("crit_chance", "Prob. Crítico (0.0-1.0)", float), ("crit_damage", "Daño Crítico (multiplicador, ej. 1.5)", float),
+    ("crit_chance", "Prob. Crítico (0.0-1.0)", float),
+    ("crit_damage", "Daño Crítico (multiplicador, ej. 1.5)", float),
 ]
 
 
@@ -400,14 +437,19 @@ def _admin_panel_flow(player, unlocked_enemies: list, defeated_enemies: list) ->
             ("Poner nivel", lambda: _admin_set_level(player)),
             ("Editar estadísticas", lambda: _admin_edit_stats(player)),
             ("Curación completa", lambda: _admin_full_heal(player)),
-            ("Desbloquear y marcar como derrotados todos los enemigos",
-             lambda: _admin_unlock_all(player, unlocked_enemies, defeated_enemies)),
-            ("Combate directo contra cualquier enemigo",
-             lambda: _admin_direct_battle(player, defeated_enemies, unlocked_enemies)),
-            ("Conseguir todos los materiales (desbloquea también sus recetas)",
-             lambda: _admin_give_all_materials(player)),
-            ("Conseguir todas las armas y armaduras de los enemigos",
-             lambda: _admin_give_all_equipment(player)),
+            (
+                "Desbloquear y marcar como derrotados todos los enemigos",
+                lambda: _admin_unlock_all(player, unlocked_enemies, defeated_enemies),
+            ),
+            (
+                "Combate directo contra cualquier enemigo",
+                lambda: _admin_direct_battle(player, defeated_enemies, unlocked_enemies),
+            ),
+            (
+                "Conseguir todos los materiales (desbloquea también sus recetas)",
+                lambda: _admin_give_all_materials(player),
+            ),
+            ("Conseguir todas las armas y armaduras de los enemigos", lambda: _admin_give_all_equipment(player)),
             ("Volver", "break"),
         ]
 
@@ -453,7 +495,9 @@ def _admin_set_level(player) -> None:
         console.success(f"Nivel subido a {player.level} (estadísticas recalculadas con la curva normal de subida).")
     elif target < player.level:
         player.level = target
-        console.warning(f"Nivel bajado a {player.level} — las estadísticas no bajan solas, edítalas a mano si hace falta.")
+        console.warning(
+            f"Nivel bajado a {player.level} — las estadísticas no bajan solas, edítalas a mano si hace falta."
+        )
     else:
         console.info("Ya estás en ese nivel.")
 
@@ -567,8 +611,10 @@ def _admin_give_all_materials(player) -> None:
                 seen.add(item.name)
                 for _ in range(50):
                     player.inventory.add_item(item)
-    console.success(f"Conseguidas 50 unidades de cada uno de los {len(seen)} materiales del juego. "
-                     f"Todas las recetas de la herrería ya deberían estar descubiertas.")
+    console.success(
+        f"Conseguidas 50 unidades de cada uno de los {len(seen)} materiales del juego. "
+        f"Todas las recetas de la herrería ya deberían estar descubiertas."
+    )
 
 
 def _admin_give_all_equipment(player) -> None:
@@ -577,7 +623,9 @@ def _admin_give_all_equipment(player) -> None:
     with _quiet_pickups():
         for item in equipment:
             player.inventory.add_item(item)
-    console.success(f"Conseguidas {len(equipment)} armas y armaduras: una de cada objeto que puede soltar algún enemigo.")
+    console.success(
+        f"Conseguidas {len(equipment)} armas y armaduras: una de cada objeto que puede soltar algún enemigo."
+    )
 
 
 def _get_enemy_instance(name: str):
@@ -596,7 +644,7 @@ def _get_enemy_instance(name: str):
         "Nigromante": Nigromante,
         "Ángel Caído": AngelCaido,
         "Demonio": Demonio,
-        "Dragón": Dragon
+        "Dragón": Dragon,
     }
     # Si el nombre no existe, por defecto crea un Goblin para evitar errores
     return enemies.get(name, Goblin)()

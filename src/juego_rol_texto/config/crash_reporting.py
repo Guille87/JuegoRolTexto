@@ -19,6 +19,7 @@ Una URL de webhook de Discord es semi-secreta: cualquiera que la tenga puede
 publicar en el canal. Si alguien la extrae del .exe y hace spam, basta con
 borrar el webhook en Discord y crear otro.
 """
+
 from __future__ import annotations
 
 import getpass
@@ -27,7 +28,6 @@ import logging
 import os
 import platform
 import re
-import sys
 import urllib.request
 import uuid
 from pathlib import Path

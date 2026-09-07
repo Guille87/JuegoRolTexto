@@ -22,6 +22,7 @@ def _headless_audio():
 def tmp_save_dir(tmp_path, monkeypatch):
     """Redirige el guardado de partidas a un directorio temporal."""
     from juego_rol_texto.persistence import save_load
+
     monkeypatch.setattr(save_load, "SAVE_DIR", tmp_path)
     return tmp_path
 

@@ -25,8 +25,9 @@ class ResourceManager:
         return cls._instance
 
     def __init__(self):
-        if self._initialized: return
-        self.sounds = {}       # SFX: nombre -> pygame.mixer.Sound (varios a la vez, canal libre)
+        if self._initialized:
+            return
+        self.sounds = {}  # SFX: nombre -> pygame.mixer.Sound (varios a la vez, canal libre)
         self.music_paths = {}  # Música: nombre -> ruta de archivo
         self.current_volume_sfx = 0.5
         self.current_volume_music = 0.4

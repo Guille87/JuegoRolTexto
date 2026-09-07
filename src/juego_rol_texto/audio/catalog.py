@@ -14,5 +14,5 @@ AUDIO_ASSETS = {
         "slash": "sfx/sword-slash-swoosh.ogg",
         "fireball": "sfx/fireball-variation1.ogg",
         "lightning": "sfx/lightning-variation1.ogg",
-    }
+    },
 }

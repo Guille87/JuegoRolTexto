@@ -13,9 +13,23 @@ class AngelCaido(Enemy):
         # Divinidad corrupta: ataque habitual mágico, con autocuración y un
         # golpe de "Juicio" ocasional mucho más fuerte que lo normal.
         super().__init__(
-            "Ángel Caído", Stats(380, 380, 44, 60, 8, magic_resist=12, speed=19, precision=14, evasion=10,
-                                  crit_chance=0.08, crit_damage=1.6, magic_penetration=8),
-            gold_min=140, gold_max=180
+            "Ángel Caído",
+            Stats(
+                380,
+                380,
+                44,
+                60,
+                8,
+                magic_resist=12,
+                speed=19,
+                precision=14,
+                evasion=10,
+                crit_chance=0.08,
+                crit_damage=1.6,
+                magic_penetration=8,
+            ),
+            gold_min=140,
+            gold_max=180,
         )
 
     def perform_turn(self, player) -> None:
@@ -35,13 +49,17 @@ class AngelCaido(Enemy):
     def _self_heal(self) -> None:
         heal = random.randint(30, 50)
         self.stats.health = min(self.stats.max_health, self.stats.health + heal)
-        print(f"{console.colorize(self.name, console.Fore.YELLOW)} extiende las alas y se envuelve en luz. "
-              f"{console.colorize(f'+{heal} HP', console.Fore.GREEN)}.")
+        print(
+            f"{console.colorize(self.name, console.Fore.YELLOW)} extiende las alas y se envuelve en luz. "
+            f"{console.colorize(f'+{heal} HP', console.Fore.GREEN)}."
+        )
 
     def _holy_strike(self, player) -> None:
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-            print(f"{console.colorize(self.name, console.Fore.YELLOW)} ataca, pero "
-                  f"{console.colorize(player.name, console.Fore.GREEN)} lo esquiva.")
+            print(
+                f"{console.colorize(self.name, console.Fore.YELLOW)} ataca, pero "
+                f"{console.colorize(player.name, console.Fore.GREEN)} lo esquiva."
+            )
             return
 
         damage = self.get_attack_damage()
@@ -53,12 +71,17 @@ class AngelCaido(Enemy):
 
         if is_crit:
             print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
-        print(f"{console.colorize(self.name, console.Fore.YELLOW)} golpea con luz corrupta y hace "
-              f"{console.colorize(str(final_damage), console.Fore.MAGENTA)} de daño.")
+        print(
+            f"{console.colorize(self.name, console.Fore.YELLOW)} golpea con luz corrupta y hace "
+            f"{console.colorize(str(final_damage), console.Fore.MAGENTA)} de daño."
+        )
 
     def _divine_judgment(self, player) -> None:
-        print(console.colorize(f"¡{self.name} alza los brazos! Un juicio divino desciende...",
-                                console.Fore.YELLOW, bright=True))
+        print(
+            console.colorize(
+                f"¡{self.name} alza los brazos! Un juicio divino desciende...", console.Fore.YELLOW, bright=True
+            )
+        )
 
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
             print(f"El juicio cae, pero {console.colorize(player.name, console.Fore.GREEN)} logra esquivarlo.")
@@ -73,13 +96,39 @@ class AngelCaido(Enemy):
         if random.random() <= 0.5:
             items.append(HealingPotion("Poción de Salud", "Restaura 20 HP", 2, 20))
         if random.random() <= 0.3:
-            items.append(Material("Pluma Corrupta", "Una pluma blanca manchada de un negro que no debería existir.", 40, rarity="Raro"))
+            items.append(
+                Material(
+                    "Pluma Corrupta", "Una pluma blanca manchada de un negro que no debería existir.", 40, rarity="Raro"
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Aureola Rota", "Un fragmento de halo que aún desprende un calor antinatural.", 70,
-                                slot="casco", max_health=35, defense=10, magic_resist=8))
+            items.append(
+                Armor(
+                    "Aureola Rota",
+                    "Un fragmento de halo que aún desprende un calor antinatural.",
+                    70,
+                    slot="casco",
+                    max_health=35,
+                    defense=10,
+                    magic_resist=8,
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Weapon("Espada Sagrada Corrupta", "Su filo brilla con una luz que quema al portador equivocado.", 40, 27))
+            items.append(
+                Weapon(
+                    "Espada Sagrada Corrupta", "Su filo brilla con una luz que quema al portador equivocado.", 40, 27
+                )
+            )
         if random.random() <= 0.1:
-            items.append(Armor("Anillo de Juicio", "Un aro dorado que pesa más de lo que debería.", 35,
-                                slot="anillo", crit_damage=0.14, damage=4, magic_resist=3))
+            items.append(
+                Armor(
+                    "Anillo de Juicio",
+                    "Un aro dorado que pesa más de lo que debería.",
+                    35,
+                    slot="anillo",
+                    crit_damage=0.14,
+                    damage=4,
+                    magic_resist=3,
+                )
+            )
         return items

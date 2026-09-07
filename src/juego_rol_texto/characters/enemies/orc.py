@@ -11,9 +11,23 @@ from juego_rol_texto.ui import console
 class Orc(Enemy):
     def __init__(self):
         super().__init__(
-            "Orco", Stats(150, 150, 15, 20, 6, magic_resist=1, speed=9, precision=10, evasion=3,
-                          crit_chance=0.08, crit_damage=1.75, armor_penetration=3),
-            gold_min=21, gold_max=29
+            "Orco",
+            Stats(
+                150,
+                150,
+                15,
+                20,
+                6,
+                magic_resist=1,
+                speed=9,
+                precision=10,
+                evasion=3,
+                crit_chance=0.08,
+                crit_damage=1.75,
+                armor_penetration=3,
+            ),
+            gold_min=21,
+            gold_max=29,
         )
         self.fury_active = False
         self.total_turns = 0  # Contador de turnos transcurridos
@@ -24,8 +38,10 @@ class Orc(Enemy):
             console.error("¡El Orco está enfurecido!")
 
             if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-                print(f"{console.colorize(self.name, console.Fore.RED)} ataca enfurecido, pero "
-                      f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe.")
+                print(
+                    f"{console.colorize(self.name, console.Fore.RED)} ataca enfurecido, pero "
+                    f"{console.colorize(player.name, console.Fore.GREEN)} esquiva el golpe."
+                )
                 return
 
             # 1. Obtenemos el daño aleatorio del Orco (con posibilidad de crítico)
@@ -48,8 +64,10 @@ class Orc(Enemy):
             if is_crit:
                 print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
-            print(f"{console.colorize(self.name, console.Fore.RED)} lanza un golpe devastador y hace "
-                  f"{console.colorize(str(final_dmg), console.Fore.RED)} de daño.")
+            print(
+                f"{console.colorize(self.name, console.Fore.RED)} lanza un golpe devastador y hace "
+                f"{console.colorize(str(final_dmg), console.Fore.RED)} de daño."
+            )
         else:
             super().perform_turn(player)
 
@@ -69,12 +87,16 @@ class Orc(Enemy):
         # Lógica de ACTIVACIÓN: Después del tercer turno (al final del turno 3)
         if fase_furia and not self.fury_active:
             self.fury_active = True
-            print(f"\n{console.colorize('😡 ¡El Orco se ha enfurecido! Sus ojos brillan en rojo...', console.Fore.RED)}")
+            print(
+                f"\n{console.colorize('😡 ¡El Orco se ha enfurecido! Sus ojos brillan en rojo...', console.Fore.RED)}"
+            )
 
         # Lógica de DESACTIVACIÓN: Si está en furia, reducir duración
         elif not fase_furia and self.fury_active:
             self.fury_active = False
-            print(f"\n{console.colorize('😴 El Orco parece haberse cansado y recupera la calma.', console.Fore.YELLOW)}")
+            print(
+                f"\n{console.colorize('😴 El Orco parece haberse cansado y recupera la calma.', console.Fore.YELLOW)}"
+            )
 
     def drop_item(self) -> list:
         items = []
@@ -84,13 +106,35 @@ class Orc(Enemy):
             # Usamos StatBuffPotion para la fuerza
             items.append(StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3))
         if random.random() <= 0.08:
-            items.append(Armor("Peto de Orco", "Placas de metal remachadas sobre cuero curtido.", 12,
-                                slot="peto", defense=7, max_health=20))
+            items.append(
+                Armor(
+                    "Peto de Orco",
+                    "Placas de metal remachadas sobre cuero curtido.",
+                    12,
+                    slot="peto",
+                    defense=7,
+                    max_health=20,
+                )
+            )
         if random.random() <= 0.2:
-            items.append(Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común"))
+            items.append(
+                Material("Colmillo de Orco", "Un colmillo enorme, todavía manchado de sangre seca.", 6, rarity="Común")
+            )
         if random.random() <= 0.08:
-            items.append(Weapon("Espada Flamígera", "Una hoja que arde con un fuego que nunca se apaga.", 15, 10, element="fuego"))
+            items.append(
+                Weapon(
+                    "Espada Flamígera", "Una hoja que arde con un fuego que nunca se apaga.", 15, 10, element="fuego"
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Brazales de Guerra", "Pesados brazales de guerra pensados para golpear más fuerte, no para protegerse.", 20,
-                                slot="brazales", crit_chance=0.03, damage=3))
+            items.append(
+                Armor(
+                    "Brazales de Guerra",
+                    "Pesados brazales de guerra pensados para golpear más fuerte, no para protegerse.",
+                    20,
+                    slot="brazales",
+                    crit_chance=0.03,
+                    damage=3,
+                )
+            )
         return items

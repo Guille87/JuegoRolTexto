@@ -5,6 +5,7 @@ from juego_rol_texto.ui import console
 
 class CraftingRecipe:
     """Una receta: materiales + oro requeridos, y una plantilla del objeto resultante."""
+
     def __init__(self, name: str, materials: dict, gold_cost: int, result_template):
         self.name = name
         self.materials = materials  # {"Piel de Troll": 2}
@@ -38,8 +39,10 @@ class CraftingRecipe:
 
     def __str__(self) -> str:
         materials_str = ", ".join(f"{name} x{qty}" for name, qty in self.materials.items())
-        return (f"{self.name} | Requiere: {materials_str} + {self.gold_cost} oro "
-                f"| [{self.result_template.get_stats_info()}]")
+        return (
+            f"{self.name} | Requiere: {materials_str} + {self.gold_cost} oro "
+            f"| [{self.result_template.get_stats_info()}]"
+        )
 
 
 class Forge:
@@ -55,8 +58,12 @@ class Forge:
                 result_template=Armor(
                     "Armadura Regenerativa",
                     "Forjada con la piel imperecedera de un Troll; aún parece palpitar con vida propia.",
-                    value=60, slot="peto", defense=14, max_health=35, regen=8
-                )
+                    value=60,
+                    slot="peto",
+                    defense=14,
+                    max_health=35,
+                    regen=8,
+                ),
             ),
             CraftingRecipe(
                 name="Daga Envenenada",
@@ -68,8 +75,10 @@ class Forge:
                 result_template=Weapon(
                     "Daga Envenenada",
                     "Forjada con colmillos que todavía destilan un veneno letal.",
-                    value=22, damage=10, element="veneno"
-                )
+                    value=22,
+                    damage=10,
+                    element="veneno",
+                ),
             ),
             CraftingRecipe(
                 name="Guantes de Combate",
@@ -78,8 +87,11 @@ class Forge:
                 result_template=Armor(
                     "Guantes de Combate",
                     "Refuerzos de cuero y colmillos afilados cosidos en los nudillos.",
-                    value=15, slot="guantes", crit_chance=0.05, crit_damage=0.15
-                )
+                    value=15,
+                    slot="guantes",
+                    crit_chance=0.05,
+                    crit_damage=0.15,
+                ),
             ),
             CraftingRecipe(
                 name="Brazales Arcanos",
@@ -88,8 +100,12 @@ class Forge:
                 result_template=Armor(
                     "Brazales Arcanos",
                     "Energía mágica condensada en forma de brazales; arden con un fuego que no quema al portador.",
-                    value=25, slot="brazales", crit_chance=0.05, magic_resist=3, element="fuego"
-                )
+                    value=25,
+                    slot="brazales",
+                    crit_chance=0.05,
+                    magic_resist=3,
+                    element="fuego",
+                ),
             ),
             CraftingRecipe(
                 name="Hombreras Reforzadas",
@@ -98,8 +114,12 @@ class Forge:
                 result_template=Armor(
                     "Hombreras Reforzadas",
                     "Placas de hueso y colmillo unidas con remaches toscos pero efectivos.",
-                    value=18, slot="hombreras", precision=3, defense=2, max_health=15
-                )
+                    value=18,
+                    slot="hombreras",
+                    precision=3,
+                    defense=2,
+                    max_health=15,
+                ),
             ),
             CraftingRecipe(
                 name="Cinturón de Resistencia",
@@ -108,8 +128,12 @@ class Forge:
                 result_template=Armor(
                     "Cinturón de Resistencia",
                     "Tejido con fragmentos óseos que parecen absorber el dolor, tanto físico como arcano.",
-                    value=12, slot="cinturon", defense=3, max_health=15, magic_resist=4
-                )
+                    value=12,
+                    slot="cinturon",
+                    defense=3,
+                    max_health=15,
+                    magic_resist=4,
+                ),
             ),
             CraftingRecipe(
                 name="Perneras de Placa",
@@ -118,8 +142,12 @@ class Forge:
                 result_template=Armor(
                     "Perneras de Placa",
                     "Protección rígida para las piernas, forjada con colmillos de orco fundidos.",
-                    value=14, slot="perneras", evasion=2, defense=3, max_health=12
-                )
+                    value=14,
+                    slot="perneras",
+                    evasion=2,
+                    defense=3,
+                    max_health=12,
+                ),
             ),
             CraftingRecipe(
                 name="Botas Ligeras",
@@ -128,8 +156,11 @@ class Forge:
                 result_template=Armor(
                     "Botas Ligeras",
                     "Suelas flexibles que facilitan golpear en el punto justo y moverse con más soltura.",
-                    value=10, slot="botas", crit_damage=0.10, speed=3
-                )
+                    value=10,
+                    slot="botas",
+                    crit_damage=0.10,
+                    speed=3,
+                ),
             ),
             CraftingRecipe(
                 name="Anillo de Fuerza",
@@ -138,8 +169,11 @@ class Forge:
                 result_template=Armor(
                     "Anillo de Fuerza",
                     "Un aro pesado grabado con runas de poder bruto.",
-                    value=16, slot="anillo", crit_damage=0.12, damage=3
-                )
+                    value=16,
+                    slot="anillo",
+                    crit_damage=0.12,
+                    damage=3,
+                ),
             ),
             CraftingRecipe(
                 name="Anillo de Precisión",
@@ -148,8 +182,10 @@ class Forge:
                 result_template=Armor(
                     "Anillo de Precisión",
                     "Un aro fino que agudiza el instinto para encontrar el punto débil.",
-                    value=20, slot="anillo", crit_damage=0.12
-                )
+                    value=20,
+                    slot="anillo",
+                    crit_damage=0.12,
+                ),
             ),
             CraftingRecipe(
                 name="Amuleto de Resistencia",
@@ -158,8 +194,11 @@ class Forge:
                 result_template=Armor(
                     "Amuleto de Resistencia",
                     "Un talismán que envuelve al portador en una tenue barrera contra la magia.",
-                    value=28, slot="amuleto", defense=2, magic_resist=5
-                )
+                    value=28,
+                    slot="amuleto",
+                    defense=2,
+                    magic_resist=5,
+                ),
             ),
             CraftingRecipe(
                 name="Anillo de Vitalidad",
@@ -171,8 +210,11 @@ class Forge:
                 result_template=Armor(
                     "Anillo de Vitalidad",
                     "Un aro sencillo grabado con símbolos de sanación; late al mismo ritmo que el corazón.",
-                    value=14, slot="anillo", crit_damage=0.16, regen=2
-                )
+                    value=14,
+                    slot="anillo",
+                    crit_damage=0.16,
+                    regen=2,
+                ),
             ),
         ]
 
@@ -186,17 +228,26 @@ class Forge:
             hidden_count = len(self.recipes) - len(visible_recipes)
 
             if not visible_recipes:
-                print("Todavía no has descubierto ningún material craftable. Derrota enemigos y consigue sus materiales.")
+                print(
+                    "Todavía no has descubierto ningún material craftable. Derrota enemigos y consigue sus materiales."
+                )
                 if hidden_count:
-                    print(console.colorize(f"({hidden_count} recetas más por descubrir)", console.Fore.BLACK, bright=True))
+                    print(
+                        console.colorize(f"({hidden_count} recetas más por descubrir)", console.Fore.BLACK, bright=True)
+                    )
                 return
 
             for idx, recipe in enumerate(visible_recipes, 1):
                 print(f"{idx}. {recipe}")
             print(f"{len(visible_recipes) + 1}. Volver")
             if hidden_count:
-                print(console.colorize(f"({hidden_count} recetas más por descubrir consiguiendo nuevos materiales)",
-                                        console.Fore.BLACK, bright=True))
+                print(
+                    console.colorize(
+                        f"({hidden_count} recetas más por descubrir consiguiendo nuevos materiales)",
+                        console.Fore.BLACK,
+                        bright=True,
+                    )
+                )
 
             choice = console.ask(f"\nElige qué craftear (1-{len(visible_recipes) + 1}): ")
             if not choice.isdigit():

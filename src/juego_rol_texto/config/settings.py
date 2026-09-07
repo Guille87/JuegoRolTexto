@@ -5,6 +5,7 @@ automático de informes de error (`[REPORTS]`). Las escrituras conservan el
 resto de secciones (leer-modificar-escribir), para que ajustar el volumen no
 borre la preferencia de informes ni al revés.
 """
+
 import configparser
 
 from juego_rol_texto.config.paths import CONFIG_FILE

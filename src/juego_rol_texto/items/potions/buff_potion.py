@@ -10,7 +10,7 @@ class StatBuffPotion(Potion):
         self.is_combat_only = True
 
     def use(self, player) -> bool:
-        if getattr(player, 'in_combat', False):
+        if getattr(player, "in_combat", False):
             # Sumamos +1 a la duración para compensar el turno actual de uso
             # Así, si la poción es de 3 turnos, el jugador atacará 3 veces con el buff.
             self.duration += 1
@@ -22,10 +22,12 @@ class StatBuffPotion(Potion):
             current_val = getattr(player.stats, self.stat_name)
             setattr(player.stats, self.stat_name, current_val + self.boost)
 
-            print(console.colorize(
-                f"¡Efecto {self.name} activado! (+{self.boost} {self.stat_name} por {self.duration} turnos)",
-                console.Fore.CYAN
-            ))
+            print(
+                console.colorize(
+                    f"¡Efecto {self.name} activado! (+{self.boost} {self.stat_name} por {self.duration} turnos)",
+                    console.Fore.CYAN,
+                )
+            )
             return True
 
         console.error("No puedes usar este objeto fuera del combate.")
@@ -46,5 +48,4 @@ class StatBuffPotion(Potion):
 
     @classmethod
     def from_dict(cls, data: dict) -> "StatBuffPotion":
-        return cls(data["name"], data["description"], data["value"],
-                    data["stat_name"], data["boost"], data["duration"])
+        return cls(data["name"], data["description"], data["value"], data["stat_name"], data["boost"], data["duration"])

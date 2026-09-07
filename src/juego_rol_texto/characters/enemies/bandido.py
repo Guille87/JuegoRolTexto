@@ -14,9 +14,22 @@ class Bandido(Enemy):
 
     def __init__(self):
         super().__init__(
-            "Bandido", Stats(85, 85, 13, 19, 5, speed=12, precision=10, evasion=6,
-                             crit_chance=0.10, crit_damage=1.6, armor_penetration=2),
-            gold_min=16, gold_max=22
+            "Bandido",
+            Stats(
+                85,
+                85,
+                13,
+                19,
+                5,
+                speed=12,
+                precision=10,
+                evasion=6,
+                crit_chance=0.10,
+                crit_damage=1.6,
+                armor_penetration=2,
+            ),
+            gold_min=16,
+            gold_max=22,
         )
         self.ambush_done = False
 
@@ -26,8 +39,10 @@ class Bandido(Enemy):
             self.ambush_done = True
             damage = self.get_attack_damage() + 4
             final_dmg = player.take_damage(damage, armor_penetration=self.stats.armor_penetration)
-            print(f"\n¡{console.colorize('EMBOSCADA!', console.Fore.YELLOW)} El {self.name} te ataca desde las "
-                  f"sombras y te hace {console.colorize(str(final_dmg), console.Fore.RED)} de daño.")
+            print(
+                f"\n¡{console.colorize('EMBOSCADA!', console.Fore.YELLOW)} El {self.name} te ataca desde las "
+                f"sombras y te hace {console.colorize(str(final_dmg), console.Fore.RED)} de daño."
+            )
             return True
         return False
 
@@ -41,13 +56,17 @@ class Bandido(Enemy):
     def _attempt_disarm(self, player) -> None:
         """Desarme temporal: anula el bonus de daño del arma equipada durante 2 turnos."""
         if not resolve_hit(self.stats.precision, player.get_total_evasion()):
-            print(f"{console.colorize(self.name, console.Fore.RED)} intenta desarmar a "
-                  f"{console.colorize(player.name, console.Fore.GREEN)}, pero falla.")
+            print(
+                f"{console.colorize(self.name, console.Fore.RED)} intenta desarmar a "
+                f"{console.colorize(player.name, console.Fore.GREEN)}, pero falla."
+            )
             return
 
         player.apply_status("desarmado", 2)
-        print(f"{console.colorize(self.name, console.Fore.RED)} te arranca el arma de las manos. "
-              f"{console.colorize('¡Desarmado durante 2 turnos!', console.Fore.YELLOW)}")
+        print(
+            f"{console.colorize(self.name, console.Fore.RED)} te arranca el arma de las manos. "
+            f"{console.colorize('¡Desarmado durante 2 turnos!', console.Fore.YELLOW)}"
+        )
 
     def drop_item(self) -> list:
         items = []
@@ -58,12 +77,36 @@ class Bandido(Enemy):
         if random.random() <= 0.1:
             items.append(Weapon("Daga Robada", "Ligera y afilada, perfecta para golpear rápido y desaparecer.", 12, 9))
         if random.random() <= 0.08:
-            items.append(Armor("Guantes de Ladrón", "Sin apenas grosor; perfectos para no perder el tacto al robar.", 18,
-                                slot="guantes", crit_damage=0.12, crit_chance=0.04))
+            items.append(
+                Armor(
+                    "Guantes de Ladrón",
+                    "Sin apenas grosor; perfectos para no perder el tacto al robar.",
+                    18,
+                    slot="guantes",
+                    crit_damage=0.12,
+                    crit_chance=0.04,
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Perneras de Bandido", "Cortadas para no estorbar al correr entre callejones.", 14,
-                                slot="perneras", evasion=2, speed=2))
+            items.append(
+                Armor(
+                    "Perneras de Bandido",
+                    "Cortadas para no estorbar al correr entre callejones.",
+                    14,
+                    slot="perneras",
+                    evasion=2,
+                    speed=2,
+                )
+            )
         if random.random() <= 0.08:
-            items.append(Armor("Capucha de Ladrón", "Oculta el rostro y agudiza los reflejos para el golpe rápido.", 14,
-                                slot="casco", max_health=18, crit_chance=0.04))
+            items.append(
+                Armor(
+                    "Capucha de Ladrón",
+                    "Oculta el rostro y agudiza los reflejos para el golpe rápido.",
+                    14,
+                    slot="casco",
+                    max_health=18,
+                    crit_chance=0.04,
+                )
+            )
         return items

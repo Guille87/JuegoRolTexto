@@ -47,7 +47,9 @@ def test_huargo_pack_bite_never_triggers_when_roll_is_high(player, monkeypatch):
 
 
 def test_bandido_disarm_zeroes_weapon_bonus_until_it_expires(player, monkeypatch):
-    monkeypatch.setattr("juego_rol_texto.characters.enemies.bandido.random.random", lambda: 0.0)  # siempre desarma y acierta
+    monkeypatch.setattr(
+        "juego_rol_texto.characters.enemies.bandido.random.random", lambda: 0.0
+    )  # siempre desarma y acierta
     player.equipped_weapon = Weapon("Espada", "desc", 1, damage=5)
 
     assert player.get_attack_range() == (10, 15)  # base(5-10) + arma(+5)
@@ -67,7 +69,9 @@ def test_bandido_disarm_zeroes_weapon_bonus_until_it_expires(player, monkeypatch
 
 
 def test_espiritu_vengativo_curse_reduces_armor_until_it_expires(player, monkeypatch):
-    monkeypatch.setattr("juego_rol_texto.characters.enemies.espiritu_vengativo.random.random", lambda: 0.0)  # siempre maldice y acierta
+    monkeypatch.setattr(
+        "juego_rol_texto.characters.enemies.espiritu_vengativo.random.random", lambda: 0.0
+    )  # siempre maldice y acierta
     player.stats.armor = 6
 
     assert player.get_total_armor() == 6

@@ -20,9 +20,20 @@ from juego_rol_texto.items.equipment import Armor
 # Orden real de la cadena (combat/battle.py::ENEMY_PROGRESSION), con la posición
 # de cada uno (1-indexado) para poder comprobar la progresión por hueco.
 CHAIN = [
-    (1, Goblin), (2, Huargo), (3, Skeleton), (4, Bandido), (5, Orc),
-    (6, EspirituVengativo), (7, Troll), (8, Gargola), (9, GolemDePiedra),
-    (10, Mago), (11, Nigromante), (12, AngelCaido), (13, Demonio), (14, Dragon),
+    (1, Goblin),
+    (2, Huargo),
+    (3, Skeleton),
+    (4, Bandido),
+    (5, Orc),
+    (6, EspirituVengativo),
+    (7, Troll),
+    (8, Gargola),
+    (9, GolemDePiedra),
+    (10, Mago),
+    (11, Nigromante),
+    (12, AngelCaido),
+    (13, Demonio),
+    (14, Dragon),
 ]
 
 # El stat "base" garantizado en todo objeto de ese hueco (ver la conversación
@@ -40,8 +51,18 @@ BASE_STAT_BY_SLOT = {
     "amuleto": "magic_resist",
 }
 
-STAT_FIELDS = ["defense", "max_health", "magic_resist", "crit_chance", "crit_damage",
-               "damage", "regen", "speed", "precision", "evasion"]
+STAT_FIELDS = [
+    "defense",
+    "max_health",
+    "magic_resist",
+    "crit_chance",
+    "crit_damage",
+    "damage",
+    "regen",
+    "speed",
+    "precision",
+    "evasion",
+]
 
 # Excepciones deliberadas, acordadas explícitamente con el usuario, donde el
 # stat base de un hueco NO sube respecto al enemigo anterior de ese mismo
@@ -106,9 +127,7 @@ def _all_forge_armor_templates():
 def test_every_forge_armor_recipe_grants_its_slot_base_stat():
     for recipe_name, item in _all_forge_armor_templates():
         base_field = BASE_STAT_BY_SLOT[item.slot]
-        assert getattr(item, base_field), (
-            f"{recipe_name} (hueco {item.slot}) no da su stat base ({base_field})"
-        )
+        assert getattr(item, base_field), f"{recipe_name} (hueco {item.slot}) no da su stat base ({base_field})"
 
 
 def test_every_forge_armor_recipe_has_between_one_and_four_stats():

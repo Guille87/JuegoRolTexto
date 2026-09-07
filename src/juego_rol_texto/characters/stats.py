@@ -27,10 +27,24 @@ def resolve_hit(attacker_precision: int, defender_evasion: int) -> bool:
 
 class Stats:
     """Maneja las estadísticas básicas con validación de límites."""
-    def __init__(self, health: int, max_health: int, min_atk: int, max_atk: int, armor: int,
-                 magic_resist: int = 0, crit_chance: float = 0.0, crit_damage: float = 1.5,
-                 speed: int = 10, precision: int = 0, evasion: int = 0,
-                 armor_penetration: int = 0, magic_penetration: int = 0, regen: int = 0):
+
+    def __init__(
+        self,
+        health: int,
+        max_health: int,
+        min_atk: int,
+        max_atk: int,
+        armor: int,
+        magic_resist: int = 0,
+        crit_chance: float = 0.0,
+        crit_damage: float = 1.5,
+        speed: int = 10,
+        precision: int = 0,
+        evasion: int = 0,
+        armor_penetration: int = 0,
+        magic_penetration: int = 0,
+        regen: int = 0,
+    ):
         self.max_health = max_health
         self._health = health
         self.min_atk = min_atk
@@ -64,6 +78,8 @@ class Stats:
         self._health = max(0, min(value, self.max_health))
 
     def __str__(self) -> str:
-        return (f"HP: {self.health}/{self.max_health} | ATK: {self.min_atk}-{self.max_atk} "
-                f"| ARM: {self.armor} | RES.MAG: {self.magic_resist} "
-                f"| CRIT: {self.crit_chance*100:.0f}% x{self.crit_damage:.2f}")
+        return (
+            f"HP: {self.health}/{self.max_health} | ATK: {self.min_atk}-{self.max_atk} "
+            f"| ARM: {self.armor} | RES.MAG: {self.magic_resist} "
+            f"| CRIT: {self.crit_chance * 100:.0f}% x{self.crit_damage:.2f}"
+        )
