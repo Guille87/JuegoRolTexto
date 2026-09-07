@@ -8,7 +8,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "colorama==0.4.6",
-    "pygame-ce==2.5.7",
+    "pygame-ce==2.5.8",
 ]
 
 [project.optional-dependencies]
