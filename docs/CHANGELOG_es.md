@@ -9,6 +9,11 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-07
+
+Primera versión etiquetada. Añade el informe de errores, la infraestructura de
+proyecto y una gran pasada de cobertura de tests sobre la línea base 0.2.0.
+
 ### Añadido
 
 - Registro de errores en disco: `logs/juego.log` (rotativo) y un
@@ -30,6 +35,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 - Archivos de proyecto: `LICENSE` (MIT), `CONTRIBUTING`, `ROADMAP`, este
   `CHANGELOG`, `CODE_OF_CONDUCT`, `SECURITY`, plantillas de issue/PR, Dependabot, `.editorconfig`.
 - Ruff como linter y formateador (conjunto de reglas conservador), configurado en `pyproject.toml`.
+- Pasada de cobertura de tests: 70% → 91% (238 tests). `ui/menus.py` y `app.py`
+  se excluyen de la métrica por ser pegamento interactivo.
 
 ### Corregido
 
@@ -64,6 +71,5 @@ cambios anteriores no se registraron formalmente.
 
 - Versión inicial: combate por turnos básico en consola.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.2.0
-[0.1.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.3.0

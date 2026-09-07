@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-07
+
+First tagged release. Adds error reporting, project infrastructure and a large
+test-coverage pass on top of the 0.2.0 baseline.
+
 ### Added
 
 - On-disk error logging: `logs/juego.log` (rotating) and a standalone
@@ -30,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Project files: `LICENSE` (MIT), `CONTRIBUTING`, `ROADMAP`, this `CHANGELOG`,
   `CODE_OF_CONDUCT`, `SECURITY`, issue/PR templates, Dependabot, `.editorconfig`.
 - Ruff as linter and formatter (conservative rule set), configured in `pyproject.toml`.
+- Test-coverage pass: 70% → 91% (238 tests). `ui/menus.py` and `app.py` are
+  excluded from the metric as interactive glue.
 
 ### Fixed
 
@@ -64,6 +71,5 @@ were not formally tracked.
 
 - Initial version: basic console turn-based combat.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.2.0
-[0.1.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.3.0
