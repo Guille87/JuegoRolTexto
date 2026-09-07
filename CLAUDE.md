@@ -33,7 +33,7 @@ pytest --cov=juego_rol_texto --cov-report=term-missing       # with coverage
 pytest --cov=juego_rol_texto --cov-report=html               # htmlcov/index.html
 ```
 
-Lint / format (Ruff, config in `pyproject.toml`, conservative rule set — `F`, `E4/E7/E9`, `W`, `I`):
+Lint / format (Ruff, config in `pyproject.toml` — `F`, `E4/E7/E9`, `W`, `I`, `UP`, `B`, `SIM`):
 ```bash
 ruff check .
 ruff format .          # or `ruff format --check .` in CI

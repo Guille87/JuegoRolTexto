@@ -170,10 +170,9 @@ class Player(Character):
                     can_act = False
                     break  # Salimos del check de movimiento, pero seguimos con el daño
 
-            elif effect["name"] == "paralizado":
-                if random.random() < 0.5:
-                    console.warning("⚡ ¡La parálisis te impide actuar!")
-                    can_act = False
+            elif effect["name"] == "paralizado" and random.random() < 0.5:
+                console.warning("⚡ ¡La parálisis te impide actuar!")
+                can_act = False
 
         # 2. Procesamiento de daño/curación (Ocurre aunque no puedas actuar)
         for effect in self.status_effects[:]:

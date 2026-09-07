@@ -94,12 +94,9 @@ def scrub(text: str) -> str:
 
 
 def _game_version() -> str:
-    try:
-        from importlib.metadata import version
+    from juego_rol_texto import __version__
 
-        return version("juego-rol-texto")
-    except Exception:
-        return "desconocida"
+    return __version__
 
 
 def is_configured() -> bool:

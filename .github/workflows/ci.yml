@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Cancela runs superados en PRs; en main se dejan terminar (el job del badge commitea).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
