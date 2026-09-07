@@ -5,6 +5,9 @@
 [![CI](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml/badge.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
 [![Coverage](.github/badges/coverage.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Contributors](https://img.shields.io/github/contributors/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/pulls)
 
 A Spanish-language, terminal-based turn-based RPG written in Python. Fight your way
 through a chain of 14 enemies, manage gear and potions, craft equipment and grow

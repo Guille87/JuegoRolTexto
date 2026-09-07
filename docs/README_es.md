@@ -5,6 +5,9 @@
 [![CI](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml/badge.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
 [![Coverage](../.github/badges/coverage.svg)](https://github.com/Guille87/JuegoRolTexto/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
+[![Contributors](https://img.shields.io/github/contributors/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/Guille87/JuegoRolTexto)](https://github.com/Guille87/JuegoRolTexto/pulls)
 
 Un RPG de batalla por turnos en consola, en español, escrito en Python. Enfréntate
 a una cadena de 14 enemigos, gestiona equipo y pociones, fabrica objetos en la
