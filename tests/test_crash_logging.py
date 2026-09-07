@@ -34,3 +34,30 @@ def test_setup_logging_is_idempotent(tmp_path, monkeypatch):
     logging_setup.setup_logging()
 
     assert len(logging_setup.logger.handlers) == 1
+
+
+def test_log_session_end_is_a_noop_when_not_configured(monkeypatch):
+    """No debe lanzar aunque setup_logging() no se haya llamado."""
+    monkeypatch.setattr(logging_setup, "_configured", False)
+    logging_setup.log_session_end()  # sin excepción
+
+
+def test_handle_uncaught_writes_a_crash_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(logging_setup, "LOG_DIR", tmp_path)
+    monkeypatch.setattr(logging_setup, "LOG_FILE", tmp_path / "juego.log")
+    monkeypatch.setattr(sys, "__excepthook__", lambda *a: None)
+
+    exc = RuntimeError("algo se rompió")
+    logging_setup._handle_uncaught(RuntimeError, exc, exc.__traceback__)
+
+    assert list(tmp_path.glob("crash_*.txt"))
+
+
+def test_handle_uncaught_ignores_keyboard_interrupt(tmp_path, monkeypatch):
+    monkeypatch.setattr(logging_setup, "LOG_DIR", tmp_path)
+    monkeypatch.setattr(logging_setup, "LOG_FILE", tmp_path / "juego.log")
+    monkeypatch.setattr(sys, "__excepthook__", lambda *a: None)
+
+    logging_setup._handle_uncaught(KeyboardInterrupt, KeyboardInterrupt(), None)
+
+    assert not list(tmp_path.glob("crash_*.txt"))
