@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Cross-platform, non-blocking keyboard input (`ui/keyboard.py`); the game and
+  test suite no longer require Windows.
+- Static type checking with `pyright` (basic mode) as a required CI check.
+- Boot smoke test (`app.main()` starts and exits cleanly).
+
+### Changed
+
+- CI runs the test matrix on Linux (3.10–3.13) plus one Windows job.
+- Branch protection on `main`: PR + green CI required; the coverage badge lives
+  on an orphan `badges` branch.
+- Ruff rule set extended with `UP`, `B` and `SIM`.
+
 ## [0.3.0] - 2026-09-07
 
 First tagged release. Adds error reporting, project infrastructure and a large

@@ -1,11 +1,16 @@
 import random
 import time
+from typing import TYPE_CHECKING
 
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
 from juego_rol_texto.ui.keyboard import key_pressed
+
+if TYPE_CHECKING:
+    from juego_rol_texto.characters.enemies.enemy_base import Enemy
+    from juego_rol_texto.characters.player import Player
 
 # Mapa de progresión: Al derrotar a la LLAVE, se desbloquea el VALOR.
 # Orden de tiers acordado con el usuario (ver TODO.md): los enemigos nuevos se
@@ -238,7 +243,7 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list) -> None:
         enemy.on_turn_end()
 
 
-def _execute_turn(attacker, defender, defeated_enemies: list) -> None:
+def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list) -> None:
     """Ejecuta un ataque estándar calculando daño y stats."""
     from juego_rol_texto.characters.player import Player
 

@@ -52,19 +52,32 @@ jobs:
       - name: Tests + cobertura
         run: pytest --cov=juego_rol_texto --cov-report=xml --cov-report=term-missing
 
-  # Check único y estable para la protección de rama: agrega el resultado de la
-  # matriz de 'test' en un solo estado. Si la matriz cambia, esto no se rompe.
-  all-green:
-    if: always()
-    needs: test
+  types:
     runs-on: ubuntu-latest
     steps:
-      - name: El job 'test' debe haber pasado
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Pyright
+        run: pyright
+
+  # Check único y estable para la protección de rama: agrega el resultado de la
+  # matriz de 'test' (y de 'types') en un solo estado. Si la matriz cambia, esto
+  # no se rompe.
+  all-green:
+    if: always()
+    needs: [test, types]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'test' y 'types' deben haber pasado
         run: |
-          if [ "${{ needs.test.result }}" != "success" ]; then
-            echo "test = ${{ needs.test.result }}"
-            exit 1
-          fi
+          [ "${{ needs.test.result }}" = "success" ] || { echo "test = ${{ needs.test.result }}"; exit 1; }
+          [ "${{ needs.types.result }}" = "success" ] || { echo "types = ${{ needs.types.result }}"; exit 1; }
 
   coverage-badge:
     needs: test

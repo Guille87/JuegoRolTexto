@@ -17,9 +17,10 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 - Guardado/carga en JSON con copia de seguridad; reconocimiento del jugador por
   nombre sin distinguir mayúsculas/minúsculas.
 - Registro de errores en disco e informe opcional (opt-in) a Discord.
-- CI (Ruff + tests en Python 3.10–3.13, Linux + Windows), badge de cobertura, workflow de release (v0.3.0).
+- CI (Ruff, pyright, tests en Python 3.10–3.13 Linux + un job de Windows), badge de cobertura, workflow de release (v0.3.0).
 - Protección de la rama `main` (PR + check `all-green`); smoke test de arranque.
 - Entrada de teclado multiplataforma (`ui/keyboard.py`) — el juego y los tests ya no necesitan Windows.
+- Ruff `UP`/`B`/`SIM`, `__version__` vía `importlib.metadata`, `concurrency` en el CI.
 
 ## Juego — planeado
 
@@ -41,11 +42,8 @@ Impacto alto:
 
 Medio / pulido:
 
-- **Comprobación estática de tipos** en el CI (`pyright` o `ty`), sin bloquear al principio.
-- **`__version__`** en `src/juego_rol_texto/__init__.py` vía `importlib.metadata`.
 - **Metadatos del repo en GitHub** — descripción, topics, imagen de social preview.
-- Ampliar el conjunto de reglas de Ruff (`UP`, `B`, `SIM`, …).
-- `concurrency:` en `ci.yml` para cancelar runs superados.
+- Extender `pyright` para que revise también `tests/`, y subir de `basic` a `standard`.
 - Limpiar las notas de release autogeneradas; enlazar el CHANGELOG.
 - Job opcional del CI que construya el paquete de PyInstaller sin publicarlo
   (solo cuando cambie el `.spec`) para detectar un `.spec` roto antes de un release.

@@ -17,7 +17,7 @@ Gracias por tu interés. El proyecto es pequeño; estas son las convenciones.
 
 1. Crea una rama a partir de `main`.
 2. Un commit por unidad lógica de cambio.
-3. Ejecuta `ruff format .`, luego `ruff check .`, y luego `pytest`: debe pasar todo.
+3. Ejecuta `ruff format .`, luego `ruff check .`, luego `pyright`, y luego `pytest`: debe pasar todo.
 4. Abre una *pull request*. La CI ejecuta Ruff y los tests en Python 3.10–3.13
    (Windows) y actualiza el badge de cobertura; tiene que quedar en verde.
 

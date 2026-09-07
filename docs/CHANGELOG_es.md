@@ -9,6 +9,20 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- Entrada de teclado no bloqueante y multiplataforma (`ui/keyboard.py`); el juego
+  y la suite de tests ya no necesitan Windows.
+- Comprobación estática de tipos con `pyright` (modo `basic`) como check obligatorio del CI.
+- Smoke test de arranque (`app.main()` arranca y sale limpio).
+
+### Cambiado
+
+- El CI ejecuta la matriz de tests en Linux (3.10–3.13) más un job de Windows.
+- Protección de la rama `main`: PR + CI en verde obligatorios; el badge de
+  cobertura vive en una rama huérfana `badges`.
+- El conjunto de reglas de Ruff añade `UP`, `B` y `SIM`.
+
 ## [0.3.0] - 2026-09-07
 
 Primera versión etiquetada. Añade el informe de errores, la infraestructura de
