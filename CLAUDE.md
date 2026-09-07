@@ -110,14 +110,14 @@ ruff format .          # or `ruff format --check .` in CI
 
 ## Tests (`tests/`)
 
-`pytest`-based, ~240 tests, coverage ≥90% of the measured code (see the Coverage note above). `tests/conftest.py` provides the shared fixtures: `_headless_audio` (session-scoped autouse — sets `SDL_AUDIODRIVER=dummy` and inits `pygame.mixer` so `ResourceManager`/`battle.py` run without audio hardware), `player` (a fresh `Player` used by almost every test), `weak_enemy` (a 1-HP Goblin for deterministic combat outcomes), and `tmp_save_dir` (monkeypatches `save_load.SAVE_DIR` to a tmp dir).
+`pytest`-based, ~240 tests, coverage ≥90% of the measured code (see the Coverage note above). `tests/conftest.py` sets `SDL_AUDIODRIVER`/`SDL_VIDEODRIVER=dummy` and provides the shared fixtures: `_headless_audio` (session-scoped autouse — inits `pygame.mixer` so `ResourceManager`/`battle.py` run without audio hardware), `player` (a fresh `Player` used by almost every test), `weak_enemy` (a 1-HP Goblin for deterministic combat outcomes), and `tmp_save_dir` (monkeypatches `save_load.SAVE_DIR` to a tmp dir).
 
 Testing conventions:
 - **Interactive code is driven by monkeypatching `console.ask`** at the module under test, e.g. `monkeypatch.setattr("juego_rol_texto.shop.shop.console.ask", ...)`; queue a sequence of answers with an `iter(...)` when a flow asks more than once.
 - **`random.random`/`randint`/`choice` are one shared stdlib object process-wide** — `characters/stats.py::resolve_hit`, `enemy_base.py` and each enemy module all call the same function, so a monkeypatch of `"random.random"` affects every roll in that turn. Tests fix an extreme value (`0.0` → everything hits/procs, `0.99` → misses) and assert *effects* (health dropped, status applied), not exact damage numbers. The one enemy test file that needs per-roll control (`test_new_enemies.py`) documents the real roll order in a comment.
 - Enemy `perform_turn()` / `_cast_*` / `_claw_attack` helpers are tested directly (call the helper, don't route through a whole battle).
 
-Which file tests what: `test_stats` (clamping, `resolve_hit`), `test_player` (combat math / status / leveling), `test_battle` (`initiate_battle` outcomes, elemental bonus), `test_new_enemies` + `test_original_enemies` + `test_enemy_attacks` (per-enemy `perform_turn` mechanics), `test_inventory` / `test_items` / `test_potions` / `test_shop` / `test_crafting` / `test_armor_progression`, `test_save_load`, `test_formatting`, `test_audio`, `test_settings`, `test_secret_store`, `test_crash_logging`, `test_crash_reporting`.
+Which file tests what: `test_stats` (clamping, `resolve_hit`), `test_player` (combat math / status / leveling), `test_battle` (`initiate_battle` outcomes, elemental bonus), `test_new_enemies` + `test_original_enemies` + `test_enemy_attacks` (per-enemy `perform_turn` mechanics), `test_inventory` / `test_items` / `test_potions` / `test_shop` / `test_crafting` / `test_armor_progression`, `test_save_load`, `test_formatting`, `test_audio`, `test_settings`, `test_secret_store`, `test_crash_logging`, `test_crash_reporting`, `test_app_boot` (smoke test — `app.main()` boots and exits cleanly).
 
 ## Known incomplete/dead areas (see TODO.md)
 
