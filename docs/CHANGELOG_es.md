@@ -9,6 +9,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-08
+
 ### Añadido
 
 - Entrada de teclado no bloqueante y multiplataforma (`ui/keyboard.py`); el juego
@@ -94,5 +96,6 @@ cambios anteriores no se registraron formalmente.
 
 - Versión inicial: combate por turnos básico en consola.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.3.0
