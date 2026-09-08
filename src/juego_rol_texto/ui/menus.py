@@ -4,6 +4,7 @@ import hashlib
 import random
 import sys
 
+from juego_rol_texto import updater
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.enemies import (
     AngelCaido,
@@ -75,35 +76,52 @@ def _check_admin_password() -> bool:
     return hashlib.sha256(entered.encode("utf-8")).hexdigest() == _ADMIN_PASSWORD_HASH
 
 
+_update_notice_shown = False
+
+
+def _maybe_show_update_notice(*, in_game: bool) -> None:
+    """Si el hilo de arranque encontró una versión nueva, lo dice una vez."""
+    global _update_notice_shown
+    info = updater.available()
+    if not info or _update_notice_shown:
+        return
+    _update_notice_shown = True
+    print(console.colorize(f"\n⬆  Versión nueva disponible: {info.tag}", console.Fore.GREEN, bright=True))
+    if in_game:
+        print(console.colorize("   Guarda la partida y vuelve al Menú Principal para actualizar.", console.Fore.GREEN))
+
+
 def main_menu() -> None:
     resource_manager.set_mood("adventure")
 
     while True:
         # 1. Comprobamos si la música terminó y hay que poner otra
         resource_manager.update()
+        _maybe_show_update_notice(in_game=False)
 
         print("\n" + "=" * 30)
         print(console.colorize("⚔️  MENÚ PRINCIPAL  ⚔️", console.Fore.YELLOW))
         print("=" * 30)
 
-        options = {
-            "1": ("Nueva Partida", start_new_game),
-            "2": ("Cargar Partida", load_saved_game),
-            "3": ("Opciones", open_options),
-            "4": ("Salir", sys.exit),
-        }
+        options = [
+            ("Nueva Partida", start_new_game),
+            ("Cargar Partida", load_saved_game),
+            ("Opciones", open_options),
+            ("Salir", "break"),
+        ]
 
-        for key, (text, _) in options.items():
-            print(f"{key}. {text}")
+        for i, (text, _) in enumerate(options, 1):
+            print(f"{i}. {text}")
 
         choice = console.ask(f"\nSelecciona (1-{len(options)}): ")
-
-        if choice in options:
-            if choice == "4":
-                break
-            options[choice][1]()  # Ejecuta la función asociada
-        else:
+        if not choice.isdigit() or not (1 <= int(choice) <= len(options)):
             console.error("Opción inválida.")
+            continue
+
+        action = options[int(choice) - 1][1]
+        if action == "break":
+            break
+        action()
 
 
 def start_new_game() -> None:
@@ -223,42 +241,52 @@ def _crash_reporting_label() -> str:
     return "Sin configurar"
 
 
+def _check_updates_now() -> None:
+    """Comprobación manual de actualizaciones desde Opciones."""
+    print("Comprobando...")
+    info = updater.check()
+    if info:
+        console.success(f"¡Hay una versión nueva! {info.tag}. Actualiza desde el Menú Principal.")
+    else:
+        console.info(f"Estás en la última versión ({updater._current_version()}), o no se pudo comprobar.")
+
+
 def open_options() -> None:
-    # Cargamos volúmenes actuales
     music_vol, sfx_vol = settings.load_config()
-    show_reports = crash_reporting.is_configured()
 
     while True:
+        options: list[tuple[str, str]] = [
+            (f"Música (actual: {int(music_vol * 10)})", "music"),
+            (f"Efectos (actual: {int(sfx_vol * 10)})", "sfx"),
+        ]
+        if updater.is_active():
+            estado = "activado" if settings.load_update_check() else "desactivado"
+            options.append((f"Aviso de actualizaciones ({estado})", "upd_toggle"))
+            options.append(("Buscar actualizaciones ahora", "upd_check"))
+        if crash_reporting.is_configured():
+            options.append((f"Informes de error ({_crash_reporting_label()})", "reports"))
+        options.append(("Volver", "back"))
+
         print(console.colorize("\n--- AJUSTES ---", console.Fore.YELLOW))
-        print(f"1. Música (Actual: {int(music_vol * 10)})")
-        print(f"2. Efectos (Actual: {int(sfx_vol * 10)})")
-        if show_reports:
-            print(f"3. Informes de error (Actual: {_crash_reporting_label()})")
-            print("4. Volver")
-        else:
-            print("3. Volver")
+        for i, (label, _) in enumerate(options, 1):
+            print(f"{i}. {label}")
 
         choice = console.ask("\nSelecciona una opción: ")
-
-        if show_reports and choice == "3":
-            current = settings.load_crash_reporting() is True
-            settings.save_crash_reporting(not current)
-            console.success("Informes de error activados." if not current else "Informes de error desactivados.")
+        if not choice.isdigit() or not (1 <= int(choice) <= len(options)):
+            console.error("Opción no válida.")
             continue
+        key = options[int(choice) - 1][1]
 
-        back_option = "4" if show_reports else "3"
-        if choice == back_option:
+        if key == "back":
             break
-
-        if choice == "1":
+        elif key == "music":
             vol = console.ask("Volumen Música (0-10): ")
             if vol.isdigit() and 0 <= int(vol) <= 10:
                 music_vol = int(vol) / 10
                 resource_manager.set_volume_music(music_vol)
                 settings.save_config(music_vol, sfx_vol)
                 console.success("Música ajustada.")
-
-        elif choice == "2":
+        elif key == "sfx":
             vol = console.ask("Volumen Efectos (0-10): ")
             if vol.isdigit() and 0 <= int(vol) <= 10:
                 sfx_vol = int(vol) / 10
@@ -266,6 +294,18 @@ def open_options() -> None:
                 settings.save_config(music_vol, sfx_vol)
                 resource_manager.play_sfx("level_up")  # Feedback auditivo
                 console.success("Efectos ajustados.")
+        elif key == "reports":
+            current = settings.load_crash_reporting() is True
+            settings.save_crash_reporting(not current)
+            console.success("Informes de error activados." if not current else "Informes de error desactivados.")
+        elif key == "upd_toggle":
+            new_value = not settings.load_update_check()
+            settings.save_update_check(new_value)
+            console.success(
+                "Aviso de actualizaciones activado." if new_value else "Aviso de actualizaciones desactivado."
+            )
+        elif key == "upd_check":
+            _check_updates_now()
 
 
 def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: bool = False) -> None:
@@ -304,6 +344,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
 
     while True:
         resource_manager.update()  # Por si la pista de aventura ya ha terminado
+        _maybe_show_update_notice(in_game=True)
 
         print("\n" + "=" * 40)
         print(console.colorize(f"ESTADO: {player.name} | Nivel: {player.level}", console.Fore.CYAN))

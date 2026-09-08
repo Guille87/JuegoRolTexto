@@ -1,9 +1,9 @@
 """Persistencia de la configuración del juego en config.ini.
 
-Guarda volumen de audio (`[VOLUME]`) y si el jugador ha aceptado el envío
-automático de informes de error (`[REPORTS]`). Las escrituras conservan el
-resto de secciones (leer-modificar-escribir), para que ajustar el volumen no
-borre la preferencia de informes ni al revés.
+Guarda el volumen de audio (`[VOLUME]`), si el jugador ha aceptado el envío
+automático de informes de error (`[REPORTS]`) y si quiere que el juego avise de
+actualizaciones al arrancar (`[UPDATES]`). Las escrituras conservan el resto de
+secciones (leer-modificar-escribir), para que tocar una preferencia no borre otra.
 """
 
 import configparser
@@ -74,4 +74,21 @@ def save_crash_reporting(enabled: bool) -> None:
     if not config.has_section("REPORTS"):
         config.add_section("REPORTS")
     config["REPORTS"]["send_crash_reports"] = "true" if enabled else "false"
+    _write(config)
+
+
+def load_update_check() -> bool:
+    """¿Comprobar si hay una versión nueva al arrancar? Activado por defecto."""
+    config = _read()
+    try:
+        return config.getboolean("UPDATES", "check_on_startup", fallback=True)
+    except ValueError:
+        return True
+
+
+def save_update_check(enabled: bool) -> None:
+    config = _read()
+    if not config.has_section("UPDATES"):
+        config.add_section("UPDATES")
+    config["UPDATES"]["check_on_startup"] = "true" if enabled else "false"
     _write(config)

@@ -6,6 +6,7 @@ import threading
 import pygame
 from colorama import init
 
+from juego_rol_texto import updater
 from juego_rol_texto.audio.catalog import AUDIO_ASSETS
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.config import crash_reporting, paths, settings
@@ -90,6 +91,11 @@ def main() -> None:
         if crash_reporting.is_configured():
             ask_crash_reporting_opt_in()
 
+        # En la build empaquetada, comprobamos en segundo plano si hay una
+        # versión más nueva publicada (el resultado se muestra en el menú).
+        if updater.is_active() and settings.load_update_check():
+            updater.start_background_check()
+
         # Iniciar música inicial
         rm = ResourceManager()
         rm.update()
@@ -123,6 +129,7 @@ def main() -> None:
         # ANTES de cerrar el mezclador, si no puede intentar reproducir música
         # con el dispositivo de audio ya cerrado ("Audio device hasn't been opened").
         _music_watchdog_stop.set()
+        updater.stop_background_check()
         if watchdog is not None:
             watchdog.join(timeout=3)
         pygame.mixer.quit()
