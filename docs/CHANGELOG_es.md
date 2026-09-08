@@ -17,6 +17,9 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 - Smoke test de arranque (`app.main()` arranca y sale limpio).
 - Captura del README generada a partir de un combate real (`tools/capture_screenshot.py`).
 - `build-check` en el CI — construye el `.exe` cuando cambian los archivos de empaquetado.
+- Auto-actualización (build empaquetada): comprueba los GitHub Releases al
+  arrancar y avisa si hay una versión más nueva; toggle y comprobación manual en
+  Opciones. (Descargar y aplicar la actualización llega en un paso posterior.)
 
 ### Cambiado
 

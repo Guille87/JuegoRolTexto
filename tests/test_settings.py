@@ -48,6 +48,24 @@ def test_saving_volume_preserves_crash_reporting_and_vice_versa(config_file):
     assert settings.load_crash_reporting() is False
 
 
+def test_update_check_defaults_to_true_and_round_trips(config_file):
+    assert settings.load_update_check() is True
+    settings.save_update_check(False)
+    assert settings.load_update_check() is False
+    settings.save_update_check(True)
+    assert settings.load_update_check() is True
+
+
+def test_update_check_does_not_clash_with_the_other_sections(config_file):
+    settings.save_config(0.3, 0.4)
+    settings.save_crash_reporting(True)
+    settings.save_update_check(False)
+
+    assert settings.load_config() == (0.3, 0.4)
+    assert settings.load_crash_reporting() is True
+    assert settings.load_update_check() is False
+
+
 def test_crash_reporting_unset_when_value_is_garbage(config_file):
     config_file.write_text("[REPORTS]\nsend_crash_reports = quizás\n", encoding="utf-8")
     assert settings.load_crash_reporting() == settings.CRASH_REPORTS_UNSET
