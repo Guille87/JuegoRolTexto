@@ -328,6 +328,42 @@ Sketch (types: `fís` physical, `mág` magical, `ele` elemental, `util` utility;
 | 6 | Botín Afortunado — p: +25 % gold, +10 % drop chance | Golpe Sísmico — a5 fís: high damage, ignores evasion | Marca de Muerte — a5 util: enemy takes +30 % of all damage for 3 turns | Mente Aguda — p: −1 turn to all cooldowns |
 | 7 | Voluntad de Hierro — p: survive a lethal hit at 1 HP (once/battle) | Último Bastión — a7 util: 2 turns immune to physical damage | Asalto — a7 fís: 3 quick strikes | Cataclismo — a8 arc: massive magic damage, ignores all mitigation |
 
+#### 6.2.1 Locked decisions for v0.10.0
+
+These were reviewed and fixed with the maintainer; the numbers are provisional
+and will be revisited in the v0.14 power-budget phase (tracked in `TODO.md`).
+
+1. **Per-class stat / growth deltas (provisional).** Applied on top of the
+   current Vagabundo baseline at creation; growth-rate tweaks on top of the
+   current `_*_GROWTH_RATE`:
+   - **Vagabundo** — unchanged (today's character exactly).
+   - **Guerrero** — +15 % max HP, +2 base armour, +1 min/max attack; armour
+     growth ×1.3; no other magic interaction.
+   - **Pícaro** — +3 speed, +5 % evasion, +5 % crit chance, −10 % max HP;
+     speed growth ×1.3.
+   - **Arcanista** — −15 % max HP, −2 base armour; gains a `poder_mágico` stat
+     (see below) that grows every level.
+2. **`poder_mágico` and the Arcanista attack.** New `Stats` field, `0` for every
+   other class. The Arcanista's standard attack in `_execute_turn` uses
+   `poder_mágico` as its damage source **instead of** the weapon's attack range,
+   and is flagged `is_magical=True`. Weapons still contribute their secondary
+   stats and `element`, just not base damage, for an Arcanista.
+3. **Arcanista basic-attack element.** Defaults to `arcano` (matches Proyectil
+   Arcano and feeds `fractura mágica`). The **Sintonía** passive (M1) lets the
+   player override the element at battle start.
+4. **Provisional unlock levels.** M1 skills are granted at **character creation
+   (level 1)**; M2 skills at **level 4**. Exact values move to v0.14; a skill
+   stays tied to its milestone until then.
+5. **Save schema.** v0.10.0 adds only two keys, not the full `mundo` block:
+   `clase` (back-fills to `"vagabundo"`) and `habilidades_equipadas` (back-fills
+   to `[]`). The complete `mundo` block (§9.4) still lands in v0.12.0.
+6. **`Skill` data model.** A dataclass — `id`, `name`, `class`, `kind`
+   (`passive` / `active`), `milestone`, `cooldown` — plus a per-skill effect
+   hook. Passives are read via `player.has_passive(id)` at the relevant call
+   sites (`take_damage`, `_execute_turn`, `_handle_victory`, status processing);
+   actives resolve through a dispatch in the battle loop. Lives in
+   `characters/skills.py` (§9.3).
+
 ### 6.3 Equipment set bonuses *(design under review by the maintainer)*
 
 `Armor` gains optional `set_name`. `Player` counts equipped pieces per set and
