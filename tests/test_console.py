@@ -1,5 +1,6 @@
 """Tests de la capa de presentación: coloreado de estados y de estadísticas."""
 
+import pytest
 from colorama import Fore
 
 from juego_rol_texto.ui import console
@@ -33,6 +34,16 @@ def test_say_prints_the_line_with_states_tinted(capsys):
     out = capsys.readouterr().out
     assert "recorre tus venas" in out
     assert Fore.GREEN in out
+
+
+def test_ask_exits_cleanly_when_stdin_is_closed(monkeypatch):
+    def _eof(_prompt):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", _eof)
+    with pytest.raises(SystemExit) as exc:
+        console.ask("nombre: ")
+    assert exc.value.code == 0
 
 
 def test_stat_line_uses_the_color_for_that_concept():
