@@ -48,6 +48,16 @@ El patrón completo está en [CLAUDE.md](../CLAUDE.md):
 
 Todo cambio de lógica va con su test.
 
+## Regenerar la captura del README
+
+`docs/screenshot.svg` la genera `tools/capture_screenshot.py` (un combate real,
+con semilla fija, renderizado como SVG de terminal). Para actualizarla:
+
+```bash
+pip install ansitoimg
+python tools/capture_screenshot.py
+```
+
 ## Publicar una versión
 
 - Sube `version` en `pyproject.toml` y vuelve a ejecutar `pip install -e .` para
