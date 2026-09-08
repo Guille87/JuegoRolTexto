@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-08
+
 ### Added
 
 - Battle start always shows both combat sheets (player and enemy) regardless of
@@ -132,7 +134,8 @@ were not formally tracked.
 
 - Initial version: basic console turn-based combat.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...v0.4.0
