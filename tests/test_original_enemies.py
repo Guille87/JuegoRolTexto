@@ -96,6 +96,18 @@ def test_orc_fury_cycle_toggles_every_three_turns():
     assert not orc.fury_active
 
 
+def test_orc_enrage_message_is_deferred_to_an_announcement():
+    orc = Orc()
+    for _ in range(2):
+        orc.on_turn_end()
+    assert orc.pop_announcements() == []  # todavía no
+
+    orc.on_turn_end()  # 3er turno -> se enfurece
+    msgs = orc.pop_announcements()
+    assert len(msgs) == 1 and "enfurecido" in msgs[0]
+    assert orc.pop_announcements() == []  # ya consumido
+
+
 def test_orc_fury_attack_doubles_post_mitigation_damage(player, monkeypatch):
     monkeypatch.setattr("random.random", lambda: 0.99)  # sin crítico, pero acierta contra evasión 0
     monkeypatch.setattr("random.randint", lambda a, b: 18)

@@ -84,7 +84,8 @@ class Weapon(Item):
             from juego_rol_texto.i18n import t
 
             info += f" · inflige {t('status.' + inflicts['status'])} {int(inflicts['chance'] * 100)}%"
-        return console.colorize(info, console.Fore.RED)
+        # Un arma elemental se muestra en el color de su elemento; una normal, en rojo.
+        return console.colorize(info, console.element_color(self.element))
 
     def to_dict(self) -> dict:
         # Aseguramos que el daño se guarde con la llave correcta

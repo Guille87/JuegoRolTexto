@@ -1,3 +1,6 @@
+import contextlib
+import io
+
 from juego_rol_texto.characters.enemies.bandido import Bandido
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.mage import Mago
@@ -6,6 +9,7 @@ from juego_rol_texto.combat.battle import (
     ENEMY_PROGRESSION,
     _attempt_flee,
     _execute_turn,
+    _run_enemy_turn,
     _run_player_turn,
     initiate_battle,
 )
@@ -198,6 +202,54 @@ def test_elemental_weapon_can_inflict_its_status_on_the_enemy(player, monkeypatc
     _execute_turn(player, goblin, defeated_enemies=[])
 
     assert any(e["name"] == "veneno" for e in goblin.status_effects)
+
+
+def test_disarmed_player_weapon_applies_no_element_or_status(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    player.apply_status("desarmado", 2)
+    bandido = Bandido()  # débil a veneno x2
+    bandido.stats.armor = 0
+    bandido.stats.health = bandido.stats.max_health = 500
+
+    before = bandido.stats.health
+    _execute_turn(player, bandido, defeated_enemies=["Bandido"])
+
+    assert bandido.status_effects == []  # sin veneno
+    assert before - bandido.stats.health == 10  # 10 base, sin el x2 del elemento
+
+
+def test_frozen_enemy_loses_the_turn_without_the_turn_header(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a: None)
+    monkeypatch.setattr("random.random", lambda: 0.9)  # no se descongela
+
+    goblin = Goblin()
+    goblin.apply_status("congelado", 3)
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _run_enemy_turn(player, goblin, defeated_enemies=["Goblin"])
+    out = buf.getvalue()
+
+    assert "congelado" in out
+    assert "Turno de" not in out  # no cabecera de turno cuando pierde el turno
+
+
+def test_mage_spells_print_the_damage_dealt(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.mage.random.random", lambda: 0.99)  # sin crit/estado
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.mage.random.randint", lambda a, b: 10)
+
+    mago = Mago()
+    for spell in (mago._cast_fireball, mago._cast_thunder, mago._cast_poison, mago._cast_blizzard):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            spell(player)
+        assert "de daño" in buf.getvalue()
 
 
 def test_status_weapon_does_nothing_to_an_element_immune_enemy(player, monkeypatch):

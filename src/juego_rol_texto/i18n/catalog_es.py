@@ -36,4 +36,6 @@ CATALOG: dict[str, str] = {
     "combat.enemy_regen": "💚 {name} regenera {amount} HP.",
     "combat.status_faded_enemy": "✨ El efecto de {status} sobre {name} ha desaparecido.",
     "combat.enemy_succumbs": "{name} sucumbe a sus heridas.",
+    # --- Combate: daño de ataques especiales del enemigo ---
+    "combat.spell_damage": "El impacto te hace {amount} de daño.",
 }

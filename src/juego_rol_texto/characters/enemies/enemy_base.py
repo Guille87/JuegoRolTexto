@@ -29,9 +29,20 @@ class Enemy:
         self.gold_max = gold_max
         # Estados alterados: [{"name": "quemado", "duration": 3, "power": 0}, ...]
         self.status_effects: list[dict] = []
+        # Mensajes a mostrar DESPUÉS del resumen del turno (barras de vida),
+        # no en mitad de él: cambios de estado tipo "se ha enfurecido".
+        self._announcements: list[str] = []
 
     def get_gold_drop(self) -> int:
         return random.randint(self.gold_min, self.gold_max)
+
+    def announce(self, message: str) -> None:
+        """Encola un mensaje para mostrarlo tras el resumen del turno."""
+        self._announcements.append(message)
+
+    def pop_announcements(self) -> list[str]:
+        msgs, self._announcements = self._announcements, []
+        return msgs
 
     # --- AFINIDADES ---
 
@@ -193,12 +204,10 @@ class Enemy:
 
         final_damage = player.take_damage(damage, armor_penetration=self.stats.armor_penetration)
 
-        if is_crit:
-            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
-
         print(
             f"{console.colorize(self.name, console.Fore.RED)} ataca y hace "
             f"{console.colorize(str(final_damage), console.Fore.RED)} de daño."
+            f"{console.crit_suffix(is_crit)}"
         )
 
     def drop_item(self) -> list:

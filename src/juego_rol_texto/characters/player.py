@@ -154,8 +154,10 @@ class Player(Character):
         return self.stats.magic_penetration
 
     def get_equipped_element(self) -> str | None:
-        """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
-        if self.equipped_weapon and self.equipped_weapon.element:
+        """Devuelve el elemento del arma equipada; si no tiene (o estás
+        desarmado), el de los brazales."""
+        is_disarmed = any(e["name"] == "desarmado" for e in self.status_effects)
+        if self.equipped_weapon and self.equipped_weapon.element and not is_disarmed:
             return self.equipped_weapon.element
         brazales = self.equipped_armor.get("brazales")
         return brazales.element if brazales else None

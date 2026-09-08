@@ -280,20 +280,29 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) 
         time.sleep(1)
 
     # Estados alterados: veneno/quemadura (daño), parálisis/congelación (pierde turno).
+    hp_before = enemy.stats.health
     can_act = enemy.on_turn_start()
     if not enemy.is_alive():
         console.info(i18n.t("combat.enemy_succumbs", name=enemy.name))
         enemy.decay_status_effects()
         return
+    took_dot = enemy.stats.health != hp_before
 
-    print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
     if can_act:
+        print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
         enemy.perform_turn(player)
     enemy.on_turn_end()
     enemy.decay_status_effects()
 
-    if not turbo:
+    # Si el enemigo pierde el turno y no hubo daño por veneno/quemadura, no
+    # repetimos las barras de vida: el mensaje de parálisis/congelación basta.
+    if not turbo and (can_act or took_dot):
         print_status(player, enemy, defeated_enemies)
+
+    announcements = enemy.pop_announcements()
+    if not turbo:
+        for message in announcements:
+            print(message)
 
 
 def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list) -> None:
@@ -359,9 +368,6 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
         damage, defeated_enemies=defeated_enemies, element=element, armor_penetration=attacker_armor_penetration
     )
 
-    if is_crit:
-        print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
-
     element_name = i18n.t(f"element.{element}") if element else ""
     if is_super_effective:
         print(
@@ -380,25 +386,22 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
             console.colorize(i18n.t("combat.resisted_hit", element=element_name, name=defender.name), console.Fore.BLUE)
         )
 
-    # Estado alterado del arma elemental (p. ej. veneno -> "veneno"). Solo el
-    # jugador; si el enemigo resiste el elemento, la probabilidad y la duración
-    # se reducen a la mitad.
-    if isinstance(attacker, Player) and final_dmg >= 0 and hasattr(defender, "apply_status"):
-        _try_inflict_weapon_status(attacker, defender, element)
-
     if final_dmg > 0:
-        # Daño normal en cian; el amarillo en negrita queda reservado para el
-        # crítico (el mensaje "¡Golpe crítico!" de arriba ya usa ese mismo estilo).
         dmg_color = console.Fore.YELLOW if is_crit else console.Fore.CYAN
         print(
             f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
             f"{console.colorize(defender.name, console.Fore.RED)} y hace "
             f"{console.colorize(str(final_dmg), dmg_color, bright=is_crit)} de daño"
+            f"{console.crit_suffix(is_crit)}"
         )
     else:
         print(f"{console.colorize(defender.name, console.Fore.BLUE)} ha bloqueado el ataque.")
 
-    from juego_rol_texto.characters.player import Player
+    # Estado alterado del arma elemental, DESPUÉS de anunciar el golpe. Solo el
+    # jugador; si el enemigo resiste el elemento, la probabilidad y la duración
+    # se reducen a la mitad; si es inmune al elemento, no se aplica.
+    if isinstance(attacker, Player) and hasattr(defender, "apply_status"):
+        _try_inflict_weapon_status(attacker, defender, element)
 
     if isinstance(attacker, Player):
         print_status(attacker, defender, defeated_enemies)
@@ -410,6 +413,10 @@ def _try_inflict_weapon_status(player: "Player", enemy, element: str | None) -> 
     """Si el arma equipada inflige un estado (explícito en `inflicts` o derivado
     de su elemento), lo tira. La resistencia del enemigo al elemento reduce a la
     mitad la probabilidad y la duración; la inmunidad al elemento lo anula."""
+    # Desarmado: el arma no está en tus manos, así que no inflige nada
+    # (igual que no cuenta su bonus de daño ni su elemento).
+    if any(e["name"] == "desarmado" for e in player.status_effects):
+        return
     weapon = player.equipped_weapon
     inflicts = weapon.get_inflicts() if weapon and hasattr(weapon, "get_inflicts") else None
     if not inflicts:
