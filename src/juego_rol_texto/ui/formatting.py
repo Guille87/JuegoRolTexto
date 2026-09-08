@@ -75,37 +75,95 @@ def print_bestiary_entry(enemy, kill_count: int = 0) -> None:
     if enemy.stats.regen:
         _p(f"Regeneración: {enemy.stats.regen} HP/turno", "regen")
 
-    weaknesses = getattr(type(enemy), "ELEMENTAL_WEAKNESSES", {})
-    if weaknesses:
-        weak_str = ", ".join(f"{elem.capitalize()} (x{mult:.1f})" for elem, mult in weaknesses.items())
-        _p(f"Debilidad elemental: {weak_str}", "elemento")
+    def _elements(names) -> str:
+        # Cada elemento en su propio color (fuego rojo, veneno verde, rayo
+        # amarillo, hielo azul...).
+        return ", ".join(console.colorize(e.capitalize(), console.element_color(e), bright=True) for e in sorted(names))
+
+    cls = type(enemy)
+    weak = set(getattr(cls, "WEAKNESSES", ())) | set(getattr(cls, "ELEMENTAL_WEAKNESSES", {}))
+    if weak:
+        print(f"  Débil a: {_elements(weak)}")
+    if getattr(cls, "RESISTANCES", ()):
+        print(f"  Resiste: {_elements(cls.RESISTANCES)}")
+    if getattr(cls, "IMMUNE_ELEMENTS", ()):
+        print(f"  Inmune a: {_elements(cls.IMMUNE_ELEMENTS)}")
 
     _p(f"Oro al derrotarlo: {enemy.gold_min}-{enemy.gold_max}", "oro")
     print("=" * 60)
 
 
+_STATUS_SHORT = {"fractura_magica": "fractura", "regeneración": "regen"}
+
+
+def _status_badge(combatant) -> str:
+    """`  [quemado 2 · veneno 1]` con los estados activos y sus turnos restantes."""
+    effects = getattr(combatant, "status_effects", None)
+    if not effects:
+        return ""
+    parts = [console.tint_status(f"{_STATUS_SHORT.get(e['name'], e['name'])} {e['duration']}") for e in effects]
+    return "  [" + " · ".join(parts) + "]"
+
+
+def _bar(current: int, maximum: int, color, hidden: bool = False) -> str:
+    if hidden:
+        return f"|{'?' * 20}| ??/?? HP"
+    percent = max(0, min(current / maximum, 1))
+    filled = int(20 * percent)
+    bar = "#" * filled + "-" * (20 - filled)
+    return f"|{console.colorize(bar, color)}| {current}/{maximum} HP"
+
+
+def _bar_line(
+    name: str, current: int, maximum: int, name_color, bar_color, *, width: int, hidden=False, badge=""
+) -> str:
+    return f"{console.colorize(name.ljust(width), name_color)}: {_bar(current, maximum, bar_color, hidden)}{badge}"
+
+
+def print_combatant_bar(combatant, *, is_player: bool) -> None:
+    """Una sola línea de vida (con estados). Para mostrar la salud tras un tick
+    de veneno/quemadura sin repetir todo el resumen del combate."""
+    name_color = console.Fore.CYAN if is_player else console.Fore.LIGHTRED_EX
+    bar_color = console.Fore.GREEN if is_player else console.Fore.RED
+    print(
+        _bar_line(
+            combatant.name,
+            combatant.stats.health,
+            combatant.stats.max_health,
+            name_color,
+            bar_color,
+            width=len(combatant.name),
+            badge=_status_badge(combatant),
+        )
+    )
+
+
 def print_status(player, enemy, defeated_enemies: list) -> None:
-    """Muestra las barras de salud gráficas de forma profesional."""
-
-    # Encapsulamos la lógica de la barra en una función interna para no repetir código (DRY)
-    def create_bar(current, maximum, color, hidden=False):
-        if hidden:
-            return f"|{'?' * 20}| ??/?? HP"
-
-        percent = max(0, min(current / maximum, 1))
-        filled_length = int(20 * percent)
-        bar = "#" * filled_length + "-" * (20 - filled_length)
-        return f"|{console.colorize(bar, color)}| {current}/{maximum} HP"
-
-    max_name = max(len(player.name), len(enemy.name))
-
-    # Barra del Jugador
-    player_bar = create_bar(player.stats.health, player.stats.max_health, console.Fore.GREEN)
-    print(f"{console.colorize(player.name.ljust(max_name), console.Fore.CYAN)}: {player_bar}")
-
-    # Barra del Enemigo
+    """Muestra las barras de salud gráficas de ambos combatientes."""
+    width = max(len(player.name), len(enemy.name))
+    print(
+        _bar_line(
+            player.name,
+            player.stats.health,
+            player.stats.max_health,
+            console.Fore.CYAN,
+            console.Fore.GREEN,
+            width=width,
+            badge=_status_badge(player),
+        )
+    )
+    # Los estados del enemigo solo se ven si ya lo has derrotado antes.
     is_hidden = enemy.name not in defeated_enemies
-    enemy_bar = create_bar(enemy.stats.health, enemy.stats.max_health, console.Fore.RED, is_hidden)
-    print(f"{console.colorize(enemy.name.ljust(max_name), console.Fore.LIGHTRED_EX)}: {enemy_bar}")
-
+    print(
+        _bar_line(
+            enemy.name,
+            enemy.stats.health,
+            enemy.stats.max_health,
+            console.Fore.LIGHTRED_EX,
+            console.Fore.RED,
+            width=width,
+            hidden=is_hidden,
+            badge="" if is_hidden else _status_badge(enemy),
+        )
+    )
     print("=" * 60)

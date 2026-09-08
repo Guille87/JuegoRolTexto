@@ -17,8 +17,12 @@ class Inventory:
         # el jugador nunca ha visto todavía.
         self.discovered_materials = set()
 
-    def add_item(self, item) -> None:
-        """Añade un ítem gestionando stacks para consumibles y oro para equipo repetido."""
+    def add_item(self, item, quantity: int = 1, *, announce: bool = True) -> None:
+        """Añade `quantity` unidades de un ítem gestionando stacks para
+        consumibles y oro para equipo repetido. Imprime "Obtenido: X" una sola
+        vez (con `xN` si son varias), no una línea por unidad."""
+        if quantity < 1:
+            return
         if isinstance(item, Material):
             self.discovered_materials.add(item.name)
 
@@ -32,12 +36,14 @@ class Inventory:
 
         # Lógica de Stacking
         if item.name in self.quantities:
-            self.quantities[item.name] += 1
+            self.quantities[item.name] += quantity
         else:
             self.items.append(item)
-            self.quantities[item.name] = 1
+            self.quantities[item.name] = quantity
 
-        console.success(f"Obtenido: {item.name}")
+        if announce:
+            suffix = f" x{quantity}" if quantity > 1 else ""
+            console.success(f"Obtenido: {item.name}{suffix}")
 
     def load_items(self, items_list: list) -> None:
         """Limpia y carga una lista de objetos reconstruyendo el stacking."""

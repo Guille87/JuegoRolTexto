@@ -1,3 +1,6 @@
+import contextlib
+import io
+
 from juego_rol_texto.characters.enemies.bandido import Bandido
 from juego_rol_texto.characters.enemies.goblin import Goblin
 from juego_rol_texto.characters.enemies.mage import Mago
@@ -6,6 +9,7 @@ from juego_rol_texto.combat.battle import (
     ENEMY_PROGRESSION,
     _attempt_flee,
     _execute_turn,
+    _run_enemy_turn,
     _run_player_turn,
     initiate_battle,
 )
@@ -133,11 +137,11 @@ def test_troll_regen_is_anchored_to_its_regen_stat(monkeypatch):
 def test_enemy_take_damage_magical_uses_magic_resist_instead_of_armor():
     mago = Mago()
     mago.stats.armor = 100  # no debería influir en absoluto en daño mágico
-    mago.stats.magic_resist = 5
+    mago.stats.magic_resist = 20
 
-    dealt = mago.take_damage(20, is_magical=True)
+    dealt = mago.take_damage(40, is_magical=True)
 
-    assert dealt == 15  # 20 - magic_resist(5), ignora los 100 de armadura
+    assert dealt == 20  # 40 * 20/(20+20), con res. mágica, ignora la armadura
 
 
 def test_enemy_take_damage_physical_still_uses_armor_by_default():
@@ -186,6 +190,124 @@ def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeyp
     assert dealt == 20  # 10 base * 2.0 (débil al fuego) - 0 armadura
 
 
+def test_elemental_weapon_can_inflict_its_status_on_the_enemy(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # el estado prende
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    goblin = Goblin()
+
+    _execute_turn(player, goblin, defeated_enemies=[])
+
+    assert any(e["name"] == "veneno" for e in goblin.status_effects)
+
+
+def test_disarmed_player_weapon_applies_no_element_or_status(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    player.apply_status("desarmado", 2)
+    bandido = Bandido()  # débil a veneno x2
+    bandido.stats.armor = 0
+    bandido.stats.health = bandido.stats.max_health = 500
+
+    before = bandido.stats.health
+    _execute_turn(player, bandido, defeated_enemies=["Bandido"])
+
+    assert bandido.status_effects == []  # sin veneno
+    assert before - bandido.stats.health == 10  # 10 base, sin el x2 del elemento
+
+
+def test_bandit_does_not_disarm_an_already_disarmed_player(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.bandido import Bandido
+
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.bandido.random.random", lambda: 0.0)  # querría desarmar
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.bandido.random.randint", lambda a, b: 10)
+
+    bandido = Bandido()
+    player.apply_status("desarmado", 2)
+    hp_before = player.stats.health
+
+    bandido.perform_turn(player)  # ya desarmado -> ataca en vez de re-desarmar
+
+    assert player.stats.health < hp_before  # hizo daño, no otro desarme
+
+
+def test_immobilized_player_still_gets_the_menu_and_can_use_an_item(player, weak_enemy, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "2")  # Objetos
+    monkeypatch.setattr(player.inventory, "equip_menu", lambda *a, **k: True)  # "usó un objeto"
+    monkeypatch.setattr("random.random", lambda: 0.0)  # parálisis segura
+
+    player.apply_status("paralizado", 2)
+    signal, _ = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
+
+    assert signal == "ok"
+    assert weak_enemy.is_alive()  # no atacó (estaba inmovilizado), pero usó el objeto
+
+
+def test_golem_is_immune_to_lightning_and_weak_to_ice():
+    from juego_rol_texto.characters.enemies.golem import GolemDePiedra
+
+    golem = GolemDePiedra()
+    golem.stats.armor = 0
+    assert golem.affinity_for({"rayo"}) == 0.0
+    assert golem.affinity_for({"hielo"}) == 1.5
+    assert golem.take_damage(50, element="rayo") == 0
+
+
+def test_frozen_enemy_loses_the_turn_without_the_turn_header(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a: None)
+    monkeypatch.setattr("random.random", lambda: 0.9)  # no se descongela
+
+    goblin = Goblin()
+    goblin.apply_status("congelado", 3)
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _run_enemy_turn(player, goblin, defeated_enemies=["Goblin"])
+    out = buf.getvalue()
+
+    assert "congelado" in out
+    assert "Turno de" not in out  # no cabecera de turno cuando pierde el turno
+
+
+def test_mage_spells_print_the_damage_dealt(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.mage.random.random", lambda: 0.99)  # sin crit/estado
+    monkeypatch.setattr("juego_rol_texto.characters.enemies.mage.random.randint", lambda a, b: 10)
+
+    mago = Mago()
+    for spell in (mago._cast_fireball, mago._cast_thunder, mago._cast_poison, mago._cast_blizzard):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            spell(player)
+        assert "de daño" in buf.getvalue()
+
+
+def test_status_weapon_does_nothing_to_an_element_immune_enemy(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    goblin = Goblin()
+    type(goblin).IMMUNE_ELEMENTS = frozenset({"veneno"})
+    try:
+        before = goblin.stats.health
+        _execute_turn(player, goblin, defeated_enemies=[])
+        assert goblin.status_effects == []
+        assert goblin.stats.health == before  # inmune al elemento -> 0 daño
+    finally:
+        type(goblin).IMMUNE_ELEMENTS = frozenset()
+
+
 def test_execute_turn_applies_elemental_bonus_for_newer_elements(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
@@ -232,17 +354,19 @@ def test_execute_turn_uses_attacker_armor_penetration(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
 
-    player.stats.armor_penetration = 2
+    player.stats.armor_penetration = 20
 
     goblin = Goblin()
-    goblin.stats.armor = 3
+    goblin.stats.armor = 40
     goblin.stats.health = goblin.stats.max_health = 1000
 
     before = goblin.stats.health
     _execute_turn(player, goblin, defeated_enemies=[])
     dealt = before - goblin.stats.health
 
-    assert dealt == 9  # 10 base - max(0, armor(3) - penetración(2))
+    # 10 base, armadura efectiva 40-20=20 -> round(10 * 20/40) = 5.
+    # Sin la penetración serían round(10 * 20/60) = 3.
+    assert dealt == 5
 
 
 def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player, monkeypatch):
@@ -327,7 +451,7 @@ def test_attempt_flee_chance_drops_but_never_reaches_zero_when_enemy_is_faster(p
 def test_fleeing_does_not_heal_damage_carried_over_from_before_the_battle(player, weak_enemy, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *_args, **_kwargs: None)
     monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")  # huir
-    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: True)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda *a, **k: True)
 
     player.stats.max_health = 100
     player.stats.health = 40  # ya venía dañado de una pelea anterior (missing=60)
@@ -343,7 +467,7 @@ def test_run_player_turn_failed_flee_consumes_turn_without_attacking(player, wea
     weak_enemy.stats.max_health = 50
     weak_enemy.stats.health = 50
     monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")
-    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: False)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda *a, **k: False)
 
     signal, is_auto = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
 
@@ -354,7 +478,7 @@ def test_run_player_turn_failed_flee_consumes_turn_without_attacking(player, wea
 
 def test_run_player_turn_successful_flee_returns_huir_signal(player, weak_enemy, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "4")
-    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda p, e: True)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._attempt_flee", lambda *a, **k: True)
 
     signal, is_auto = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
 

@@ -1,5 +1,6 @@
 import random
 
+from juego_rol_texto import i18n
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
 from juego_rol_texto.characters.stats import Stats, resolve_hit
 from juego_rol_texto.items.equipment import Armor, Weapon
@@ -61,11 +62,13 @@ class Mago(Enemy):
                 self._cast_blizzard(player)
 
     def _cast_heal(self) -> None:
-        heal = random.randint(40, 60)
-        self.stats.health = min(self.stats.max_health, self.stats.health + heal)
+        healed = self.heal(random.randint(40, 60))
+        if healed <= 0:
+            print(f"{console.colorize(self.name, console.Fore.MAGENTA)} intenta sanarse, pero la magia se disipa.")
+            return
         print(
             f"{console.colorize(self.name, console.Fore.MAGENTA)} susurra palabras antiguas y se cura "
-            f"{console.colorize(f'{heal} HP', console.Fore.GREEN)}."
+            f"{console.colorize(f'{healed} HP', console.Fore.GREEN)}."
         )
 
     def _cast_fireball(self, player) -> None:
@@ -88,10 +91,11 @@ class Mago(Enemy):
         if is_crit:
             dmg = int(dmg * self.stats.crit_damage)
 
-        player.take_damage(dmg, is_fire=True, is_magical=True, magic_penetration=self.stats.magic_penetration)
-
-        if is_crit:
-            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
+        final = player.take_damage(dmg, is_fire=True, is_magical=True, magic_penetration=self.stats.magic_penetration)
+        print(
+            f"{console.colorize(i18n.t('combat.spell_damage', amount=final), console.Fore.MAGENTA)}"
+            f"{console.crit_suffix(is_crit)}"
+        )
 
         if random.random() < 0.3:
             player.apply_status("quemado", 3)
@@ -117,10 +121,11 @@ class Mago(Enemy):
         if is_crit:
             dmg = int(dmg * self.stats.crit_damage)
 
-        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
-
-        if is_crit:
-            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
+        final = player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+        print(
+            f"{console.colorize(i18n.t('combat.spell_damage', amount=final), console.Fore.MAGENTA)}"
+            f"{console.crit_suffix(is_crit)}"
+        )
 
         if random.random() < 0.3:
             player.apply_status("paralizado", 3)
@@ -142,10 +147,11 @@ class Mago(Enemy):
         if is_crit:
             dmg = int(dmg * self.stats.crit_damage)
 
-        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
-
-        if is_crit:
-            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
+        final = player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+        print(
+            f"{console.colorize(i18n.t('combat.spell_damage', amount=final), console.Fore.MAGENTA)}"
+            f"{console.crit_suffix(is_crit)}"
+        )
 
         if random.random() < 0.3:
             player.apply_status("veneno", 3)
@@ -169,10 +175,11 @@ class Mago(Enemy):
         if is_crit:
             dmg = int(dmg * self.stats.crit_damage)
 
-        player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
-
-        if is_crit:
-            print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
+        final = player.take_damage(dmg, is_magical=True, magic_penetration=self.stats.magic_penetration)
+        print(
+            f"{console.colorize(i18n.t('combat.spell_damage', amount=final), console.Fore.MAGENTA)}"
+            f"{console.crit_suffix(is_crit)}"
+        )
 
         if random.random() < 0.1:
             player.apply_status("congelado", 3)

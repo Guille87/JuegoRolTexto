@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
-from juego_rol_texto.characters.stats import Stats, resolve_hit
+from juego_rol_texto.characters.stats import Stats, apply_mitigation, resolve_hit
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import StatBuffPotion
@@ -51,9 +51,9 @@ class Orc(Enemy):
                 base_damage = int(base_damage * self.stats.crit_damage)
 
             # 2. Calculamos cuánto daño pasaría la defensa total del jugador
-            # (Ataque - Defensa, con penetración de armadura, mínimo 0 para no curar al jugador)
-            mitigation = max(0, player.get_total_armor() - self.stats.armor_penetration)
-            damage_after_def = max(0, base_damage - mitigation)
+            # (mismo suelo de daño mínimo que take_damage: nunca 0 por armadura).
+            mitigation = player.get_total_armor() - self.stats.armor_penetration
+            damage_after_def = apply_mitigation(base_damage, mitigation)
 
             # 3. Multiplicamos el resultado por 2
             final_dmg = damage_after_def * 2
@@ -65,12 +65,10 @@ class Orc(Enemy):
                 final_dmg //= 2
             player.stats.health -= final_dmg
 
-            if is_crit:
-                print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
-
             print(
                 f"{console.colorize(self.name, console.Fore.RED)} lanza un golpe devastador y hace "
                 f"{console.colorize(str(final_dmg), console.Fore.RED)} de daño."
+                f"{console.crit_suffix(is_crit)}"
             )
         else:
             super().perform_turn(player)
@@ -91,15 +89,15 @@ class Orc(Enemy):
         # Lógica de ACTIVACIÓN: Después del tercer turno (al final del turno 3)
         if fase_furia and not self.fury_active:
             self.fury_active = True
-            print(
-                f"\n{console.colorize('😡 ¡El Orco se ha enfurecido! Sus ojos brillan en rojo...', console.Fore.RED)}"
+            self.announce(
+                console.colorize("😡 ¡El Orco se ha enfurecido! Sus ojos brillan en rojo...", console.Fore.RED)
             )
 
         # Lógica de DESACTIVACIÓN: Si está en furia, reducir duración
         elif not fase_furia and self.fury_active:
             self.fury_active = False
-            print(
-                f"\n{console.colorize('😴 El Orco parece haberse cansado y recupera la calma.', console.Fore.YELLOW)}"
+            self.announce(
+                console.colorize("😴 El Orco parece haberse cansado y recupera la calma.", console.Fore.YELLOW)
             )
 
     def drop_item(self) -> list:

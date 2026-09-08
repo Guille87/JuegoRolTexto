@@ -18,6 +18,9 @@ __all__ = [
     "tint_status",
     "STAT_COLORS",
     "stat_line",
+    "ELEMENT_COLORS",
+    "element_color",
+    "crit_suffix",
 ]
 
 # --- Coloreado automático de estados alterados ---------------------------------
@@ -118,3 +121,27 @@ STAT_COLORS = {
 def stat_line(text: str, key: str, bright: bool = True) -> str:
     """Colorea una línea de estadística según su concepto (`STAT_COLORS`)."""
     return colorize(text, STAT_COLORS.get(key, Fore.WHITE), bright=bright)
+
+
+# --- Color por elemento de daño ---------------------------------------------
+# Mismo criterio que los estados: veneno verde, fuego rojo, rayo amarillo,
+# hielo azul (+ los tres nuevos).
+ELEMENT_COLORS = {
+    "fuego": Fore.RED,
+    "veneno": Fore.GREEN,
+    "rayo": Fore.YELLOW,
+    "hielo": Fore.BLUE,
+    "sagrado": Fore.LIGHTWHITE_EX,
+    "oscuridad": Fore.MAGENTA,
+    "arcano": Fore.CYAN,
+}
+
+
+def element_color(element: str | None):
+    """Color de colorama para un elemento (rojo por defecto)."""
+    return ELEMENT_COLORS.get(element or "", Fore.RED)
+
+
+def crit_suffix(is_crit: bool) -> str:
+    """Sufijo para pegar al final de la línea de daño cuando ha sido crítico."""
+    return colorize("  💥 ¡Golpe crítico!", Fore.YELLOW, bright=True) if is_crit else ""

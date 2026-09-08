@@ -38,10 +38,13 @@ class CraftingRecipe:
         return missing
 
     def __str__(self) -> str:
-        materials_str = ", ".join(f"{name} x{qty}" for name, qty in self.materials.items())
+        materials_str = ", ".join(
+            f"{console.colorize(name, console.Fore.LIGHTBLACK_EX)} x{qty}" for name, qty in self.materials.items()
+        )
+        gold = console.colorize(f"{self.gold_cost} oro", console.Fore.YELLOW, bright=True)
+        name = console.colorize(self.name, console.Fore.CYAN, bright=True)
         return console.tint_status(
-            f"{self.name} | Requiere: {materials_str} + {self.gold_cost} oro "
-            f"| [{self.result_template.get_stats_info()}]"
+            f"{name} | Requiere: {materials_str} + {gold} | [{self.result_template.get_stats_info()}]"
         )
 
 
@@ -221,8 +224,10 @@ class Forge:
     def open(self, player) -> None:
         """Punto de entrada del menú interactivo de la herrería."""
         while True:
-            print(console.colorize("\n--- HERRERÍA ---", console.Fore.YELLOW))
-            print(f"Oro disponible: {console.colorize(str(player.inventory.gold), console.Fore.YELLOW)}")
+            print(console.colorize("\n--- HERRERÍA ---", console.Fore.YELLOW, bright=True))
+            print(
+                f"Oro disponible: {console.colorize(f'{player.inventory.gold} oro', console.Fore.YELLOW, bright=True)}"
+            )
 
             visible_recipes = [r for r in self.recipes if r.is_discovered(player)]
             hidden_count = len(self.recipes) - len(visible_recipes)
@@ -238,8 +243,8 @@ class Forge:
                 return
 
             for idx, recipe in enumerate(visible_recipes, 1):
-                print(f"{idx}. {recipe}")
-            print(f"{len(visible_recipes) + 1}. Volver")
+                print(f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {recipe}")
+            print(f"{console.colorize(f'{len(visible_recipes) + 1}.', console.Fore.CYAN)} Volver")
             if hidden_count:
                 print(
                     console.colorize(

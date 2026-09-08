@@ -1,10 +1,34 @@
+import pytest
+
 from juego_rol_texto.characters.stats import (
     BASE_HIT_CHANCE,
     MAX_HIT_CHANCE,
     MIN_HIT_CHANCE,
     Stats,
+    apply_mitigation,
     resolve_hit,
 )
+
+
+@pytest.mark.parametrize(
+    ("amount", "mitigation", "expected"),
+    [
+        (40, 0, 40),  # sin mitigación -> daño íntegro
+        (40, 20, 20),  # mitigación 20 -> 40 * 20/40 (reduce el 50%)
+        (40, 60, 10),  # mitigación 60 -> 40 * 20/80 (reduce el 75%)
+        (40, 999, 1),  # mitigación enorme -> nunca 0, mínimo 1
+        (40, -3, 40),  # mitigación negativa se trata como 0
+        (0, 50, 0),  # daño 0 sigue siendo 0
+    ],
+)
+def test_apply_mitigation_uses_a_diminishing_returns_curve(amount, mitigation, expected):
+    assert apply_mitigation(amount, mitigation) == expected
+
+
+def test_apply_mitigation_each_armor_point_helps_less_than_the_last():
+    steps = [apply_mitigation(1000, m) for m in (0, 20, 40, 60, 80)]
+    diffs = [steps[i] - steps[i + 1] for i in range(len(steps) - 1)]
+    assert diffs == sorted(diffs, reverse=True)  # rendimientos decrecientes
 
 
 def test_health_is_clamped_to_max_health():

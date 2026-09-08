@@ -92,3 +92,23 @@ def save_update_check(enabled: bool) -> None:
         config.add_section("UPDATES")
     config["UPDATES"]["check_on_startup"] = "true" if enabled else "false"
     _write(config)
+
+
+DEFAULT_LANGUAGE = "es"
+
+
+def load_language() -> str:
+    """Código de idioma activo (`[IDIOMA] idioma`). Por defecto español."""
+    config = _read()
+    try:
+        return config.get("IDIOMA", "idioma", fallback=DEFAULT_LANGUAGE) or DEFAULT_LANGUAGE
+    except configparser.Error:
+        return DEFAULT_LANGUAGE
+
+
+def save_language(code: str) -> None:
+    config = _read()
+    if not config.has_section("IDIOMA"):
+        config.add_section("IDIOMA")
+    config["IDIOMA"]["idioma"] = code
+    _write(config)

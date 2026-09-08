@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto.characters.base import Character
-from juego_rol_texto.characters.stats import Stats
+from juego_rol_texto.characters.stats import Stats, apply_mitigation
 from juego_rol_texto.inventory.inventory import Inventory
 from juego_rol_texto.items.equipment import ARMOR_SLOTS, slot_label
 from juego_rol_texto.ui import console
@@ -43,10 +43,10 @@ class Player(Character):
     ) -> int:
         """Calcula el daño final tras aplicar armadura o resistencia mágica y lo resta de la vida."""
         if is_magical:
-            mitigation = max(0, self.get_total_magic_resist() - magic_penetration)
+            mitigation = self.get_total_magic_resist() - magic_penetration
         else:
-            mitigation = max(0, self.get_total_armor() - armor_penetration)
-        final_damage = max(0, amount - mitigation)
+            mitigation = self.get_total_armor() - armor_penetration
+        final_damage = apply_mitigation(amount, mitigation)
 
         # Postura defensiva: el golpe entra a la mitad.
         if self.defending and final_damage > 0:
@@ -154,8 +154,10 @@ class Player(Character):
         return self.stats.magic_penetration
 
     def get_equipped_element(self) -> str | None:
-        """Devuelve el elemento del arma equipada; si no tiene, el de los brazales."""
-        if self.equipped_weapon and self.equipped_weapon.element:
+        """Devuelve el elemento del arma equipada; si no tiene (o estás
+        desarmado), el de los brazales."""
+        is_disarmed = any(e["name"] == "desarmado" for e in self.status_effects)
+        if self.equipped_weapon and self.equipped_weapon.element and not is_disarmed:
             return self.equipped_weapon.element
         brazales = self.equipped_armor.get("brazales")
         return brazales.element if brazales else None
@@ -171,18 +173,24 @@ class Player(Character):
         # 1. Comprobación de estados que bloquean el turno
         for effect in self.status_effects[:]:
             if effect["name"] == "congelado":
-                if random.random() < 0.20:
+                # El primer turno tras congelarte pierdes el turno seguro; a
+                # partir de ahí hay un 20% por turno de romper el hielo.
+                if not effect.get("fresh") and random.random() < 0.20:
                     console.info("¡El hielo se rompe! Te has descongelado.")
                     self.status_effects.remove(effect)
                 else:
+                    effect["fresh"] = False
                     print(console.colorize("❄️ Estás congelado y no puedes moverte.", console.Fore.BLUE))
                     # Si está congelado, no procesamos parálisis, pero SÍ veneno/quemadura más abajo
                     can_act = False
                     break  # Salimos del check de movimiento, pero seguimos con el daño
 
-            elif effect["name"] == "paralizado" and random.random() < 0.5:
-                console.warning("⚡ ¡La parálisis te impide actuar!")
-                can_act = False
+            elif effect["name"] == "paralizado":
+                # Primer turno seguro; después, 50% por turno.
+                if effect.get("fresh") or random.random() < 0.5:
+                    console.warning("⚡ ¡La parálisis te impide actuar!")
+                    can_act = False
+                effect["fresh"] = False
 
         # 2. Procesamiento de daño/curación (Ocurre aunque no puedas actuar)
         for effect in self.status_effects[:]:
@@ -217,14 +225,8 @@ class Player(Character):
             if effect["duration"] <= 0:
                 console.info(f"✨ El efecto de {effect['name']} ha desaparecido.")
                 self.status_effects.remove(effect)
-            else:
-                # Esto ayuda al jugador a planificar (Estilo Raid/RPG moderno)
-                print(
-                    console.colorize(
-                        f"⏳ {effect['name'].capitalize()} persistirá por {effect['duration']} turnos más.",
-                        console.Fore.WHITE,
-                    )
-                )
+        # Los turnos restantes de cada estado se ven en las barras de vida
+        # (print_status), así no hay que repetir un "persistirá por N turnos".
 
         for buff in self.active_effects[:]:
             buff.duration -= 1
@@ -240,7 +242,7 @@ class Player(Character):
                 effect["duration"] = max(effect["duration"], duration)
                 return
 
-        self.status_effects.append({"name": name, "duration": duration, "power": power})
+        self.status_effects.append({"name": name, "duration": duration, "power": power, "fresh": True})
 
     # --- PROGRESIÓN ---
 

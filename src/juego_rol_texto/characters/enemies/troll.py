@@ -36,10 +36,9 @@ class Troll(Enemy):
         """Habilidad especial: regeneración aleatoria alrededor de su stat de
         regeneración (el Troll es de los pocos enemigos "aptos" para esto)."""
         if self.is_alive() and self.stats.health < self.stats.max_health:
-            regen = random.randint(self.stats.regen - 5, self.stats.regen + 5)
-
-            self.stats.health = min(self.stats.max_health, self.stats.health + regen)
-            console.success(f"✨ El Troll gruñe mientras sus heridas se cierran (+{regen} HP).")
+            healed = self.heal(random.randint(self.stats.regen - 5, self.stats.regen + 5))
+            if healed > 0:
+                console.success(f"✨ El Troll gruñe mientras sus heridas se cierran (+{healed} HP).")
 
     def drop_item(self) -> list:
         items = []

@@ -30,11 +30,45 @@ def slot_label(slot: str) -> str:
     return SLOT_LABELS.get(slot, slot.capitalize())
 
 
+# Probabilidad / duración por defecto del estado que infligen las armas
+# elementales que no lo especifican (GDD §6.4).
+_DEFAULT_INFLICT_CHANCE = 0.25
+_DEFAULT_INFLICT_DURATION = 3
+
+
 class Weapon(Item):
-    def __init__(self, name: str, description: str, value: int, damage: int, element: str | None = None):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        value: int,
+        damage: int,
+        element: str | None = None,
+        inflicts: dict | None = None,
+    ):
         super().__init__(name, description, value)
         self.damage = damage
         self.element = element
+        # `inflicts`: {"status", "chance", "duration", "power"}. Si es None y el
+        # arma tiene un elemento con estado asociado, se deriva uno por defecto.
+        self.inflicts = inflicts
+
+    def get_inflicts(self) -> dict | None:
+        """El estado alterado que inflige este golpe, explícito o derivado del
+        elemento. `None` si el arma no inflige nada."""
+        if self.inflicts:
+            return self.inflicts
+        from juego_rol_texto.combat.elements import ELEMENT_STATUS
+
+        status = ELEMENT_STATUS.get(self.element or "")
+        if not status:
+            return None
+        return {
+            "status": status,
+            "chance": _DEFAULT_INFLICT_CHANCE,
+            "duration": _DEFAULT_INFLICT_DURATION,
+            "power": 0,
+        }
 
     def use(self, player) -> bool:
         player.equipped_weapon = self
@@ -45,12 +79,18 @@ class Weapon(Item):
         info = f"Daño: {self.damage}"
         if self.element:
             info += f" ({self.element.capitalize()})"
-        return console.colorize(info, console.Fore.RED)
+        inflicts = self.get_inflicts()
+        if inflicts:
+            from juego_rol_texto.i18n import t
+
+            info += f" · inflige {t('status.' + inflicts['status'])} {int(inflicts['chance'] * 100)}%"
+        # Un arma elemental se muestra en el color de su elemento; una normal, en rojo.
+        return console.colorize(info, console.element_color(self.element))
 
     def to_dict(self) -> dict:
         # Aseguramos que el daño se guarde con la llave correcta
         data = super().to_dict()
-        data.update({"damage": self.damage, "element": self.element, "type": "Weapon"})
+        data.update({"damage": self.damage, "element": self.element, "inflicts": self.inflicts, "type": "Weapon"})
         return data
 
     @classmethod
@@ -61,6 +101,7 @@ class Weapon(Item):
             value=data["value"],
             damage=data.get("damage", 0),  # Parámetro extra de Weapon
             element=data.get("element"),
+            inflicts=data.get("inflicts"),
         )
 
 

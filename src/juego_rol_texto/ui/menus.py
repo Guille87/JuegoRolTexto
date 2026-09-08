@@ -1,4 +1,3 @@
-import contextlib
 import getpass
 import hashlib
 import random
@@ -524,6 +523,7 @@ def _admin_panel_flow(player, unlocked_enemies: list, defeated_enemies: list) ->
                 lambda: _admin_give_all_materials(player),
             ),
             ("Conseguir todas las armas y armaduras de los enemigos", lambda: _admin_give_all_equipment(player)),
+            ("Conseguir todas las pociones (x20 de cada)", lambda: _admin_give_all_potions(player)),
             ("Volver", "break"),
         ]
 
@@ -662,29 +662,15 @@ def _collect_all_possible_drops() -> list:
         random.random = original_random
 
 
-@contextlib.contextmanager
-def _quiet_pickups():
-    """Silencia los 'Obtenido: X' de Inventory.add_item() durante una entrega
-    masiva del panel de admin — si no, imprime cientos de líneas seguidas."""
-    original = console.success
-    console.success = lambda *_a, **_k: None
-    try:
-        yield
-    finally:
-        console.success = original
-
-
 def _admin_give_all_materials(player) -> None:
     """Da 50 unidades de cada material del juego (y, de paso, descubre las
     recetas de la herrería que los piden, ya que Inventory.add_item() marca
     un Material como descubierto la primera vez que se consigue)."""
     seen = set()
-    with _quiet_pickups():
-        for item in _collect_all_possible_drops():
-            if isinstance(item, Material) and item.name not in seen:
-                seen.add(item.name)
-                for _ in range(50):
-                    player.inventory.add_item(item)
+    for item in _collect_all_possible_drops():
+        if isinstance(item, Material) and item.name not in seen:
+            seen.add(item.name)
+            player.inventory.add_item(item, 50, announce=False)
     console.success(
         f"Conseguidas 50 unidades de cada uno de los {len(seen)} materiales del juego. "
         f"Todas las recetas de la herrería ya deberían estar descubiertas."
@@ -694,12 +680,22 @@ def _admin_give_all_materials(player) -> None:
 def _admin_give_all_equipment(player) -> None:
     """Da una copia de cada arma y armadura que puede soltar algún enemigo."""
     equipment = [item for item in _collect_all_possible_drops() if isinstance(item, (Weapon, Armor))]
-    with _quiet_pickups():
-        for item in equipment:
-            player.inventory.add_item(item)
+    for item in equipment:
+        player.inventory.add_item(item, announce=False)
     console.success(
         f"Conseguidas {len(equipment)} armas y armaduras: una de cada objeto que puede soltar algún enemigo."
     )
+
+
+def _admin_give_all_potions(player) -> None:
+    """Da 20 unidades de cada poción de la tienda (salud, regeneración, fuerza, antídoto)."""
+    from juego_rol_texto.items.factory import item_factory
+    from juego_rol_texto.shop.shop import Shop
+
+    potions = [entry.template for entry in Shop().catalog if entry.stackable]
+    for template in potions:
+        player.inventory.add_item(item_factory(template.to_dict()), 20, announce=False)
+    console.success(f"Conseguidas 20 unidades de cada una de las {len(potions)} pociones.")
 
 
 def _get_enemy_instance(name: str):

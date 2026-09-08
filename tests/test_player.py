@@ -3,44 +3,54 @@ from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.items.equipment import Armor, Weapon
 
 
-def test_take_damage_subtracts_total_armor(player):
-    dealt = player.take_damage(10)
-    assert dealt == 8  # 10 - armor(2)
-    assert player.stats.health == 92
+# Curva de reducción de daño: dealt = round(amount * 20 / (mitigación + 20)).
+def test_take_damage_applies_the_armor_reduction_curve(player):
+    player.stats.armor = 20
+    dealt = player.take_damage(40)
+    assert dealt == 20  # 40 * 20/(20+20) = 20 (armadura 20 reduce el 50%)
+    assert player.stats.health == 80
 
 
 def test_take_damage_magical_uses_magic_resist_instead_of_armor(player):
     player.stats.armor = 100  # no debería influir en absoluto en daño mágico
-    player.stats.magic_resist = 3
+    player.stats.magic_resist = 20
 
-    dealt = player.take_damage(10, is_magical=True)
+    dealt = player.take_damage(40, is_magical=True)
 
-    assert dealt == 7  # 10 - magic_resist(3), ignora los 100 de armadura
-    assert player.stats.health == 93
+    assert dealt == 20  # 40 * 20/(20+20), con res. mágica, ignora la armadura
+    assert player.stats.health == 80
 
 
-def test_take_damage_never_negative(player):
-    dealt = player.take_damage(1)
-    assert dealt == 0
+def test_take_damage_has_a_minimum_chip_and_never_heals(player):
+    # Un golpe que acierta nunca hace 0 solo por armadura: siempre pasa 1.
+    player.stats.armor = 999
+    dealt = player.take_damage(40)
+    assert dealt == 1
+    assert player.stats.health == 99
+
+
+def test_take_damage_of_zero_stays_zero(player):
+    player.stats.armor = 999
+    assert player.take_damage(0) == 0
     assert player.stats.health == 100
 
 
 def test_take_damage_armor_penetration_reduces_mitigation(player):
-    dealt = player.take_damage(10, armor_penetration=1)
-    assert dealt == 9  # 10 - max(0, armor(2) - penetración(1))
-    assert player.stats.health == 91
+    player.stats.armor = 20
+    dealt = player.take_damage(40, armor_penetration=10)
+    assert dealt == 27  # mitigación efectiva 10 -> 40 * 20/30
 
 
 def test_take_damage_armor_penetration_cannot_go_below_zero_mitigation(player):
-    dealt = player.take_damage(10, armor_penetration=100)
-    assert dealt == 10  # la armadura mitigada no puede volverse negativa
-    assert player.stats.health == 90
+    player.stats.armor = 20
+    dealt = player.take_damage(40, armor_penetration=100)
+    assert dealt == 40  # mitigación 0 -> daño íntegro
 
 
 def test_take_damage_magic_penetration_reduces_magic_resist_mitigation(player):
-    player.stats.magic_resist = 5
-    dealt = player.take_damage(10, is_magical=True, magic_penetration=2)
-    assert dealt == 7  # 10 - max(0, magic_resist(5) - penetración(2))
+    player.stats.magic_resist = 30
+    dealt = player.take_damage(40, is_magical=True, magic_penetration=10)
+    assert dealt == 20  # mitigación efectiva 20 -> 40 * 20/40
 
 
 def test_get_attack_range_includes_weapon_bonus(player):

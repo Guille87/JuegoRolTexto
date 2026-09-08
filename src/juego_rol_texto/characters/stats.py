@@ -10,6 +10,26 @@ MIN_HIT_CHANCE = 5
 MAX_HIT_CHANCE = 100
 
 
+# Curva de reducción de daño por defensa, estilo Raid: Shadow Legends. En vez de
+# restar la armadura (lineal: o es inútil o es un muro), se reduce un porcentaje
+# con rendimientos decrecientes: reduccion = DEF / (DEF + K). Cada punto de
+# armadura vale un poco menos que el anterior y el daño nunca llega a 0.
+# K está escalado a los números de este juego (armaduras de ~2 a ~25): con K=20,
+# armadura 20 reduce el 50%, armadura 5 reduce el 20%.
+DEFENSE_SOFTENING = 20
+
+
+def apply_mitigation(amount: int, mitigation: int) -> int:
+    """Aplica la reducción de daño por defensa (`mitigation` = armadura o
+    resistencia mágica, ya con la penetración del atacante restada). Un `amount`
+    de 0 sigue haciendo 0; cualquier golpe real hace al menos 1."""
+    if amount <= 0:
+        return 0
+    mitigation = max(0, mitigation)
+    reduced = amount * DEFENSE_SOFTENING / (mitigation + DEFENSE_SOFTENING)
+    return max(1, round(reduced))
+
+
 def resolve_hit(attacker_precision: int, defender_evasion: int) -> bool:
     """Tirada de acierto: precisión del atacante vs evasión del defensor.
 
