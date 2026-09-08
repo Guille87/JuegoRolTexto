@@ -23,6 +23,9 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 - Ruff `UP`/`B`/`SIM`, `__version__` vía `importlib.metadata`, `concurrency` en el CI.
 - Captura de partida en el README; descripción y topics del repo.
 - `build-check` en el CI — construye el `.exe` cuando cambian los archivos de empaquetado.
+- **Auto-updater** — la build empaquetada comprueba los GitHub Releases y puede
+  descargar, verificar (SHA-256) y aplicar una actualización, reiniciándose sin
+  reinstalar y sin tocar `saved_games/` / `config.ini`.
 
 ## Juego — planeado
 
@@ -35,12 +38,11 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 
 ## Proyecto y herramientas — planeado
 
-Impacto alto:
-
-- **Auto-updater** — que una build repartida (`.exe`) descargue y aplique una
-  versión nueva sin reinstalar y sin tocar `saved_games/` / `config.ini`.
-
 Medio / pulido:
+
+- **Firma Ed25519** en la auto-actualización, sobre el SHA-256 + HTTPS actual,
+  para protegerse también ante una cuenta de GitHub comprometida (ver
+  `SECURITY.md`).
 
 - **Grabación de gameplay (GIF / asciinema)** para el README, más allá de la captura estática.
 - **Imagen de social preview** del repo (por los ajustes de GitHub).

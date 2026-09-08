@@ -22,6 +22,9 @@ A living document of what exists and what is planned. See the
 - Ruff `UP`/`B`/`SIM`, `__version__` via `importlib.metadata`, CI `concurrency`.
 - README screenshot; repo description and topics.
 - CI `build-check` — builds the `.exe` when packaging files change.
+- **Auto-updater** — the frozen build checks GitHub Releases, and can download,
+  verify (SHA-256) and apply an update, restarting itself without a reinstall and
+  without touching `saved_games/` / `config.ini`.
 
 ## Game — planned
 
@@ -34,12 +37,10 @@ A living document of what exists and what is planned. See the
 
 ## Project & tooling — planned
 
-High impact:
-
-- **Auto-updater** — a distributed `.exe` pulls and applies a new version
-  without a reinstall and without touching `saved_games/` / `config.ini`.
-
 Medium / polish:
+
+- **Ed25519 signature** on the auto-update, on top of the current SHA-256 +
+  HTTPS, to also defend against a compromised GitHub account (see `SECURITY.md`).
 
 - **Gameplay recording (GIF / asciinema)** for the README, beyond the static screenshot.
 - **Social-preview image** for the repo (via GitHub settings).

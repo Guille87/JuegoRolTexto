@@ -3,6 +3,7 @@ import getpass
 import hashlib
 import random
 import sys
+from functools import partial
 
 from juego_rol_texto import updater
 from juego_rol_texto.audio.resource_manager import ResourceManager
@@ -91,6 +92,26 @@ def _maybe_show_update_notice(*, in_game: bool) -> None:
         print(console.colorize("   Guarda la partida y vuelve al Menú Principal para actualizar.", console.Fore.GREEN))
 
 
+def _update_flow(info: updater.UpdateInfo) -> None:
+    """Descarga, verifica y aplica una actualización (reinicia el juego)."""
+    print(console.colorize(f"\n--- ACTUALIZAR A {info.tag} ---", console.Fore.YELLOW))
+    if info.notes:
+        print(info.notes[:600])
+    if console.ask("\n¿Descargar y aplicar ahora? El juego se reiniciará. (s/n): ").strip().lower() != "s":
+        return
+
+    def _progress(fraction: float) -> None:
+        print(f"\rDescargando... {fraction * 100:3.0f}%", end="", flush=True)
+
+    new_dir = updater.download_and_stage(info, on_progress=_progress)
+    print()
+    if not new_dir:
+        console.error("No se pudo descargar o verificar la actualización. Inténtalo más tarde.")
+        return
+    console.success("Descarga verificada. Cerrando para aplicar la actualización...")
+    updater.apply_and_restart(new_dir)
+
+
 def main_menu() -> None:
     resource_manager.set_mood("adventure")
 
@@ -103,12 +124,15 @@ def main_menu() -> None:
         print(console.colorize("⚔️  MENÚ PRINCIPAL  ⚔️", console.Fore.YELLOW))
         print("=" * 30)
 
-        options = [
+        options: list[tuple[str, object]] = [
             ("Nueva Partida", start_new_game),
             ("Cargar Partida", load_saved_game),
             ("Opciones", open_options),
-            ("Salir", "break"),
         ]
+        pending = updater.available()
+        if pending:
+            options.append((f"Actualizar a {pending.tag}", partial(_update_flow, pending)))
+        options.append(("Salir", "break"))
 
         for i, (text, _) in enumerate(options, 1):
             print(f"{i}. {text}")
@@ -121,7 +145,7 @@ def main_menu() -> None:
         action = options[int(choice) - 1][1]
         if action == "break":
             break
-        action()
+        action()  # type: ignore[operator]
 
 
 def start_new_game() -> None:

@@ -2,8 +2,12 @@
 
 El juego se reparte como un paquete PyInstaller `--onedir`. Este módulo detecta
 si hay una versión más nueva publicada en el GitHub Release, avisa en el menú y
-—si el jugador lo pide (PR B)— la descarga, la verifica por SHA-256 y la aplica
+—si el jugador lo pide— la descarga, la verifica por SHA-256 y la aplica
 reiniciándose, sin tocar `saved_games/` / `config.ini`.
+
+Aplicar la actualización con el `.exe` en marcha es imposible en Windows (los
+archivos están bloqueados), así que `apply_and_restart()` escribe un `.bat` que
+espera a que el juego se cierre, copia la versión nueva encima y relanza.
 
 Solo hace algo en la build empaquetada (`sys.frozen`). Ejecutando desde el código
 fuente (`python main.py`) todo es no-op: ahí se actualiza con `git`.
@@ -16,13 +20,20 @@ añadir después en `verify()`.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
+import shutil
+import subprocess
 import sys
 import threading
 import urllib.request
+import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
+from typing import NoReturn
 
 logger = logging.getLogger("juego_rol_texto.updater")
 
@@ -162,11 +173,98 @@ def available() -> UpdateInfo | None:
     return _available
 
 
-def cleanup_staging() -> None:
-    """Borra `BASE_DIR/.update/` (carpeta de trabajo de una actualización previa).
-    Se llama al arrancar. En PR A todavía no existe; queda listo para PR B."""
-    import shutil
-
+def _staging_dir() -> Path:
     from juego_rol_texto.config.paths import BASE_DIR
 
-    shutil.rmtree(BASE_DIR / ".update", ignore_errors=True)
+    return BASE_DIR / ".update"
+
+
+def cleanup_staging() -> None:
+    """Borra `BASE_DIR/.update/` (carpeta de trabajo de una actualización). Se
+    llama al arrancar, para no dejar restos de un intento anterior."""
+    shutil.rmtree(_staging_dir(), ignore_errors=True)
+
+
+# --- Descarga, verificación y aplicación ---
+
+
+def verify(zip_path: Path, info: UpdateInfo) -> bool:
+    """Comprueba el SHA-256 del zip contra el publicado en el Release. Sin hash
+    publicado, se niega a aplicar (hueco para una firma en el futuro)."""
+    if not info.sha256:
+        logger.warning("El Release %s no publica SHA256SUMS; no se aplica.", info.tag)
+        return False
+    h = hashlib.sha256()
+    with open(zip_path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest().lower() == info.sha256.lower()
+
+
+def _download(url: str, dest: Path, on_progress: Callable[[float], None] | None) -> None:  # pragma: no cover - red
+    req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+    with urllib.request.urlopen(req, timeout=_TIMEOUT_S) as resp, open(dest, "wb") as out:
+        total = int(resp.headers.get("Content-Length") or 0)
+        done = 0
+        while chunk := resp.read(1 << 16):
+            out.write(chunk)
+            done += len(chunk)
+            if on_progress and total:
+                on_progress(done / total)
+
+
+def download_and_stage(info: UpdateInfo, on_progress: Callable[[float], None] | None = None) -> Path | None:
+    """Descarga el zip a `.update/`, verifica el SHA-256 y lo extrae. Devuelve la
+    carpeta `JuegoRolTexto/` extraída, o `None` si algo falla (y limpia)."""
+    staging = _staging_dir()
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True, exist_ok=True)
+    zip_path = staging / "download.zip"
+    try:
+        _download(info.zip_url, zip_path, on_progress)
+        if not verify(zip_path, info):
+            logger.warning("La descarga no pasó la verificación SHA-256.")
+            raise ValueError("verificación fallida")
+        new_dir = staging / "new"
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(new_dir)
+    except Exception as exc:  # noqa: BLE001 - el updater nunca debe lanzar
+        logger.warning("No se pudo preparar la actualización: %s", exc)
+        shutil.rmtree(staging, ignore_errors=True)
+        return None
+
+    inner = new_dir / "JuegoRolTexto"
+    return inner if inner.is_dir() else None
+
+
+def _apply_bat(pid: int) -> str:
+    """Contenido del .bat relanzador (ASCII puro). `%~dp0` = carpeta del .bat
+    (`.update/`), así que `%~dp0..` es la carpeta del juego."""
+    return (
+        "@echo off\r\n"
+        f"set PID={pid}\r\n"
+        ":wait\r\n"
+        'tasklist /fi "PID eq %PID%" 2>nul | find "%PID%" >nul\r\n'
+        "if not errorlevel 1 (\r\n"
+        "  timeout /t 1 /nobreak >nul\r\n"
+        "  goto wait\r\n"
+        ")\r\n"
+        'robocopy "%~dp0new\\JuegoRolTexto" "%~dp0.." /E /NJH /NJS /NP '
+        '/XD "%~dp0..\\saved_games" "%~dp0..\\logs" "%~dp0..\\.update"\r\n'
+        "if %ERRORLEVEL% GEQ 8 (\r\n"
+        "  echo Error aplicando la actualizacion.\r\n"
+        "  pause\r\n"
+        "  exit /b 1\r\n"
+        ")\r\n"
+        'start "" "%~dp0..\\JuegoRolTexto.exe"\r\n'
+    )
+
+
+def apply_and_restart(new_dir: Path) -> NoReturn:  # pragma: no cover - lanza proceso y sale
+    """Escribe `apply.bat`, lo lanza desprendido y cierra el juego. El `.bat`
+    espera a que el proceso muera, copia la versión nueva y relanza."""
+    bat = _staging_dir() / "apply.bat"
+    bat.write_text(_apply_bat(os.getpid()), encoding="ascii")
+    flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, close_fds=True)
+    sys.exit(0)

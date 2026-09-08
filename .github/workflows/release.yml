@@ -37,10 +37,15 @@ jobs:
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          Compress-Archive -Path dist/JuegoRolTexto -DestinationPath "JuegoRolTexto-$tag-windows.zip"
+          $zip = "JuegoRolTexto-$tag-windows.zip"
+          Compress-Archive -Path dist/JuegoRolTexto -DestinationPath $zip
+          # SHA256SUMS: lo verifica el auto-updater antes de aplicar una actualización.
+          "$((Get-FileHash $zip -Algorithm SHA256).Hash.ToLower())  $zip" | Set-Content -Encoding ascii SHA256SUMS
 
       - name: Publicar en el GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: JuegoRolTexto-*-windows.zip
+          files: |
+            JuegoRolTexto-*-windows.zip
+            SHA256SUMS
           generate_release_notes: true

@@ -70,6 +70,11 @@ El resultado queda en `dist\JuegoRolTexto\` — copia la **carpeta entera** (nec
 los assets y las DLLs que la acompañan). `config.ini`, `saved_games\` y `logs\` se
 crean junto al `.exe`. Usa `--onedir` (el `.spec` ya lo hace), nunca `--onefile`.
 
+El juego empaquetado **se actualiza solo**: al arrancar comprueba si hay una
+versión más nueva en los GitHub Releases y, si aceptas, la descarga, verifica su
+SHA-256 y se reinicia — `saved_games\` y `config.ini` se conservan. La
+comprobación se desactiva en *Opciones*.
+
 El informe opcional de errores a Discord vive en `src/juego_rol_texto/config/secrets.py`
 (no versionado). Copia `config/secrets.example.py` a `config/secrets.py` y rellénalo
 antes de compilar; sin él el juego funciona igual, solo sin informes de errores.

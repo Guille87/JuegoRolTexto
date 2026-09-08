@@ -70,4 +70,7 @@ python tools/capture_screenshot.py
   git tag vX.Y.Z && git push origin vX.Y.Z
   ```
 
-The release workflow builds the Windows package and attaches it to the GitHub Release.
+The release workflow builds the Windows package and attaches it to the GitHub
+Release, together with a `SHA256SUMS` file. Both are required — the packaged
+game's auto-updater refuses to apply a release that has no matching
+`-windows.zip` and `SHA256SUMS` pair.

@@ -1,3 +1,6 @@
+import hashlib
+import zipfile
+
 import pytest
 
 from juego_rol_texto import updater
@@ -119,3 +122,76 @@ def test_background_check_stores_the_result_and_stops_cleanly(monkeypatch):
 
 def test_cleanup_staging_is_a_noop_when_there_is_nothing_to_clean():
     updater.cleanup_staging()  # sin excepción
+
+
+# --- Descarga / verificación / aplicación ---
+
+
+def _make_release_zip(path) -> str:
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("JuegoRolTexto/JuegoRolTexto.exe", b"MZ ejecutable de mentira")
+        zf.writestr("JuegoRolTexto/_internal/base_library.zip", b"contenido")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture
+def staging(tmp_path, monkeypatch):
+    d = tmp_path / ".update"
+    monkeypatch.setattr(updater, "_staging_dir", lambda: d)
+    return d
+
+
+def test_verify_accepts_a_matching_hash(tmp_path):
+    zip_path = tmp_path / "x.zip"
+    sha = _make_release_zip(zip_path)
+    info = updater.UpdateInfo("0.4.0", "v0.4.0", "https://x/x.zip", sha, "")
+    assert updater.verify(zip_path, info) is True
+
+
+def test_verify_rejects_a_mismatched_or_missing_hash(tmp_path):
+    zip_path = tmp_path / "x.zip"
+    _make_release_zip(zip_path)
+    assert updater.verify(zip_path, updater.UpdateInfo("0.4.0", "v0.4.0", "u", "deadbeef", "")) is False
+    assert updater.verify(zip_path, updater.UpdateInfo("0.4.0", "v0.4.0", "u", None, "")) is False
+
+
+def test_download_and_stage_verifies_and_extracts(staging, tmp_path, monkeypatch):
+    source = tmp_path / "release.zip"
+    sha = _make_release_zip(source)
+    monkeypatch.setattr(updater, "_download", lambda url, dest, cb: dest.write_bytes(source.read_bytes()))
+    info = updater.UpdateInfo("0.4.0", "v0.4.0", "https://x/release.zip", sha, "")
+
+    new_dir = updater.download_and_stage(info)
+
+    assert new_dir is not None
+    assert (new_dir / "JuegoRolTexto.exe").exists()
+
+
+def test_download_and_stage_aborts_and_cleans_on_bad_hash(staging, tmp_path, monkeypatch):
+    source = tmp_path / "release.zip"
+    _make_release_zip(source)
+    monkeypatch.setattr(updater, "_download", lambda url, dest, cb: dest.write_bytes(source.read_bytes()))
+    info = updater.UpdateInfo("0.4.0", "v0.4.0", "u", "0" * 64, "")
+
+    assert updater.download_and_stage(info) is None
+    assert not staging.exists()
+
+
+def test_apply_bat_content():
+    bat = updater._apply_bat(4321)
+    assert "set PID=4321" in bat
+    assert "robocopy" in bat
+    assert '/XD "%~dp0..\\saved_games"' in bat
+    assert 'start "" "%~dp0..\\JuegoRolTexto.exe"' in bat
+
+
+def test_apply_and_restart_writes_the_bat_spawns_and_exits(staging, monkeypatch):
+    staging.mkdir(parents=True)
+    calls = {}
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda *a, **k: calls.setdefault("cmd", a[0]))
+
+    with pytest.raises(SystemExit):
+        updater.apply_and_restart(staging / "new" / "JuegoRolTexto")
+
+    assert (staging / "apply.bat").exists()
+    assert "apply.bat" in calls["cmd"][-1]
