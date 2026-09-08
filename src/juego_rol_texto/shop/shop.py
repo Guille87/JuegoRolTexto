@@ -7,9 +7,6 @@ from juego_rol_texto.items.potions.potion_base import Potion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
 from juego_rol_texto.ui import console
 
-# Máximo de un mismo consumible que se puede llevar / comprar de una vez.
-MAX_STACK = 99
-
 
 def _gold(amount) -> str:
     return console.colorize(f"{amount} oro", console.Fore.YELLOW, bright=True)
@@ -28,10 +25,11 @@ def _item_name(item) -> str:
 
 
 def _ask_quantity(available: int) -> int:
-    """Pregunta cuántas unidades (1..available). 0 o entrada no válida -> 0 (cancela)."""
+    """Pregunta cuántas unidades (1..available). Si se pide de más, se ajusta a
+    `available`. 0 o entrada no válida -> 0 (cancela)."""
     if available <= 1:
         return available
-    raw = console.ask(f"¿Cuántas? (1-{available}, 0 para cancelar): ")
+    raw = console.ask(f"¿Cuántas? (máx. {available}, 0 para cancelar): ")
     if not raw.isdigit():
         return 0
     return max(0, min(int(raw), available))
@@ -132,17 +130,16 @@ class Shop:
             console.error("No tienes suficiente oro ni para una unidad.")
             return
 
-        # Consumibles: se pueden comprar varios a la vez (hasta lo que permita el
-        # oro, con tope de MAX_STACK). Armas/armaduras: siempre una.
-        max_affordable = min(MAX_STACK, player.inventory.gold // shop_item.buy_price)
+        # Consumibles: se compran varios a la vez, hasta lo que permita el oro.
+        # Armas/armaduras: siempre una.
+        max_affordable = player.inventory.gold // shop_item.buy_price
         quantity = _ask_quantity(max_affordable) if shop_item.stackable else 1
         if quantity <= 0:
             return
 
         total = shop_item.buy_price * quantity
         player.inventory.gold -= total
-        for _ in range(quantity):
-            player.inventory.add_item(shop_item.create_item())
+        player.inventory.add_item(shop_item.create_item(), quantity, announce=False)
         unidades = f"{quantity}x " if quantity > 1 else ""
         console.success(f"Has comprado {unidades}{shop_item.template.name} por {total} oro.")
 
