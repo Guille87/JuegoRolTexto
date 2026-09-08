@@ -9,12 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-08
+
 ### Fixed
 
 - Auto-update: the relauncher `.bat` is now started with `os.startfile`
   (ShellExecute) instead of `subprocess.Popen`, which intermittently failed with
   `0xC0000142` (cmd.exe init failure) when spawned during the game's shutdown.
   A short grace period was also added before the game exits.
+- Closing stdin (piped input running out, no TTY) now exits the game cleanly
+  instead of raising `EOFError` as an unexpected crash (which also fired the
+  optional Discord report).
 
 ## [0.7.0] - 2026-09-08
 
@@ -141,7 +146,8 @@ were not formally tracked.
 
 - Initial version: basic console turn-based combat.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...v0.5.0

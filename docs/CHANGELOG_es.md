@@ -9,12 +9,17 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-08
+
 ### Corregido
 
 - Auto-actualización: el `.bat` relanzador ahora se arranca con `os.startfile`
   (ShellExecute) en vez de `subprocess.Popen`, que a veces fallaba con
   `0xC0000142` (fallo al inicializar cmd.exe) al lanzarse mientras el juego se
   cerraba. También se añade un pequeño margen antes de que el juego cierre.
+- Cerrar stdin (entrada canalizada agotada, consola sin TTY) ahora cierra el
+  juego limpiamente en vez de lanzar `EOFError` como cierre inesperado (que
+  además disparaba el informe opcional a Discord).
 
 ## [0.7.0] - 2026-09-08
 
@@ -147,7 +152,8 @@ cambios anteriores no se registraron formalmente.
 
 - Versión inicial: combate por turnos básico en consola.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...v0.5.0
