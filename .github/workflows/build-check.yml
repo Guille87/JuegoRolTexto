@@ -1,0 +1,63 @@
+name: Build check
+
+# Solo cuando cambia algo que afecta al empaquetado: comprueba que el .exe de
+# PyInstaller sigue construyéndose y arranca. No publica nada (eso es release.yml).
+on:
+  pull_request:
+    paths:
+      - JuegoRolTexto.spec
+      - main.py
+      - pyproject.toml
+      - .github/scripts/write_secrets.py
+      - .github/workflows/build-check.yml
+  push:
+    branches: [main]
+    paths:
+      - JuegoRolTexto.spec
+      - main.py
+      - pyproject.toml
+      - .github/scripts/write_secrets.py
+      - .github/workflows/build-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      SDL_AUDIODRIVER: dummy
+      SDL_VIDEODRIVER: dummy
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pyinstaller
+
+      - name: Construir el ejecutable
+        run: pyinstaller JuegoRolTexto.spec
+
+      - name: El ejecutable existe y arranca
+        shell: pwsh
+        run: |
+          $exe = "dist/JuegoRolTexto/JuegoRolTexto.exe"
+          if (-not (Test-Path $exe)) { throw "No se generó $exe" }
+          # Sin webhook configurado no hay aviso opt-in, así que "4" (Salir en el
+          # menú principal) es lo único que se lee. Debe terminar con código 0.
+          "[REPORTS]`nsend_crash_reports = false" | Set-Content dist/JuegoRolTexto/config.ini
+          "4" | & $exe
+          if ($LASTEXITCODE -ne 0) { throw "El .exe terminó con código $LASTEXITCODE" }
+
+      - name: Subir el paquete como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: JuegoRolTexto-build-check
+          path: dist/JuegoRolTexto
+          retention-days: 7

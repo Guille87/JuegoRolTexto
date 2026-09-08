@@ -21,6 +21,8 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 - Protección de la rama `main` (PR + check `all-green`); smoke test de arranque.
 - Entrada de teclado multiplataforma (`ui/keyboard.py`) — el juego y los tests ya no necesitan Windows.
 - Ruff `UP`/`B`/`SIM`, `__version__` vía `importlib.metadata`, `concurrency` en el CI.
+- Captura de partida en el README; descripción y topics del repo.
+- `build-check` en el CI — construye el `.exe` cuando cambian los archivos de empaquetado.
 
 ## Juego — planeado
 
@@ -35,18 +37,15 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 
 Impacto alto:
 
-- **Captura / grabación de partida en el README** — ahora mismo el repo solo
-  muestra badges y texto.
 - **Auto-updater** — que una build repartida (`.exe`) descargue y aplique una
   versión nueva sin reinstalar y sin tocar `saved_games/` / `config.ini`.
 
 Medio / pulido:
 
-- **Metadatos del repo en GitHub** — descripción, topics, imagen de social preview.
+- **Grabación de gameplay (GIF / asciinema)** para el README, más allá de la captura estática.
+- **Imagen de social preview** del repo (por los ajustes de GitHub).
 - Extender `pyright` para que revise también `tests/`, y subir de `basic` a `standard`.
 - Limpiar las notas de release autogeneradas; enlazar el CHANGELOG.
-- Job opcional del CI que construya el paquete de PyInstaller sin publicarlo
-  (solo cuando cambie el `.spec`) para detectar un `.spec` roto antes de un release.
 
 ## Ideas (sin compromiso)
 

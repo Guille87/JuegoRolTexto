@@ -15,6 +15,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   y la suite de tests ya no necesitan Windows.
 - Comprobación estática de tipos con `pyright` (modo `basic`) como check obligatorio del CI.
 - Smoke test de arranque (`app.main()` arranca y sale limpio).
+- Captura del README generada a partir de un combate real (`tools/capture_screenshot.py`).
+- `build-check` en el CI — construye el `.exe` cuando cambian los archivos de empaquetado.
 
 ### Cambiado
 
