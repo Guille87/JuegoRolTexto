@@ -44,9 +44,11 @@ progression, seven damage elements with weaknesses / resistances / immunities.
 
 **Premise.** Years ago the **Dragón de Ceniza** razed the capital, Valeterna.
 Its fire did more than burn — it cracked the veil between the mortal world and
-the infernal planes. Through that **breach**, necromancers, fallen angels and
-demons spill into the kingdom, and corruption spreads outward from the ruined
-capital like rot from a wound.
+the planes below. Through that **breach**, things that should not walk the world
+spill into the kingdom — the restless dead among them, and worse — and
+corruption spreads outward from the ruined capital like rot from a wound. *(The
+story never names in advance what the player will fight; the reader knows only
+"whatever comes through the breach".)*
 
 The player is one of the few survivors of the razing who can still hold a
 weapon. From **Piedrablanca**, the last free village, they set out to **find the
@@ -65,11 +67,11 @@ testing, but that is a long-shot, not a plan.
 | Act | Region | Beat |
 |-----|--------|------|
 | I | Los Yermos | Halbrand: break the bandit raids strangling the village. |
-| II | Bosque de los Susurros | Cael explains the breach; a spirit is bound to a forest altar feeding it. |
+| II | Bosque de los Susurros | Cael explains the breach; an altar deep in the forest is feeding it, and something is bound there. |
 | III | Ciénaga de los Ahogados | Something older than the breach stirs in the drowned marsh, where the corruption pools. |
-| IV | Cañón del Trueno | Mirelle: the corruption flows down the old mountain road; a Gólem seals the pass. |
-| V | Torre de los Arcanos / Necrópolis | Sella: the mage tower channels the breach; the Nigromante is raising the Necrópolis. |
-| VI | Ciudadela en Ruinas | Aldric: the cathedral is the breach's heart on the surface — the Ángel Caído fell defending it, the Demonio holds it now. |
+| IV | Cañón del Trueno | Mirelle: the corruption flows down the old mountain road, and the pass is sealed. |
+| V | Torre de los Arcanos / Necrópolis | Sella: the mage tower is channelling the breach, and the dead are rising across the Necrópolis. |
+| VI | Ciudadela en Ruinas | Aldric: the cathedral was the kingdom's last bastion; what holds it now came through the breach, and it is worse than what razed the city. |
 | VII | El Corazón de la Brecha | The corruption's true origin lies deeper than the cathedral — and it is not what the survivors expected. |
 
 ### Side quests
@@ -186,25 +188,24 @@ Existing patterns: pre-battle ambush, periodic extra hit, self-heal under a
 threshold, unavoidable attack, applied debuff through a hit roll, summon an
 ally. New: ranged attack (partly ignores evasion), gold theft, stun (skip a
 turn), stacking armour shred, life drain, enrage under a threshold, `consagrar`
-(marks the player for bonus damage), curse that blocks healing, cast a spell
-(makes the enemy vulnerable to `silenciado`).
+(marks the player for bonus damage), curse that blocks healing.
 
 ### 4.6 Sample zone — Los Yermos (10)
 
 Demonstrates the template; the other six zones are follow-up design work.
 
-| Tier | Rank | Name | Archetype | Signature | Deals | Weak | Resists | Immune |
-|------|------|------|-----------|-----------|-------|------|---------|--------|
+| Tier | Rank | Name | Archetype | Signature | Deals | Weak to | Resists | Immune to |
+|------|------|------|-----------|-----------|-------|---------|---------|-----------|
 | 1 | standard | Rata Gigante | skirmisher | quick bite, minor poison chance | veneno | fuego | — | — |
 | 2 | standard | Goblin | bruiser | ambush after first defeat | físico | — | — | — |
-| 3 | standard | Goblin Montaraz | caster/ranged | arrows (partly ignore evasion) | físico | fuego | — | — |
+| 3 | standard | Goblin Montaraz | ranged | arrows (partly ignore evasion) | físico | fuego | — | — |
 | 4 | standard | Huargo | skirmisher | pack bite (extra hit) | físico | — | — | — |
-| 5 | **elite** | Chamán Goblin | support | heals an ally / self, minor curse | oscuridad | sagrado | oscuridad ×0.5 | — |
-| 6 | standard | Esqueleto | tank | revives once | físico | sagrado ×2, contundente | veneno ×0.5 | veneno, sangrado |
+| 5 | **elite** | Chamán Goblin | support | heals an ally / self, minor curse | oscuridad | sagrado | oscuridad | — |
+| 6 | standard | Esqueleto | tank | revives once | físico | sagrado | veneno | veneno, sangrado |
 | 7 | **elite** | Bandido | ambusher | disarm | físico | veneno | — | — |
 | 8 | standard | Salteador | skirmisher | double quick strike, steals gold | físico | — | — | — |
-| 9 | **elite** | Ogro del Yermo | bruiser | crushing blow that stuns | físico | fuego | físico ×0.5 | paralizado |
-| 10 | **guardian** | El Carnicero | bruiser/tank | enrage below 40 % HP, applies sangrado | físico | sagrado | veneno ×0.25 | veneno |
+| 9 | **elite** | Ogro del Yermo | bruiser | crushing blow that stuns | físico | fuego | — | paralizado |
+| 10 | **guardian** | El Carnicero | bruiser/tank | enrage below 40 % HP, applies sangrado | físico | sagrado | veneno | — |
 
 ---
 
@@ -214,32 +215,48 @@ Demonstrates the template; the other six zones are follow-up design work.
 things: it **modifies damage** via the target's affinity, *and* it can apply a
 signature **status** on hit.
 
-| Element | Damage flavour | On-hit status | Typical weak / resist / immune |
-|---------|----------------|---------------|--------------------------------|
-| **fuego** | burn | `quemado` — DoT + **physical** attack reduced (magic unaffected) | melts `congelado`; strong vs plants/undead |
-| **veneno** | poison | `veneno` — DoT vs max HP | flesh weak; undead & constructs **immune** |
-| **rayo** | shock | `paralizado` — chance to skip a turn | metal/wet weak |
-| **hielo** | freeze / slow | `congelado` — chance to skip a turn | fire-aligned weak; melted by fuego |
-| **sagrado** | divine light | `consagrado` — takes +dmg, can't self-heal | undead & demons weak; living neutral; the Ángel Caído **resists** it |
-| **oscuridad** | breach shadow | `marchito` — healing/regen received −50 % | living & holy-aligned weak; demons & undead **resist** it |
-| **arcano** | raw magic (always `is_magical`, pierces some physical armour) | `silenciado` — enemy can't cast its spells/specials, physical attacks only | mundane weak; constructs (Gólem, Gárgola) & the Mago **resist** it |
+| Element | Damage type | On-hit status |
+|---------|-------------|---------------|
+| **fuego** | physical | `quemado` — DoT + **physical** attack output reduced (magic unaffected) |
+| **veneno** | physical | `veneno` — DoT vs max HP |
+| **rayo** | physical | `paralizado` — chance to skip a turn |
+| **hielo** | physical | `congelado` — chance to skip a turn |
+| **sagrado** | magical | `consagrado` — takes +25 % damage from all sources, can't self-heal |
+| **oscuridad** | magical | `marchito` — healing / regen received −50 % |
+| **arcano** | magical | `fractura mágica` — the target's `magic_resist` drops to 0 for the duration (so follow-up magical hits land hard) |
 
-### Affinity model (data layer)
+`arcano`'s status replaces the earlier "silence" idea: **`silenciado` is
+dropped** — a hard cast-lockout was useless against non-casters and
+back-breaking against the Mago. `fractura mágica` is always at least somewhat
+useful when you deal magical damage, never a hard shutdown, and thematically
+"crack the magic that shields it". (Open — see §11.)
 
-- `Enemy.weaknesses: dict[str, float]` — ×1.5 or ×2.0. 0–2 entries.
-- `Enemy.resistances: dict[str, float]` — a **budget of 2**: two ×0.5 entries on
-  different elements, or a single ×0.25 entry.
-- `Enemy.immune_elements: set[str]` — that element does **×0 damage** *and*
-  cannot apply its status.
-- `Enemy.immune_statuses: set[str]` — a standalone status the enemy can't
-  receive even from a non-immune element (e.g. `paralizado` on something too
-  large to stagger while still taking `rayo` damage).
-- Damage: `final = base × (weakness or resistance or 0.0-if-immune or 1.0)`,
-  then armour / magic-resist mitigation.
+### Affinity model (data layer) *(needs your confirm — see §11)*
+
+- **Weakness** — base **×1.5**. It becomes **×2.0** only when the damage
+  combines *two* elements the enemy is weak to (an elemental reaction, a
+  dual-element skill, or hitting a target already carrying a weakness-element
+  status with a second weakness element). `Enemy.weaknesses: set[str]`, 0–2
+  elements.
+- **Resistance** — base **×0.5**; **×0.25** when the damage combines *two*
+  elements the enemy resists. Resistance also **halves that element's on-hit
+  status chance and duration** (it resists the whole element, not just the
+  numbers). `Enemy.resistances: set[str]`, 0–2 elements.
+- **Immunity** — the extreme of resistance: that element does **×0 damage** and
+  its status **never** applies. Reserved for "it literally cannot be affected"
+  (a construct and `veneno`, a wraith and `físico`). `Enemy.immune_elements:
+  set[str]`.
+- **Standalone status immunity** — takes the element's damage normally but
+  can't receive one specific status (something too massive to `paralizar` while
+  still taking `rayo` damage). `Enemy.immune_statuses: set[str]`.
+- So: **resistant** = shrugs it off (less damage, weaker status); **immune** =
+  nothing happens at all. The four knobs cover every case; most enemies use one
+  or two.
+- Damage: `final = base × affinity`, then armour / magic-resist mitigation
+  (magical elements mitigated by `magic_resist`).
 - Player elemental defence: `Armor` may carry `resist` (a small dict, a %
   reduction per element), summed as `Player.get_total_resist(element)` — a few
-  pieces and the Sudario del Nigromante set grant it.
-- `apply_status` on either side is a no-op against an immune target.
+  pieces and a set grant it.
 
 ### Elemental reactions *(planned — balance carefully)*
 
@@ -274,11 +291,13 @@ player draws from (§6.2).
 ### 6.2 Skills
 
 No mana bar. Each class has a **pool of ~8 skills** unlocked across the *whole*
-progression — a new one roughly on reaching each region, chosen so it helps
-against what that region throws at you. **Exact unlock levels are set in the
-power-budget phase (v0.14)**; until then a skill unlocks on reaching its
-milestone. Milestones: **M1** Los Yermos · **M2** Bosque · **M3** Ciénaga ·
-**M4** Cañón · **M5** Torre/Necrópolis · **M6** Ciudadela · **M7** El Corazón.
+progression, chosen so each one helps against what its region throws at you.
+Skills unlock two ways: some **by level** (the early ones), some **by defeating
+a region's guardian** (the later ones — so power tracks story progress, not just
+grinding). **Exact levels / guardians are set in the power-budget phase
+(v0.14)**; until then a skill is tied to its milestone. Milestones: **M1** Los
+Yermos · **M2** Bosque · **M3** Ciénaga · **M4** Cañón · **M5**
+Torre/Necrópolis · **M6** Ciudadela · **M7** El Corazón.
 
 Two kinds:
 
@@ -300,7 +319,7 @@ Sketch (types: `fís` physical, `mág` magical, `ele` elemental, `util` utility;
 | 1 | Golpe Firme — a3 fís: +40 % dmg, can't miss · Segundo Aliento — p: heal 12 % max HP on kill | Embate — a3 fís: strong hit, 40 % stun · Piel de Piedra — p: −12 % physical dmg taken | Golpe Bajo — a3 fís: guaranteed crit + sangrado · Reflejos — p: +12 % evasion | Proyectil Arcano — a2 arc: pierces magic resist · Sintonía — p: choose your attack element at battle start |
 | 2 | Aguante — p: below 30 % HP, +15 % armour & magic resist | Represalia — p: 30 % counter on physical hit | Veneno de Contacto — p: 20 % poison on hit | Escudo de Maná — a4 util: fully absorb next hit |
 | 3 | Adaptación — p: +10 % resistance to all elements | Provocación — a4 util: enemy loses precision for 3 turns | Filo Envenenado — a3 ven: hit + stronger guaranteed poison | Descarga Elemental — a4 ele: active element's damage + its status |
-| 4 | Adrenalina — a5 util: +25 % speed for 3 turns | Grito de Guerra — a5 util: +25 % damage for 3 turns | Sombra — a4 util: dodge the next enemy attack | Ruptura Arcana — a5 arc: damage + `silenciado` for 2 turns |
+| 4 | Adrenalina — a5 util: +25 % speed for 3 turns | Grito de Guerra — a5 util: +25 % damage for 3 turns | Sombra — a4 util: dodge the next enemy attack | Ruptura Arcana — a5 arc: damage + `fractura mágica` (enemy magic resist → 0) for 2 turns |
 | 5 | Ruptura — a4 fís: ignores half the enemy's armour | Fortaleza — p: +35 % max HP | Golpe Mortal — p: +50 % crit damage | Doble Conjuro — p: 20 % chance an active costs no cooldown |
 | 6 | Botín Afortunado — p: +25 % gold, +10 % drop chance | Golpe Sísmico — a5 fís: high damage, ignores evasion | Marca de Muerte — a5 util: enemy takes +30 % of all damage for 3 turns | Mente Aguda — p: −1 turn to all cooldowns |
 | 7 | Voluntad de Hierro — p: survive a lethal hit at 1 HP (once/battle) | Último Bastión — a7 util: 2 turns immune to physical damage | Asalto — a7 fís: 3 quick strikes | Cataclismo — a8 arc: massive magic damage, ignores all mitigation |
@@ -308,18 +327,31 @@ Sketch (types: `fís` physical, `mág` magical, `ele` elemental, `util` utility;
 ### 6.3 Equipment set bonuses *(design under review by the maintainer)*
 
 `Armor` gains optional `set_name`. `Player` counts equipped pieces per set and
-applies **tiers at 2 and 4 pieces** (sets are 4 pieces). Themed to regions,
-drop there. Current draft:
+applies bonuses at **2, 4 and 6 pieces** — **tiers stack** (with 6 pieces you
+have the 2-, 4- and 6-piece bonuses at once). Design goal, Diablo-3-inspired but
+adapted to turn-based text: **one set per zone (7 sets)**, each 6 pieces across
+6 of the 11 slots (which 6 varies by set), leaving 5 slots for mix-and-match.
+Pieces **1–4 drop in the zone**; pieces **5–6 come from the Arena** (§6.5) — so
+story mode gets you the 4-piece bonus, the Arena completes the set.
 
-| Set | Region | 2-piece | 4-piece |
-|-----|--------|---------|---------|
-| Atavío del Proscrito | Los Yermos | +evasion | first hit of each battle is a guaranteed crit |
-| Placas del Guardián | Cañón del Trueno | +armour | −10 % to all physical damage taken |
-| Sudario del Nigromante | Necrópolis | +magic resist & +oscuridad resist | 20 % chance to reflect part of magic damage taken |
-| Vestiduras del Caído | Ciudadela | +regen | heal 15 % of damage dealt |
+- **2-piece** — a modest, always-useful stat.
+- **4-piece** — a strong situational effect.
+- **6-piece** — a build-defining effect: the reason to commit.
 
-No set piece is strictly better than its slot's other options. The exact set
-list, piece counts and bonus design are still being decided.
+Draft (names and effects still moving):
+
+| Set | Zone | 2 | 4 | 6 |
+|-----|------|---|---|---|
+| Atavío del Proscrito | Los Yermos | +evasion | first hit of each battle is a guaranteed crit | after a crit, your next attack also crits |
+| Manto del Bosque | Bosque | +regen | 25 % to poison on hit | poisoned enemies take +25 % damage from all sources |
+| Cieno Viviente | Ciénaga | +oscuridad resist | your `marchito` also cuts enemy damage 15 % | when an enemy dies while `marchito`, heal 20 % max HP |
+| Placas del Guardián | Cañón del Trueno | +armour | −10 % physical damage taken | first time you'd drop below 25 % HP each battle, block all damage for 1 turn |
+| Sudario del Nigromante | Torre/Necrópolis | +magic resist | 20 % reflect magic damage | after taking magic damage, your next attack deals bonus arcano damage |
+| Égida del Caído | Ciudadela | +sagrado resist | heal 15 % of damage dealt | while above 80 % HP, +30 % damage |
+| Escamas de Ceniza | El Corazón | +fuego resist & +max HP | immune to `quemado`, +25 % fuego damage dealt | at battle start, gain a shield worth 20 % max HP |
+
+No set piece is strictly better than its slot's other options. The full list,
+which 6 slots each set uses, and the numbers are still being decided.
 
 ### 6.4 Status-inflicting weapons
 
@@ -328,18 +360,18 @@ hit, roll `chance` and `enemy.apply_status(...)` (respecting immunities).
 Requires **`Enemy` to process status effects on its turn** — a mirror of
 `Player.on_turn_start` / `on_turn_end`. Elemental weapon infliction map:
 veneno→`veneno`, fuego→`quemado`, hielo→`congelado`, rayo→`paralizado`,
-oscuridad→`marchito`, sagrado→`consagrado`, arcano→`silenciado`.
+oscuridad→`marchito`, sagrado→`consagrado`, arcano→`fractura mágica`.
 
 ### 6.5 Arena mode
 
-A Piedrablanca location unlocked after Act III (or via a ticket). Pick a
-difficulty tier → **N escalating waves**, enemies from cleared zones. Healing
-between waves is paid in gold. It is designed as **high difficulty**, but it is
-a **faster route to things that are very hard to get in story mode**: rewards
-scale with the wave reached — gold, cosmetic **títulos** on the stats screen,
-*some* set pieces (not necessarily all), and at least one hard-to-get unique.
-Save tracks `arena_mejor_oleada`. Pairs with turbo auto-battle. Exact reward
-table TBD.
+A Piedrablanca location unlocked after Act III. Pick a difficulty tier → **N
+escalating waves**, enemies from cleared zones. Healing between waves is paid in
+gold. It is designed as **high difficulty**, but it is the **only route to the
+5th and 6th piece of any set** (§6.3) — story mode caps you at a 4-piece bonus,
+the Arena completes it. Rewards scale with the wave reached: gold, cosmetic
+**títulos** on the stats screen, set pieces 5–6, and at least one hard-to-get
+unique. Save tracks `arena_mejor_oleada`. Pairs with turbo auto-battle. Exact
+reward-per-wave table TBD.
 
 ---
 
@@ -372,8 +404,9 @@ listed (as today).
 ### 7.4 Rest & death
 
 - **Rest** — only in a town, at an inn, paying gold: full HP + all status
-  effects cleared. **Cost scales with level** so it stays a meaningful sink as
-  kill income grows.
+  effects cleared. **Cost scales with level**: higher-level enemies pay out more
+  gold, so the inn costs more to keep it a real sink — a rough equilibrium. A
+  broke player can always farm a few easy fights for gold.
 - **Death** — you lose a fraction of your gold (currently 1/3) and it is **gone
   for good** (no recoverable "saco"). You respawn at the last visited town at
   full HP with statuses cleared, losing your position in the current zone.
@@ -407,7 +440,11 @@ and a **tree of nodes**.
 For the first pass, choices only change the **text** you get — no mechanical
 effect — but the framework carries effects for later (easter eggs, surprises,
 choice-gated content). Some conversations are one-time (you can't redo them),
-which makes those choices feel permanent even while they're cosmetic.
+which makes those choices feel permanent even while they're cosmetic. **Choice
+nodes offer at least 3 responses.** Writing the NPC conversations is left to the
+implementer (the maintainer has said this is not their strength); the design
+target is a mix of one-time quest/story conversations and repeatable idle/lore
+lines per NPC.
 
 ### 8.3 Quests
 
@@ -491,16 +528,21 @@ is a living document and any of this can change.
 
 ## 11. Open questions
 
-- **Set bonuses** (§6.3) — the set list and bonus design are still being decided.
+- **Affinity model** (§5) — confirm the "×2 weakness / ×0.25 resist only when
+  two matching elements combine" reading, and that resistance also scales the
+  status down.
+- **`arcano`'s status** — `fractura mágica` (magic resist → 0) replaces the
+  scrapped `silenciado`. Is that the right effect, or something else? If nothing
+  balanced emerges, `arcano` can just be a damage element with no status.
+- **Set bonuses** (§6.3) — 7 sets (one per zone), 2/4/6 tiers, pieces 5–6 from
+  the Arena: the direction is set, the names / which-6-slots / exact numbers
+  are not. Mine Diablo 3's set catalogue for adaptable ideas.
 - **Elemental reactions** (§5) — final rules and, above all, that they don't
   break elite/guardian fights.
-- **Skill unlock levels** — the milestones are fixed; the exact levels come out
-  of the power-budget phase.
-- **Standalone status immunities** — which enemies get e.g. `paralizado`
-  immunity without full `rayo` immunity.
-- **Dialogue first pass** — how many one-time vs repeatable conversations per
-  NPC, and how deep the choice trees go.
-- **Arena rewards** — exactly which set pieces and which unique(s) the Arena
-  grants, and the wave-to-reward table.
-- **Drop-scaling curve** — how much more a later enemy drops a shared material.
-- **Rest cost curve** — the gold-per-level formula for the inn.
+- **Skill unlocks** — split between "by level" (early) and "by guardian defeat"
+  (later); the exact split comes out of the power-budget phase.
+- **Standalone status immunities** — decided per enemy as the roster is built.
+- **Arena** — the wave-to-reward table, and exactly which unique(s) it grants.
+- **Drop-scaling curve** — "slightly higher chance, slightly higher quantity",
+  numbers from playtesting.
+- **Rest cost curve** — the gold-per-level formula, tuned against gold income.

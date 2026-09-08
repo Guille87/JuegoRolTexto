@@ -48,9 +48,11 @@ daño con debilidades / resistencias / inmunidades.
 
 **Premisa.** Hace años, el **Dragón de Ceniza** arrasó la capital, Valeterna. Su
 fuego hizo algo más que quemar — agrietó el velo entre el mundo mortal y los
-planos infernales. Por esa **brecha** se cuelan nigromantes, ángeles caídos y
-demonios, y la corrupción se extiende hacia fuera desde la capital en ruinas
-como la podredumbre de una herida.
+planos de abajo. Por esa **brecha** se cuelan cosas que no deberían caminar por
+el mundo — los muertos que no descansan entre ellas, y cosas peores —, y la
+corrupción se extiende hacia fuera desde la capital en ruinas como la
+podredumbre de una herida. *(La historia nunca nombra de antemano a qué se
+enfrentará el jugador; el lector solo sabe "lo que salga por la brecha".)*
 
 El jugador es uno de los pocos supervivientes del arrasamiento que todavía puede
 empuñar un arma. Desde **Piedrablanca**, la última aldea libre, parte para
@@ -69,11 +71,11 @@ pero eso es una posibilidad remota, no un plan.
 | Acto | Región | Momento |
 |------|--------|---------|
 | I | Los Yermos | Halbrand: rompe las incursiones de bandidos que asfixian la aldea. |
-| II | Bosque de los Susurros | Cael explica la brecha; un espíritu está atado a un altar del bosque que la alimenta. |
+| II | Bosque de los Susurros | Cael explica la brecha; un altar en lo profundo del bosque la alimenta, y algo está atado allí. |
 | III | Ciénaga de los Ahogados | Algo más antiguo que la brecha se agita en el pantano anegado, donde la corrupción se encharca. |
-| IV | Cañón del Trueno | Mirelle: la corrupción baja por el viejo camino de montaña; un Gólem sella el paso. |
-| V | Torre de los Arcanos / Necrópolis | Sella: la torre del mago canaliza la brecha; el Nigromante levanta la Necrópolis. |
-| VI | Ciudadela en Ruinas | Aldric: la catedral es el corazón de la brecha en la superficie — el Ángel Caído cayó defendiéndola, el Demonio la ocupa ahora. |
+| IV | Cañón del Trueno | Mirelle: la corrupción baja por el viejo camino de montaña, y el paso está sellado. |
+| V | Torre de los Arcanos / Necrópolis | Sella: la torre del mago canaliza la brecha, y los muertos se levantan por toda la Necrópolis. |
+| VI | Ciudadela en Ruinas | Aldric: la catedral fue el último bastión del reino; lo que la ocupa ahora vino por la brecha, y es peor que lo que arrasó la ciudad. |
 | VII | El Corazón de la Brecha | El verdadero origen de la corrupción está más hondo que la catedral — y no es lo que los supervivientes esperaban. |
 
 ### Misiones secundarias
@@ -196,25 +198,24 @@ umbral, ataque inevitable, debuff aplicado tras tirada de acierto, invocar un
 aliado. Nuevas: ataque a distancia (ignora parte de la evasión), robo de oro,
 aturdir (pierde un turno), desgaste de armadura acumulable, drenaje de vida,
 frenesí bajo umbral, `consagrar` (marca al jugador para daño extra), maldición
-que bloquea la curación, lanzar un hechizo (hace al enemigo vulnerable a
-`silenciado`).
+que bloquea la curación.
 
 ### 4.6 Zona de ejemplo — Los Yermos (10)
 
 Demuestra la plantilla; las otras seis zonas son trabajo de diseño posterior.
 
-| Tier | Rango | Nombre | Arquetipo | Distintivo | Inflige | Débil | Resiste | Inmune |
-|------|-------|--------|-----------|------------|---------|-------|---------|--------|
+| Tier | Rango | Nombre | Arquetipo | Distintivo | Inflige | Débil a | Resiste | Inmune a |
+|------|-------|--------|-----------|------------|---------|---------|---------|----------|
 | 1 | estándar | Rata Gigante | hostigador | mordisco rápido, prob. veneno leve | veneno | fuego | — | — |
 | 2 | estándar | Goblin | bruto | emboscada tras la 1ª derrota | físico | — | — | — |
-| 3 | estándar | Goblin Montaraz | lanzador | flechas (ignoran parte de la evasión) | físico | fuego | — | — |
+| 3 | estándar | Goblin Montaraz | a distancia | flechas (ignoran parte de la evasión) | físico | fuego | — | — |
 | 4 | estándar | Huargo | hostigador | mordisco de manada (golpe extra) | físico | — | — | — |
-| 5 | **élite** | Chamán Goblin | apoyo | cura a un aliado / se cura, maldición leve | oscuridad | sagrado | oscuridad ×0.5 | — |
-| 6 | estándar | Esqueleto | tanque | revive una vez | físico | sagrado ×2, contundente | veneno ×0.5 | veneno, sangrado |
+| 5 | **élite** | Chamán Goblin | apoyo | cura a un aliado / se cura, maldición leve | oscuridad | sagrado | oscuridad | — |
+| 6 | estándar | Esqueleto | tanque | revive una vez | físico | sagrado | veneno | veneno, sangrado |
 | 7 | **élite** | Bandido | emboscador | desarme | físico | veneno | — | — |
 | 8 | estándar | Salteador | hostigador | golpe rápido doble, roba oro | físico | — | — | — |
-| 9 | **élite** | Ogro del Yermo | bruto | golpe demoledor que aturde | físico | fuego | físico ×0.5 | paralizado |
-| 10 | **guardián** | El Carnicero | bruto/tanque | frenesí bajo 40 % vida, aplica sangrado | físico | sagrado | veneno ×0.25 | veneno |
+| 9 | **élite** | Ogro del Yermo | bruto | golpe demoledor que aturde | físico | fuego | — | paralizado |
+| 10 | **guardián** | El Carnicero | bruto/tanque | frenesí bajo 40 % vida, aplica sangrado | físico | sagrado | veneno | — |
 
 ---
 
@@ -224,33 +225,50 @@ Demuestra la plantilla; las otras seis zonas son trabajo de diseño posterior.
 cosas: **modifica el daño** según la afinidad del objetivo, *y* puede aplicar un
 **estado** distintivo al golpear.
 
-| Elemento | Sabor de daño | Estado al golpear | Débil / resiste / inmune típico |
-|----------|---------------|-------------------|---------------------------------|
-| **fuego** | quema | `quemado` — daño/turno + baja el ataque **físico** (la magia no se ve afectada) | derrite `congelado`; fuerte vs plantas/no-muertos |
-| **veneno** | envenena | `veneno` — daño/turno vs vida máx | la carne es débil; no-muertos y constructos **inmunes** |
-| **rayo** | descarga | `paralizado` — prob. de saltar turno | metal/mojado débil |
-| **hielo** | congela / ralentiza | `congelado` — prob. de saltar turno | lo alineado al fuego es débil; lo derrite el fuego |
-| **sagrado** | luz divina | `consagrado` — recibe +daño, no puede autocurarse | no-muertos y demonios débiles; los vivos neutrales; el Ángel Caído lo **resiste** |
-| **oscuridad** | sombra de la brecha | `marchito` — curación/regen recibida −50 % | vivos y alineados a la luz débiles; demonios y no-muertos lo **resisten** |
-| **arcano** | magia pura (siempre `is_magical`, perfora parte de la armadura física) | `silenciado` — el enemigo no puede usar sus hechizos/especiales, solo ataque físico | lo mundano es débil; los constructos (Gólem, Gárgola) y el Mago lo **resisten** |
+| Elemento | Tipo de daño | Estado al golpear |
+|----------|--------------|-------------------|
+| **fuego** | físico | `quemado` — daño/turno + baja la salida del ataque **físico** (la magia no se ve afectada) |
+| **veneno** | físico | `veneno` — daño/turno vs vida máx |
+| **rayo** | físico | `paralizado` — prob. de saltar turno |
+| **hielo** | físico | `congelado` — prob. de saltar turno |
+| **sagrado** | mágico | `consagrado` — recibe +25 % de daño de todo, no puede autocurarse |
+| **oscuridad** | mágico | `marchito` — curación / regen recibida −50 % |
+| **arcano** | mágico | `fractura mágica` — la `magic_resist` del objetivo baja a 0 durante la duración (para que los golpes mágicos siguientes peguen fuerte) |
 
-### Modelo de afinidades (capa de datos)
+El estado de `arcano` sustituye a la idea de "silencio": **`silenciado` se
+descarta** — un bloqueo total de hechizos era inútil contra los no-lanzadores y
+destrozaba al Mago. `fractura mágica` siempre sirve algo cuando haces daño
+mágico, nunca es un apagón total, y temáticamente "agrieta la magia que lo
+escuda". (Abierto — ver §11.)
 
-- `Enemy.weaknesses: dict[str, float]` — ×1.5 o ×2.0. 0–2 entradas.
-- `Enemy.resistances: dict[str, float]` — un **presupuesto de 2**: dos entradas
-  ×0.5 en elementos distintos, o una sola entrada ×0.25.
-- `Enemy.immune_elements: set[str]` — ese elemento hace **×0 daño** *y* no puede
-  aplicar su estado.
-- `Enemy.immune_statuses: set[str]` — un estado suelto que el enemigo no puede
-  recibir aunque el elemento no le sea inmune (p. ej. `paralizado` en algo
-  demasiado grande para tambalearse, que aun así recibe daño de `rayo`).
-- Daño: `final = base × (debilidad o resistencia o 0.0-si-inmune o 1.0)`, y
-  luego la mitigación por armadura / res. mágica.
+### Modelo de afinidades (capa de datos) *(pendiente de tu confirmación — ver §11)*
+
+- **Debilidad** — base **×1.5**. Pasa a **×2.0** solo cuando el daño combina
+  *dos* elementos a los que el enemigo es débil (una reacción elemental, una
+  habilidad de doble elemento, o golpear a un objetivo que ya lleva un estado de
+  un elemento de debilidad con un segundo elemento de debilidad).
+  `Enemy.weaknesses: set[str]`, 0–2 elementos.
+- **Resistencia** — base **×0.5**; **×0.25** cuando el daño combina *dos*
+  elementos que el enemigo resiste. La resistencia también **reduce a la mitad
+  la probabilidad y la duración del estado** de ese elemento (resiste el
+  elemento entero, no solo los números). `Enemy.resistances: set[str]`, 0–2
+  elementos.
+- **Inmunidad** — el extremo de la resistencia: ese elemento hace **×0 daño** y
+  su estado **nunca** se aplica. Reservado para "literalmente no le afecta" (un
+  constructo y el `veneno`, un espectro y el `físico`). `Enemy.immune_elements:
+  set[str]`.
+- **Inmunidad a un estado suelto** — recibe el daño del elemento con
+  normalidad, pero no puede recibir un estado concreto (algo demasiado enorme
+  para `paralizar` que aun así recibe daño de `rayo`). `Enemy.immune_statuses:
+  set[str]`.
+- Así: **resistente** = lo aguanta (menos daño, estado más débil); **inmune** =
+  no pasa absolutamente nada. Las cuatro palancas cubren todos los casos; la
+  mayoría de enemigos usa una o dos.
+- Daño: `final = base × afinidad`, y luego la mitigación por armadura /
+  res. mágica (los elementos mágicos se mitigan con `magic_resist`).
 - Defensa elemental del jugador: `Armor` puede llevar `resist` (un dict pequeño,
   un % de reducción por elemento), sumado como `Player.get_total_resist(elem)` —
-  unas pocas piezas y el conjunto Sudario del Nigromante lo dan.
-- `apply_status` en cualquiera de los dos lados no hace nada contra un objetivo
-  inmune.
+  unas pocas piezas y un conjunto lo dan.
 
 ### Reacciones elementales *(planeado — balancear con cuidado)*
 
@@ -286,12 +304,14 @@ habilidades tira el jugador (§6.2).
 ### 6.2 Habilidades
 
 Sin barra de maná. Cada clase tiene un **pool de ~8 habilidades** que se
-desbloquean a lo largo de *toda* la progresión — una nueva más o menos al llegar
-a cada región, elegida para ayudar contra lo que esa región te echa encima. **Los
-niveles exactos de desbloqueo se fijan en la fase de presupuesto de poder
-(v0.14)**; hasta entonces una habilidad se desbloquea al llegar a su hito.
-Hitos: **M1** Los Yermos · **M2** Bosque · **M3** Ciénaga · **M4** Cañón · **M5**
-Torre/Necrópolis · **M6** Ciudadela · **M7** El Corazón.
+desbloquean a lo largo de *toda* la progresión, elegidas para ayudar contra lo
+que su región te echa encima. Se desbloquean de dos formas: unas **por nivel**
+(las tempranas), otras **al derrotar al guardián de una región** (las tardías —
+así el poder sigue el avance de la historia, no solo el farmeo). **Los niveles /
+guardianes exactos se fijan en la fase de presupuesto de poder (v0.14)**; hasta
+entonces una habilidad va atada a su hito. Hitos: **M1** Los Yermos · **M2**
+Bosque · **M3** Ciénaga · **M4** Cañón · **M5** Torre/Necrópolis · **M6**
+Ciudadela · **M7** El Corazón.
 
 Dos tipos:
 
@@ -313,7 +333,7 @@ Esbozo (tipos: `fís` físico, `mág` mágico, `ele` elemental, `util` utilidad;
 | 1 | Golpe Firme — a3 fís: +40 % daño, no falla · Segundo Aliento — p: cura 12 % vida máx. al matar | Embate — a3 fís: golpe fuerte, 40 % aturdir · Piel de Piedra — p: −12 % daño físico recibido | Golpe Bajo — a3 fís: crítico garantizado + sangrado · Reflejos — p: +12 % evasión | Proyectil Arcano — a2 arc: perfora res. mágica · Sintonía — p: eliges el elemento de tu ataque al empezar el combate |
 | 2 | Aguante — p: bajo 30 % vida, +15 % armadura y res. mágica | Represalia — p: 30 % de contraatacar al recibir un golpe físico | Veneno de Contacto — p: 20 % de aplicar veneno al golpear | Escudo de Maná — a4 util: absorbe por completo el próximo golpe |
 | 3 | Adaptación — p: +10 % resistencia a todos los elementos | Provocación — a4 util: el enemigo pierde precisión 3 turnos | Filo Envenenado — a3 ven: golpe + veneno garantizado más potente | Descarga Elemental — a4 ele: daño del elemento activo + su estado |
-| 4 | Adrenalina — a5 util: +25 % velocidad 3 turnos | Grito de Guerra — a5 util: +25 % daño 3 turnos | Sombra — a4 util: esquivas el próximo ataque enemigo | Ruptura Arcana — a5 arc: daño + `silenciado` 2 turnos |
+| 4 | Adrenalina — a5 util: +25 % velocidad 3 turnos | Grito de Guerra — a5 util: +25 % daño 3 turnos | Sombra — a4 util: esquivas el próximo ataque enemigo | Ruptura Arcana — a5 arc: daño + `fractura mágica` (res. mágica del enemigo → 0) 2 turnos |
 | 5 | Ruptura — a4 fís: ignora la mitad de la armadura del enemigo | Fortaleza — p: +35 % vida máxima | Golpe Mortal — p: +50 % daño crítico | Doble Conjuro — p: 20 % de que una activa no consuma enfriamiento |
 | 6 | Botín Afortunado — p: +25 % oro, +10 % prob. de drop | Golpe Sísmico — a5 fís: daño alto, ignora la evasión | Marca de Muerte — a5 util: el enemigo recibe +30 % de todo el daño 3 turnos | Mente Aguda — p: −1 turno a todos los enfriamientos |
 | 7 | Voluntad de Hierro — p: sobrevives a un golpe letal con 1 de vida (1 vez/combate) | Último Bastión — a7 util: 2 turnos inmune a daño físico | Asalto — a7 fís: 3 golpes rápidos | Cataclismo — a8 arc: daño mágico masivo, ignora toda mitigación |
@@ -321,19 +341,33 @@ Esbozo (tipos: `fís` físico, `mág` mágico, `ele` elemental, `util` utilidad;
 ### 6.3 Bonus de conjunto de armadura *(diseño en revisión por el mantenedor)*
 
 `Armor` gana un `set_name` opcional. `Player` cuenta las piezas equipadas por
-conjunto y aplica **tramos a 2 y 4 piezas** (los conjuntos son de 4). Temáticos
-por región, sueltan allí. Borrador actual:
+conjunto y aplica bonus a **2, 4 y 6 piezas** — **los tramos se acumulan** (con
+6 piezas tienes a la vez los bonus de 2, 4 y 6). Objetivo de diseño, inspirado
+en los conjuntos de Diablo 3 pero adaptado al texto por turnos: **un conjunto
+por zona (7 conjuntos)**, cada uno de 6 piezas repartidas en 6 de los 11 huecos
+(cuáles 6 varía por conjunto), dejando 5 huecos para combinar libremente. Las
+piezas **1–4 sueltan en la zona**; las piezas **5–6 se consiguen en la Arena**
+(§6.5) — el modo historia te da el bonus de 4, la Arena completa el conjunto.
 
-| Conjunto | Región | 2 piezas | 4 piezas |
-|----------|--------|----------|----------|
-| Atavío del Proscrito | Los Yermos | +evasión | el primer golpe de cada combate es crítico garantizado |
-| Placas del Guardián | Cañón del Trueno | +armadura | −10 % a todo el daño físico recibido |
-| Sudario del Nigromante | Necrópolis | +res. mágica y +res. oscuridad | 20 % de reflejar parte del daño mágico recibido |
-| Vestiduras del Caído | Ciudadela | +regeneración | curas el 15 % del daño que infliges |
+- **2 piezas** — un stat modesto y siempre útil.
+- **4 piezas** — un efecto situacional fuerte.
+- **6 piezas** — un efecto que define la build: el motivo para comprometerse.
+
+Borrador (nombres y efectos aún en movimiento):
+
+| Conjunto | Zona | 2 | 4 | 6 |
+|----------|------|---|---|---|
+| Atavío del Proscrito | Los Yermos | +evasión | el primer golpe de cada combate es crítico garantizado | tras un crítico, tu siguiente ataque también es crítico |
+| Manto del Bosque | Bosque | +regeneración | 25 % de envenenar al golpear | los enemigos envenenados reciben +25 % de daño de todo |
+| Cieno Viviente | Ciénaga | +res. oscuridad | tu `marchito` también baja el daño del enemigo 15 % | cuando un enemigo muere con `marchito`, curas 20 % vida máx. |
+| Placas del Guardián | Cañón del Trueno | +armadura | −10 % daño físico recibido | la primera vez que bajarías del 25 % vida cada combate, bloqueas todo el daño 1 turno |
+| Sudario del Nigromante | Torre/Necrópolis | +res. mágica | 20 % de reflejar daño mágico | tras recibir daño mágico, tu siguiente ataque hace daño arcano extra |
+| Égida del Caído | Ciudadela | +res. sagrado | curas el 15 % del daño que infliges | por encima del 80 % de vida, +30 % de daño |
+| Escamas de Ceniza | El Corazón | +res. fuego y +vida máx. | inmune a `quemado`, +25 % de daño de fuego | al empezar el combate, escudo del 20 % de tu vida máx. |
 
 Ninguna pieza de conjunto es estrictamente mejor que las otras opciones de su
-hueco. La lista exacta de conjuntos, el número de piezas y el diseño de los
-bonus siguen por decidir.
+hueco. La lista completa, qué 6 huecos usa cada conjunto y los números siguen
+por decidir.
 
 ### 6.4 Armas que infligen estados
 
@@ -343,19 +377,19 @@ las inmunidades). Exige que **`Enemy` procese estados en su turno** — un espej
 de `Player.on_turn_start` / `on_turn_end`. Mapa de infección de las armas
 elementales: veneno→`veneno`, fuego→`quemado`, hielo→`congelado`,
 rayo→`paralizado`, oscuridad→`marchito`, sagrado→`consagrado`,
-arcano→`silenciado`.
+arcano→`fractura mágica`.
 
 ### 6.5 Modo Arena
 
-Un lugar de Piedrablanca que se desbloquea tras el Acto III (o con una entrada).
-Eliges un nivel de dificultad → **N oleadas crecientes**, enemigos de las zonas
-superadas. La curación entre oleadas se paga con oro. Está diseñado como
-**dificultad elevada**, pero es una **vía más rápida a cosas muy difíciles de
-conseguir en el modo historia**: las recompensas escalan con la oleada — oro,
-**títulos** cosméticos en la pantalla de estadísticas, *algunas* piezas de
-conjunto (no necesariamente todas), y al menos un único difícil de obtener. El
-guardado registra `arena_mejor_oleada`. Combina con la auto-batalla turbo. Tabla
-de recompensas exacta por decidir.
+Un lugar de Piedrablanca que se desbloquea tras el Acto III. Eliges un nivel de
+dificultad → **N oleadas crecientes**, enemigos de las zonas superadas. La
+curación entre oleadas se paga con oro. Está diseñado como **dificultad
+elevada**, pero es la **única vía a la 5ª y 6ª pieza de cualquier conjunto**
+(§6.3) — el modo historia te deja en el bonus de 4 piezas, la Arena lo completa.
+Las recompensas escalan con la oleada: oro, **títulos** cosméticos en la
+pantalla de estadísticas, las piezas 5–6 de conjunto, y al menos un único
+difícil de obtener. El guardado registra `arena_mejor_oleada`. Combina con la
+auto-batalla turbo. Tabla de recompensa-por-oleada por decidir.
 
 ---
 
@@ -390,8 +424,10 @@ inmunidades · **10** → tabla de drops completa (primera vez que se muestra). 
 ### 7.4 Descanso y muerte
 
 - **Descanso** — solo en un pueblo, en una posada, pagando oro: vida completa +
-  todos los estados alterados limpiados. **El coste escala con el nivel** para
-  que siga siendo un sink relevante conforme sube el oro de las matanzas.
+  todos los estados alterados limpiados. **El coste escala con el nivel**: los
+  enemigos de más nivel dan más oro, así que la posada cuesta más para seguir
+  siendo un sink de verdad — un equilibrio aproximado. Un jugador sin oro
+  siempre puede farmear unos combates fáciles.
 - **Muerte** — pierdes una fracción de tu oro (hoy 1/3) y se va **para
   siempre** (sin "saco" recuperable). Reapareces en la última ciudad visitada
   con la vida al máximo y los estados limpiados, perdiendo tu posición en la
@@ -428,7 +464,11 @@ En la primera pasada, las respuestas solo cambian el **texto** que recibes —
 sin efecto mecánico — pero el sistema lleva los efectos para más adelante
 (easter eggs, sorpresas, contenido detrás de elecciones). Algunas conversaciones
 son de una vez (no se pueden repetir), lo que hace que esas elecciones se
-sientan permanentes aunque sean cosméticas.
+sientan permanentes aunque sean cosméticas. **Los nodos de elección ofrecen al
+menos 3 respuestas.** Escribir las conversaciones de los NPC queda a cargo de
+quien lo implemente (el mantenedor ha dicho que no es su fuerte); el objetivo de
+diseño es una mezcla de conversaciones únicas de misión/historia y frases de
+relleno/lore repetibles por NPC.
 
 ### 8.3 Misiones
 
@@ -517,18 +557,24 @@ cambiar; el GDD es un documento vivo y cualquier cosa de aquí puede cambiar.
 
 ## 11. Preguntas abiertas
 
-- **Bonus de conjunto** (§6.3) — la lista de conjuntos y el diseño de los bonus
-  siguen por decidir.
+- **Modelo de afinidades** (§5) — confirmar la lectura "×2 débil / ×0.25 resiste
+  solo cuando se combinan dos elementos que casan", y que la resistencia también
+  reduce el estado.
+- **El estado de `arcano`** — `fractura mágica` (res. mágica → 0) sustituye al
+  descartado `silenciado`. ¿Es el efecto correcto, u otra cosa? Si no sale nada
+  balanceado, `arcano` puede quedarse como elemento de daño sin estado.
+- **Bonus de conjunto** (§6.3) — 7 conjuntos (uno por zona), tramos 2/4/6,
+  piezas 5–6 de la Arena: la dirección está fijada, los nombres / qué 6 huecos /
+  los números no. Minar el catálogo de conjuntos de Diablo 3 en busca de ideas.
 - **Reacciones elementales** (§5) — las reglas finales y, sobre todo, que no
   rompan las peleas de élite/guardián.
-- **Niveles de desbloqueo de habilidades** — los hitos están fijos; los niveles
-  exactos salen de la fase de presupuesto de poder.
-- **Inmunidades a estados sueltos** — qué enemigos reciben p. ej. inmunidad a
-  `paralizado` sin ser inmunes al `rayo` entero.
-- **Primera pasada de diálogo** — cuántas conversaciones de una vez vs
-  repetibles por NPC, y cuánta profundidad tienen los árboles de respuestas.
-- **Recompensas de la Arena** — exactamente qué piezas de conjunto y qué
-  único(s) da la Arena, y la tabla de oleada-a-recompensa.
-- **Curva de drop-scaling** — cuánto más suelta un enemigo posterior un material
-  compartido.
-- **Curva de coste del descanso** — la fórmula de oro-por-nivel de la posada.
+- **Desbloqueo de habilidades** — repartido entre "por nivel" (tempranas) y "al
+  derrotar al guardián" (tardías); el reparto exacto sale de la fase de
+  presupuesto de poder.
+- **Inmunidades a estados sueltos** — se deciden por enemigo mientras se
+  construye el roster.
+- **Arena** — la tabla de oleada-a-recompensa, y qué único(s) exactamente da.
+- **Curva de drop-scaling** — "un poco más de probabilidad, un poco más de
+  cantidad", números del testeo.
+- **Curva de coste del descanso** — la fórmula de oro-por-nivel, ajustada
+  contra el ingreso de oro.
