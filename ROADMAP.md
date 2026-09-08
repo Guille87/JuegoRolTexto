@@ -16,7 +16,7 @@ A living document of what exists and what is planned. See the
 - Mood-based background music.
 - JSON save/load with backup; case-insensitive player-name recognition.
 - On-disk error logging and optional opt-in Discord crash reports.
-- CI (Ruff, pyright, tests on Python 3.10–3.13 Linux + one Windows job), coverage badge, release workflow (v0.5.0).
+- CI (Ruff, pyright, tests on Python 3.10–3.13 Linux + one Windows job), coverage badge, release workflow (v0.6.0).
 - Branch protection on `main` (PR + `all-green` check); boot smoke test.
 - Cross-platform keyboard input (`ui/keyboard.py`) — the game and test suite no longer need Windows.
 - Ruff `UP`/`B`/`SIM`, `__version__` via `importlib.metadata`, CI `concurrency`.
