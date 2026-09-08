@@ -19,7 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - CI `build-check` — builds the `.exe` when packaging files change.
 - Auto-update (frozen build): checks GitHub Releases on startup and shows a
   notice when a newer version is available; toggle and manual check in Options.
-  (Downloading and applying the update lands in a follow-up.)
+- Auto-update can now download, verify (SHA-256 against the Release's
+  `SHA256SUMS`) and apply an update, restarting the game via a `.bat` relauncher
+  without touching `saved_games/` or `config.ini`.
+- Release workflow publishes a `SHA256SUMS` file alongside the Windows zip.
 
 ### Changed
 

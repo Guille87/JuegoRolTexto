@@ -28,3 +28,21 @@ publicará y se dará crédito a quien lo reportó, salvo que prefieras el anoni
 - El panel de administración/debug es un cheat de un jugador protegido por un
   hash de contraseña en el `config/secrets.py` no versionado; no es una frontera
   de seguridad.
+
+## Modelo de amenazas del auto-update
+
+La build de Windows puede actualizarse sola (`src/juego_rol_texto/updater.py`).
+Aplicar una actualización es siempre una acción explícita del jugador; la
+comprobación al arrancar es un GET HTTPS a la API de GitHub y no envía nada.
+
+- **Qué se protege:** la actualización se descarga por HTTPS desde el GitHub
+  Release y su SHA-256 se compara con el archivo `SHA256SUMS` publicado en ese
+  mismo Release antes de aplicar nada. Un hash que no cuadra, un `SHA256SUMS`
+  ausente o una versión que no sea estrictamente más nueva que la instalada
+  abortan la actualización. Esto protege ante una descarga corrupta o un atacante
+  en la red.
+- **Qué no se protege:** cualquiera que pueda publicar un Release en el
+  repositorio (una cuenta de mantenedor comprometida) puede publicar un hash
+  válido para una build maliciosa. La mitigación prevista es una firma Ed25519
+  detached verificada en `updater.verify()` con una clave pública incrustada en
+  el binario.

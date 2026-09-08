@@ -70,6 +70,11 @@ The result is in `dist\JuegoRolTexto\` — copy the **whole folder** (it needs t
 bundled assets and DLLs). `config.ini`, `saved_games\` and `logs\` are created
 next to the `.exe`. Use `--onedir` (the spec already does), never `--onefile`.
 
+The packaged game **updates itself**: on startup it checks the GitHub Releases
+for a newer version and, if you accept, downloads it, verifies its SHA-256 and
+restarts — `saved_games\` and `config.ini` are kept. Turn the check off under
+*Opciones*.
+
 Optional error reporting to Discord lives in `src/juego_rol_texto/config/secrets.py`
 (git-ignored). Copy `config/secrets.example.py` to `config/secrets.py` and fill it
 in before building; without it the game runs fine, just without crash reports.

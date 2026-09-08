@@ -19,7 +19,11 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 - `build-check` en el CI — construye el `.exe` cuando cambian los archivos de empaquetado.
 - Auto-actualización (build empaquetada): comprueba los GitHub Releases al
   arrancar y avisa si hay una versión más nueva; toggle y comprobación manual en
-  Opciones. (Descargar y aplicar la actualización llega en un paso posterior.)
+  Opciones.
+- La auto-actualización ya puede descargar, verificar (SHA-256 contra el
+  `SHA256SUMS` del Release) y aplicar una actualización, reiniciando el juego con
+  un `.bat` relanzador sin tocar `saved_games/` ni `config.ini`.
+- El workflow de release publica un archivo `SHA256SUMS` junto al zip de Windows.
 
 ### Cambiado
 
