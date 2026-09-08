@@ -192,11 +192,14 @@ def test_apply_bat_content():
 
 def test_apply_and_restart_writes_the_bat_spawns_and_exits(staging, monkeypatch):
     staging.mkdir(parents=True)
-    calls = {}
-    monkeypatch.setattr(updater.subprocess, "Popen", lambda *a, **k: calls.setdefault("cmd", a[0]))
+    launched = {}
+    monkeypatch.setattr(updater.os, "startfile", lambda path: launched.setdefault("path", path), raising=False)
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda *a, **k: launched.setdefault("popen", a[0]))
+    monkeypatch.setattr(updater.time, "sleep", lambda *_: None)
 
     with pytest.raises(SystemExit):
         updater.apply_and_restart(staging / "new" / "JuegoRolTexto")
 
     assert (staging / "apply.bat").exists()
-    assert "apply.bat" in calls["cmd"][-1]
+    # En Windows se usa os.startfile; el fallback Popen no debería dispararse.
+    assert launched.get("path", "").endswith("apply.bat") or "apply.bat" in str(launched.get("popen", ""))

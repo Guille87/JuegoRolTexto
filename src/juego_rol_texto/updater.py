@@ -28,6 +28,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 import zipfile
 from collections.abc import Callable
@@ -297,6 +298,7 @@ def _apply_bat(pid: int) -> str:
         "  exit /b 1\r\n"
         ")\r\n"
         'echo [%date% %time%] relanzando >> "%LOG%"\r\n'
+        "ping -n 2 127.0.0.1 >nul\r\n"
         f'start "" /d "%DST%" "%DST%\\{_GAME_EXE}"\r\n'
         "exit /b 0\r\n"
         ":badpaths\r\n"
@@ -308,14 +310,29 @@ def _apply_bat(pid: int) -> str:
 
 
 def apply_and_restart(new_dir: Path) -> NoReturn:  # pragma: no cover - lanza proceso y sale
-    """Escribe `apply.bat`, lo lanza en una consola nueva e independiente y
-    cierra el juego. El `.bat` espera a que el proceso muera, copia la versión
-    nueva encima y relanza `JuegoRolTexto.exe`."""
+    """Escribe `apply.bat`, lo lanza totalmente desprendido del juego y cierra.
+    El `.bat` espera a que el proceso muera, espeja la versión nueva y relanza
+    `JuegoRolTexto.exe`."""
     bat = _staging_dir() / "apply.bat"
     bat.write_text(_apply_bat(os.getpid()), encoding="ascii")
-    # CREATE_NEW_CONSOLE: el .bat se ve en su propia ventana (mejor que una
-    # ventana fantasma), sobrevive al cierre del juego, y `timeout`/`pause`/
-    # `start` funcionan porque hay consola de verdad.
-    flags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-    subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, close_fds=True)
+
+    # `os.startfile` = ShellExecute: el shell arranca el .bat en su propia
+    # consola y de forma completamente asíncrona, sin heredar handles ni
+    # depender del ciclo de vida del juego. Lanzarlo con `subprocess.Popen` +
+    # `CREATE_NEW_CONSOLE` justo mientras el juego se cerraba provocaba a veces
+    # un 0xC0000142 (fallo al inicializar cmd.exe) — ver SECURITY/CHANGELOG.
+    start_file = getattr(os, "startfile", None)
+    if start_file is not None:
+        start_file(str(bat))
+    else:  # pragma: no cover - fallback fuera de Windows, que no debería ocurrir
+        subprocess.Popen(
+            ["cmd", "/c", str(bat)],
+            creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+            close_fds=True,
+        )
+
+    # Damos un margen para que la consola del .bat termine de arrancar antes de
+    # que el juego (y su teardown de pygame/colorama) se lleve el proceso.
+    sys.stdout.flush()
+    time.sleep(1.5)
     sys.exit(0)
