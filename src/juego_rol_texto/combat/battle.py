@@ -218,8 +218,14 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto):
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
     # vuelve a tocar: al empezar su turno se limpia.
     player.defending = False
+    hp_before = player.stats.health
     can_act = player.on_turn_start()
     turn_consumed = False
+
+    # Si el veneno/quemadura le hizo daño, mostramos las barras para que el
+    # jugador vea con cuánta vida se ha quedado antes de decidir su acción.
+    if player.is_alive() and player.stats.health != hp_before:
+        print_status(player, enemy, defeated_enemies)
 
     # --- COMPROBAR CANCELACIÓN DE AUTO ---
     if is_auto and check_for_interrupt():
