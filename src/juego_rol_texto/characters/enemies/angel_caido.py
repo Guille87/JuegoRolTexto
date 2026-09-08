@@ -47,11 +47,13 @@ class AngelCaido(Enemy):
             self._holy_strike(player)
 
     def _self_heal(self) -> None:
-        heal = random.randint(30, 50)
-        self.stats.health = min(self.stats.max_health, self.stats.health + heal)
+        healed = self.heal(random.randint(30, 50))
+        if healed <= 0:
+            print(f"{console.colorize(self.name, console.Fore.YELLOW)} extiende las alas, pero la luz no acude.")
+            return
         print(
             f"{console.colorize(self.name, console.Fore.YELLOW)} extiende las alas y se envuelve en luz. "
-            f"{console.colorize(f'+{heal} HP', console.Fore.GREEN)}."
+            f"{console.colorize(f'+{healed} HP', console.Fore.GREEN)}."
         )
 
     def _holy_strike(self, player) -> None:

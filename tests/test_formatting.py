@@ -48,5 +48,5 @@ def test_print_bestiary_entry_includes_kill_count_and_gold(capsys):
 def test_print_bestiary_entry_shows_elemental_weakness(capsys):
     print_bestiary_entry(Troll(), kill_count=1)
     out = capsys.readouterr().out
-    assert "Debilidad elemental" in out
+    assert "Débil a" in out
     assert "Fuego" in out

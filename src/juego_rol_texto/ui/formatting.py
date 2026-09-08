@@ -75,10 +75,14 @@ def print_bestiary_entry(enemy, kill_count: int = 0) -> None:
     if enemy.stats.regen:
         _p(f"Regeneración: {enemy.stats.regen} HP/turno", "regen")
 
-    weaknesses = getattr(type(enemy), "ELEMENTAL_WEAKNESSES", {})
-    if weaknesses:
-        weak_str = ", ".join(f"{elem.capitalize()} (x{mult:.1f})" for elem, mult in weaknesses.items())
-        _p(f"Debilidad elemental: {weak_str}", "elemento")
+    cls = type(enemy)
+    weak = set(getattr(cls, "WEAKNESSES", ())) | set(getattr(cls, "ELEMENTAL_WEAKNESSES", {}))
+    if weak:
+        _p(f"Débil a: {', '.join(sorted(e.capitalize() for e in weak))}", "elemento")
+    if getattr(cls, "RESISTANCES", ()):
+        _p(f"Resiste: {', '.join(sorted(e.capitalize() for e in cls.RESISTANCES))}", "elemento")
+    if getattr(cls, "IMMUNE_ELEMENTS", ()):
+        _p(f"Inmune a: {', '.join(sorted(e.capitalize() for e in cls.IMMUNE_ELEMENTS))}", "elemento")
 
     _p(f"Oro al derrotarlo: {enemy.gold_min}-{enemy.gold_max}", "oro")
     print("=" * 60)

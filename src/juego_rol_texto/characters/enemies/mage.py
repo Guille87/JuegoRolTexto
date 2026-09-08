@@ -61,11 +61,13 @@ class Mago(Enemy):
                 self._cast_blizzard(player)
 
     def _cast_heal(self) -> None:
-        heal = random.randint(40, 60)
-        self.stats.health = min(self.stats.max_health, self.stats.health + heal)
+        healed = self.heal(random.randint(40, 60))
+        if healed <= 0:
+            print(f"{console.colorize(self.name, console.Fore.MAGENTA)} intenta sanarse, pero la magia se disipa.")
+            return
         print(
             f"{console.colorize(self.name, console.Fore.MAGENTA)} susurra palabras antiguas y se cura "
-            f"{console.colorize(f'{heal} HP', console.Fore.GREEN)}."
+            f"{console.colorize(f'{healed} HP', console.Fore.GREEN)}."
         )
 
     def _cast_fireball(self, player) -> None:

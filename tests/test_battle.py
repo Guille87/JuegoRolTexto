@@ -186,6 +186,38 @@ def test_execute_turn_applies_elemental_bonus_against_weak_enemy(player, monkeyp
     assert dealt == 20  # 10 base * 2.0 (débil al fuego) - 0 armadura
 
 
+def test_elemental_weapon_can_inflict_its_status_on_the_enemy(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # el estado prende
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    goblin = Goblin()
+
+    _execute_turn(player, goblin, defeated_enemies=[])
+
+    assert any(e["name"] == "veneno" for e in goblin.status_effects)
+
+
+def test_status_weapon_does_nothing_to_an_element_immune_enemy(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
+
+    player.equipped_weapon = Weapon("Colmillo Venenoso", "desc", 14, damage=0, element="veneno")
+    goblin = Goblin()
+    type(goblin).IMMUNE_ELEMENTS = frozenset({"veneno"})
+    try:
+        before = goblin.stats.health
+        _execute_turn(player, goblin, defeated_enemies=[])
+        assert goblin.status_effects == []
+        assert goblin.stats.health == before  # inmune al elemento -> 0 daño
+    finally:
+        type(goblin).IMMUNE_ELEMENTS = frozenset()
+
+
 def test_execute_turn_applies_elemental_bonus_for_newer_elements(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")

@@ -1,12 +1,19 @@
 import random
 
 from juego_rol_texto.characters.stats import Stats, resolve_hit
+from juego_rol_texto.combat.elements import affinity_multiplier
 from juego_rol_texto.ui import console
 
 
 class Enemy:
-    # Multiplicador de daño por elemento recibido; vacío = neutral a todo.
-    # Las subclases lo sobrescriben para marcar debilidades (p. ej. {"fuego": 2.0}).
+    # --- Afinidades elementales (GDD §5). Las subclases sobrescriben estos
+    # conjuntos de clase. `ELEMENTAL_WEAKNESSES` es el modelo antiguo (un dict
+    # con multiplicadores explícitos); se mantiene como compatibilidad hasta que
+    # cada enemigo migre a los conjuntos nuevos.
+    WEAKNESSES: frozenset = frozenset()
+    RESISTANCES: frozenset = frozenset()
+    IMMUNE_ELEMENTS: frozenset = frozenset()
+    IMMUNE_STATUSES: frozenset = frozenset()
     ELEMENTAL_WEAKNESSES: dict = {}
 
     def __init__(self, name: str, stats: Stats, gold_min: int, gold_max: int):
@@ -14,9 +21,39 @@ class Enemy:
         self.stats = stats  # Objeto de la clase Stats
         self.gold_min = gold_min
         self.gold_max = gold_max
+        # Estados alterados: [{"name": "quemado", "duration": 3, "power": 0}, ...]
+        self.status_effects: list[dict] = []
 
     def get_gold_drop(self) -> int:
         return random.randint(self.gold_min, self.gold_max)
+
+    # --- AFINIDADES ---
+
+    def affinity_for(self, elements) -> float:
+        """Multiplicador de daño del ataque (`elements`: normalmente 1 elemento)
+        contra este enemigo, combinando debilidades/resistencias/inmunidades."""
+        cls = type(self)
+        multiplier = affinity_multiplier(
+            elements,
+            weaknesses=cls.WEAKNESSES,
+            resistances=cls.RESISTANCES,
+            immune_elements=cls.IMMUNE_ELEMENTS,
+        )
+        # Compat: si el modelo nuevo no dice nada (neutral) y hay un
+        # ELEMENTAL_WEAKNESSES antiguo, usar su multiplicador.
+        if multiplier == 1.0 and cls.ELEMENTAL_WEAKNESSES:
+            for element in elements:
+                if element in cls.ELEMENTAL_WEAKNESSES:
+                    return cls.ELEMENTAL_WEAKNESSES[element]
+        return multiplier
+
+    def resists_element(self, element: str | None) -> bool:
+        return bool(element) and element in type(self).RESISTANCES
+
+    def is_immune_to_status(self, name: str) -> bool:
+        return name in type(self).IMMUNE_STATUSES
+
+    # --- DAÑO ---
 
     def take_damage(
         self,
@@ -27,15 +64,18 @@ class Enemy:
         armor_penetration: int = 0,
         magic_penetration: int = 0,
     ) -> int:
-        # Multiplicador elemental (si el ataque tiene elemento y el enemigo es débil a él)
-        multiplier = self.ELEMENTAL_WEAKNESSES.get(element, 1.0) if element else 1.0
-        damage = int(damage * multiplier)
+        # Multiplicador elemental (débil / resistente / inmune).
+        damage = int(damage * self.affinity_for({element}))
 
-        # Igual que Player.take_damage: el daño mágico se mitiga con resistencia
-        # mágica en vez de con armadura, y la penetración del atacante reduce
-        # esa mitigación antes de restar el daño.
+        # "consagrado": el objetivo recibe +25 % de daño de todo.
+        if any(e["name"] == "consagrado" for e in self.status_effects):
+            damage = int(damage * 1.25)
+
         if is_magical:
-            mitigation = max(0, self.stats.magic_resist - magic_penetration)
+            # "fractura mágica": la resistencia mágica cuenta como 0 mientras dure.
+            fractured = any(e["name"] == "fractura_magica" for e in self.status_effects)
+            base_resist = 0 if fractured else self.stats.magic_resist
+            mitigation = max(0, base_resist - magic_penetration)
         else:
             mitigation = max(0, self.stats.armor - armor_penetration)
         actual_damage = max(0, damage - mitigation)
@@ -46,7 +86,89 @@ class Enemy:
         return self.stats.health > 0
 
     def get_attack_damage(self) -> int:
-        return random.randint(self.stats.min_atk, self.stats.max_atk)
+        dmg = random.randint(self.stats.min_atk, self.stats.max_atk)
+        # "quemado" reduce el ataque FÍSICO a la mitad (los ataques mágicos de
+        # los enemigos calculan su daño aparte y no pasan por aquí).
+        if any(e["name"] == "quemado" for e in self.status_effects):
+            dmg //= 2
+        return dmg
+
+    # --- CURACIÓN (para los enemigos que se curan: Troll, Mago, Ángel Caído) ---
+
+    def heal(self, amount: int) -> int:
+        """Cura `amount` HP respetando `consagrado` (bloquea la autocuración) y
+        `marchito` (la reduce a la mitad). Devuelve el HP realmente curado."""
+        if any(e["name"] == "consagrado" for e in self.status_effects):
+            return 0
+        if any(e["name"] == "marchito" for e in self.status_effects):
+            amount //= 2
+        before = self.stats.health
+        self.stats.health = min(self.stats.max_health, self.stats.health + amount)
+        return self.stats.health - before
+
+    # --- ESTADOS ALTERADOS ---
+
+    def apply_status(self, name: str, duration: int, power: int = 0) -> bool:
+        """Aplica un estado. Devuelve False (sin efecto) si el enemigo es inmune
+        a él. Si ya lo tiene, refresca la duración al máximo de ambas."""
+        if self.is_immune_to_status(name):
+            return False
+        for effect in self.status_effects:
+            if effect["name"] == name:
+                effect["duration"] = max(effect["duration"], duration)
+                effect["power"] = max(effect.get("power", 0), power)
+                return True
+        self.status_effects.append({"name": name, "duration": duration, "power": power})
+        return True
+
+    def on_turn_start(self) -> bool:
+        """Procesa los estados al inicio del turno del enemigo. Devuelve si puede
+        actuar (parálisis/congelación pueden hacerle perder el turno)."""
+        can_act = True
+        for effect in self.status_effects[:]:
+            if effect["name"] == "congelado":
+                if random.random() < 0.20:
+                    console.info(f"El hielo que envuelve a {self.name} se resquebraja.")
+                    self.status_effects.remove(effect)
+                else:
+                    print(console.colorize(f"❄️  {self.name} está congelado y no puede moverse.", console.Fore.BLUE))
+                    can_act = False
+                    break
+            elif effect["name"] == "paralizado" and random.random() < 0.5:
+                console.warning(f"⚡ ¡{self.name} está paralizado y pierde el turno!")
+                can_act = False
+
+        for effect in self.status_effects[:]:
+            if effect["name"] == "quemado":
+                dmg = max(1, self.stats.max_health // 16)
+                self.stats.health -= dmg
+                console.error(f"🔥 La quemadura le quita {dmg} HP a {self.name}.")
+            elif effect["name"] == "veneno":
+                dmg = max(1, self.stats.max_health // 8)
+                self.stats.health -= dmg
+                console.success(f"☣️ El veneno le quita {dmg} HP a {self.name}.")
+
+        return can_act
+
+    def on_turn_end(self) -> None:
+        """Regeneración de salud pasiva por defecto (self.stats.regen == 0 para
+        la mayoría de enemigos: solo los "aptos" para regenerar la usan, p. ej.
+        el Troll, que además personaliza el mensaje sobrescribiendo este método)."""
+        if self.stats.regen > 0 and self.is_alive() and self.stats.health < self.stats.max_health:
+            healed = self.heal(self.stats.regen)
+            if healed > 0:
+                console.success(f"💚 {self.name} regenera {healed} HP.")
+
+    def decay_status_effects(self) -> None:
+        """Descuenta un turno a cada estado y elimina los caducados. Se llama al
+        final del turno del enemigo, después de on_turn_end()."""
+        for effect in self.status_effects[:]:
+            effect["duration"] -= 1
+            if effect["duration"] <= 0:
+                console.info(f"✨ El efecto de {effect['name']} sobre {self.name} ha desaparecido.")
+                self.status_effects.remove(effect)
+
+    # --- TURNO ---
 
     def perform_turn(self, player) -> None:
         """Lógica por defecto: atacar. Las subclases pueden sobrescribir esto."""
@@ -72,14 +194,6 @@ class Enemy:
             f"{console.colorize(self.name, console.Fore.RED)} ataca y hace "
             f"{console.colorize(str(final_damage), console.Fore.RED)} de daño."
         )
-
-    def on_turn_end(self) -> None:
-        """Regeneración de salud pasiva por defecto (self.stats.regen == 0 para
-        la mayoría de enemigos: solo los "aptos" para regenerar la usan, p. ej.
-        el Troll, que ademas personaliza el mensaje sobrescribiendo este método)."""
-        if self.stats.regen > 0 and self.is_alive() and self.stats.health < self.stats.max_health:
-            self.stats.health = min(self.stats.max_health, self.stats.health + self.stats.regen)
-            console.success(f"💚 {self.name} regenera {self.stats.regen} HP.")
 
     def drop_item(self) -> list:
         """Por defecto no sueltan nada, las subclases lo implementan."""

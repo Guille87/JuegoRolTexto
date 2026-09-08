@@ -123,6 +123,15 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             gauge_enemy -= ATB_THRESHOLD
             _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo")
 
+        # El enemigo pudo morir por veneno/quemadura al empezar su turno.
+        if not enemy.is_alive():
+            player_won = True
+            new_atk, new_armor = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
+            if player.just_leveled_up:
+                snapshot["atk"] = new_atk
+                snapshot["armor"] = new_armor
+            break
+
         if not player.is_alive():
             _handle_defeat(player)
             break
@@ -267,13 +276,22 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) 
     no hay pausa ni barra de vida por turno (solo el texto del ataque)."""
     if not turbo:
         time.sleep(1)
+
+    # Estados alterados: veneno/quemadura (daño), parálisis/congelación (pierde turno).
+    can_act = enemy.on_turn_start()
+    if not enemy.is_alive():
+        console.info(f"{enemy.name} sucumbe a sus heridas.")
+        enemy.decay_status_effects()
+        return
+
     print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
-    enemy.perform_turn(player)
+    if can_act:
+        enemy.perform_turn(player)
+    enemy.on_turn_end()
+    enemy.decay_status_effects()
+
     if not turbo:
         print_status(player, enemy, defeated_enemies)
-
-    if hasattr(enemy, "on_turn_end"):
-        enemy.on_turn_end()
 
 
 def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list) -> None:
@@ -321,10 +339,13 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     if is_crit:
         damage = int(damage * attacker_crit_damage)
 
-    # ¿Es el defensor débil a este elemento? Lo comprobamos antes de aplicar el daño
-    # para poder mostrar el mensaje de "supereficaz" (take_damage no expone esa info).
-    weaknesses = getattr(type(defender), "ELEMENTAL_WEAKNESSES", {})
-    is_super_effective = bool(element) and weaknesses.get(element, 1.0) > 1.0
+    # Afinidad del defensor al elemento (débil / resistente / inmune). Lo
+    # comprobamos antes de aplicar el daño para poder mostrar el mensaje
+    # correspondiente (take_damage no expone esa info).
+    affinity = defender.affinity_for({element}) if element and hasattr(defender, "affinity_for") else 1.0
+    is_super_effective = affinity > 1.0
+    is_immune_hit = element and affinity == 0.0
+    is_resisted_hit = 0.0 < affinity < 1.0
 
     # Penetración de armadura: solo tiene efecto en ataques físicos (is_magical=False,
     # el único caso que pasa por aquí hoy), reduce la armadura del defensor antes
@@ -345,6 +366,18 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
                 f"¡Es supereficaz! El {element} causa estragos en {defender.name}.", console.Fore.RED, bright=True
             )
         )
+    elif is_immune_hit:
+        print(
+            console.colorize(f"{defender.name} es inmune al {element}: el ataque no le hace nada.", console.Fore.BLUE)
+        )
+    elif is_resisted_hit:
+        print(console.colorize(f"{defender.name} resiste el {element}.", console.Fore.BLUE))
+
+    # Estado alterado del arma elemental (p. ej. veneno -> "veneno"). Solo el
+    # jugador; si el enemigo resiste el elemento, la probabilidad y la duración
+    # se reducen a la mitad.
+    if isinstance(attacker, Player) and final_dmg >= 0 and hasattr(defender, "apply_status"):
+        _try_inflict_weapon_status(attacker, defender, element)
 
     if final_dmg > 0:
         # Daño normal en cian; el amarillo en negrita queda reservado para el
@@ -364,6 +397,27 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
         print_status(attacker, defender, defeated_enemies)
     else:
         print_status(defender, attacker, defeated_enemies)
+
+
+def _try_inflict_weapon_status(player: "Player", enemy, element: str | None) -> None:
+    """Si el arma equipada inflige un estado (explícito en `inflicts` o derivado
+    de su elemento), lo tira. La resistencia del enemigo al elemento reduce a la
+    mitad la probabilidad y la duración; la inmunidad al elemento lo anula."""
+    weapon = player.equipped_weapon
+    inflicts = weapon.get_inflicts() if weapon and hasattr(weapon, "get_inflicts") else None
+    if not inflicts:
+        return
+    if element and enemy.affinity_for({element}) == 0.0:
+        return  # inmune al elemento -> tampoco el estado
+
+    chance = inflicts["chance"]
+    duration = inflicts["duration"]
+    if element and enemy.resists_element(element):
+        chance *= 0.5
+        duration = max(1, duration // 2)
+
+    if random.random() < chance and enemy.apply_status(inflicts["status"], duration, inflicts.get("power", 0)):
+        console.warning(f"¡{enemy.name} sufre {inflicts['status']}!")
 
 
 def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> tuple:
