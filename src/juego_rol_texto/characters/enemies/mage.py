@@ -151,7 +151,7 @@ class Mago(Enemy):
             player.apply_status("veneno", 3)
             console.success("¡El veneno recorre tus venas!")
         else:
-            print("Por suerte, el veneno no logra entrar en tu organismo.")
+            console.say("Por suerte, el veneno no logra entrar en tu organismo.")
 
     def _cast_blizzard(self, player) -> None:
         print(

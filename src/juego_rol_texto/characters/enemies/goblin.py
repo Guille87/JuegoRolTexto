@@ -32,8 +32,14 @@ class Goblin(Enemy):
         )
         self.ambush_done = 0  # Añadimos contador de turnos
 
-    def check_ambush(self, player) -> bool:
-        """Intenta realizar un ataque gratuito antes de que empiece la pelea."""
+    def check_ambush(self, player, defeated_enemies: list | None = None) -> bool:
+        """Intenta realizar un ataque gratuito antes de que empiece la pelea.
+
+        El Goblin es el primer enemigo del juego: no embosca hasta que el
+        jugador lo ha derrotado al menos una vez (la primera pelea es limpia).
+        """
+        if not defeated_enemies or self.name not in defeated_enemies:
+            return False
         if not self.ambush_done and random.random() <= 0.4:
             self.ambush_done = True
             damage = self.get_attack_damage() + 5

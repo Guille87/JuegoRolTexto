@@ -36,13 +36,23 @@ def test_goblin_ambush_hits_once_then_never_again(player, always_low):
     goblin = Goblin()
     before = player.stats.health
 
-    assert goblin.check_ambush(player) is True
+    assert goblin.check_ambush(player, ["Goblin"]) is True
     assert player.stats.health < before
-    assert goblin.check_ambush(player) is False  # ambush_done ya está marcado
+    assert goblin.check_ambush(player, ["Goblin"]) is False  # ambush_done ya está marcado
 
 
 def test_goblin_ambush_can_fail(player, always_high):
-    assert Goblin().check_ambush(player) is False
+    assert Goblin().check_ambush(player, ["Goblin"]) is False
+
+
+def test_goblin_never_ambushes_until_it_has_been_defeated_once(player, always_low):
+    player.stats.armor = 0
+    before = player.stats.health
+
+    assert Goblin().check_ambush(player, []) is False
+    assert Goblin().check_ambush(player, None) is False
+    assert Goblin().check_ambush(player, ["Huargo"]) is False
+    assert player.stats.health == before
 
 
 # --- Esqueleto: reanimación ---

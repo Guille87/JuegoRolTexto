@@ -392,3 +392,26 @@ def test_defending_is_cleared_when_the_players_next_turn_begins(player, weak_ene
     _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
 
     assert player.defending is False
+
+
+def test_turbo_option_is_offered_only_for_defeated_enemies(player, weak_enemy, monkeypatch):
+    from juego_rol_texto.combat.battle import _player_menu
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "7")
+    assert _player_menu(player, weak_enemy, defeated_enemies=[weak_enemy.name]) == "turbo"
+
+
+def test_turbo_auto_battle_runs_without_any_sleep(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    slept = []
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: slept.append(a))
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "7")  # Auto turbo
+    monkeypatch.setattr("juego_rol_texto.combat.battle.check_for_interrupt", lambda: False)
+
+    enemy = Goblin()
+    enemy.stats.min_atk = enemy.stats.max_atk = 1
+    initiate_battle(player, enemy, defeated_enemies=["Goblin"], unlocked_enemies=["Goblin"])
+
+    assert player.is_alive()
+    assert slept == []  # turbo: cero pausas, ni de turno ni el "Presiona Enter" final

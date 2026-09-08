@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Battle start always shows both combat sheets (player and enemy) regardless of
+  turn order; an enemy you haven't defeated yet is shown as `???`.
+- Turbo auto-battle: a second auto-battle option with no turn pauses, no
+  per-turn health bar and no victory prompt — for fast farming of enemies you
+  can already beat easily.
+- Stat sheets (player, enemy info, bestiary) are colour-coded per stat.
+- Any text mentioning a status effect is colour-coded consistently everywhere:
+  poison green, burn red, paralysis yellow, freeze blue.
+
+### Changed
+
+- The Goblin never ambushes until it has been defeated at least once (the very
+  first fight of the game is always clean).
+
 ## [0.6.0] - 2026-09-08
 
 ### Fixed
