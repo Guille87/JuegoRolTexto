@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-08
+
 ### Added
 
 - Cross-platform, non-blocking keyboard input (`ui/keyboard.py`); the game and
@@ -93,5 +95,6 @@ were not formally tracked.
 
 - Initial version: basic console turn-based combat.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.3.0
