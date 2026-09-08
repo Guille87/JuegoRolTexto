@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Elemental affinity model** (GDD §5): enemies can now be weak to, resist or be
+  immune to each of the 7 elements. Weakness ×1.5 damage (×2.0 if two of the
+  attack's elements are weak), resistance ×0.5 (×0.25 if two), immunity ×0 damage
+  and no status. Separate standalone immunity to individual status effects.
+- **Status effects on enemies**: burn, poison, paralysis, freeze, `fractura
+  mágica` (zeroes magic resist) and the rest are now processed on the enemy's
+  turn (damage over time, skipped turns, fade messages) the same way they already
+  were on the player.
+- **Weapons that inflict status**: a weapon with an element (or an explicit
+  `inflicts`) has a chance to apply the matching status on hit. Chance and
+  duration are halved against an enemy that resists the element, and blocked
+  entirely against one immune to it.
+- **i18n string layer** (`i18n.t(key, **kwargs)`, GDD §9.1): combat/status
+  strings now come from a locale catalog with fallback to Spanish then to the
+  key. Language is read from `config.ini` `[IDIOMA]`. Only the new v0.9.0 strings
+  are migrated for now.
+- Frozen / paralysed combatants are guaranteed to lose the turn the status is
+  applied; only afterwards do the per-turn escape rolls apply.
+- Status badges on the combat health bars show each active effect and its
+  remaining turns (e.g. `[quemado 2 · veneno 1]`).
+- Shop: stackable items (potions, antidotes) can be bought and sold several at a
+  time, up to what your gold allows — one summary message instead of one line per
+  unit. Shop, sell menu and forge lines are colour-coded.
+- Admin panel: "get x20 of every potion".
+
+### Changed
+
+- **Damage mitigation is now multiplicative** (Raid-style diminishing returns):
+  `damage × K / (defence + K)` with `K = 20`, never fully absorbed (minimum 1),
+  replacing the old `damage − armour` subtraction that broke down at scale. This
+  is a balance shift; the 14-enemy chain will be recalibrated in a later pass.
+- `quemado` (burn) is now physical-only — it no longer melts on any magical hit,
+  only on an explicitly fire-flagged one.
+- The Gólem de Piedra is now weak to `hielo` and immune to `rayo` (was weak to
+  `rayo`).
+- A paralysed / frozen player now gets the normal turn menu (use items, attempt
+  to flee at half chance) instead of the turn being skipped automatically; no
+  "Defender" while immobilised.
+- Combat message order cleaned up: the critical-hit note and any inflicted-status
+  note now come after the damage line, not before it.
+
+### Fixed
+
+- The Bandido can no longer re-disarm an already-disarmed player (fights that
+  consisted only of repeated disarms).
+- Enemy spellcasters (Mago) now print the damage number of each spell.
+- A paralysed / frozen enemy no longer prints a turn header and duplicate health
+  bars for a turn it does nothing on.
+- A disarmed player's attacks no longer carry the (now dropped) weapon's element
+  or status.
+
 ## [0.8.0] - 2026-09-08
 
 ### Fixed

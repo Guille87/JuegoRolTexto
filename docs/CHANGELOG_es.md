@@ -9,6 +9,62 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- **Modelo de afinidades elementales** (GDD §5): los enemigos ahora pueden ser
+  débiles, resistentes o inmunes a cada uno de los 7 elementos. Debilidad ×1.5 de
+  daño (×2.0 si dos de los elementos del ataque son débiles), resistencia ×0.5
+  (×0.25 si dos), inmunidad ×0 de daño y sin estado. Inmunidad aparte a estados
+  concretos.
+- **Estados en los enemigos**: quemadura, veneno, parálisis, congelación,
+  `fractura mágica` (anula la resistencia mágica) y el resto se procesan ahora en
+  el turno del enemigo (daño por turno, turnos perdidos, mensajes de fin) igual
+  que ya se hacía con el jugador.
+- **Armas que infligen estados**: un arma con elemento (o con `inflicts`
+  explícito) tiene una probabilidad de aplicar el estado correspondiente al
+  golpear. La probabilidad y la duración se reducen a la mitad contra un enemigo
+  que resista el elemento, y se bloquean por completo si es inmune.
+- **Capa de strings i18n** (`i18n.t(key, **kwargs)`, GDD §9.1): los textos de
+  combate/estados salen de un catálogo por idioma con recurso al español y luego
+  a la clave. El idioma se lee de `config.ini` `[IDIOMA]`. De momento solo se han
+  migrado los textos nuevos de la v0.9.0.
+- Un combatiente congelado / paralizado pierde con seguridad el turno en el que
+  se le aplica el estado; las tiradas de escape por turno solo se aplican después.
+- Distintivos de estado en las barras de vida de combate con cada efecto activo y
+  sus turnos restantes (p. ej. `[quemado 2 · veneno 1]`).
+- Tienda: los objetos apilables (pociones, antídotos) se pueden comprar y vender
+  de varios en varios, hasta donde llegue el oro — un único mensaje resumen en
+  lugar de una línea por unidad. Los textos de tienda, venta y herrería van
+  coloreados.
+- Panel de admin: "conseguir x20 de cada poción".
+
+### Cambiado
+
+- **La mitigación de daño ahora es multiplicativa** (rendimientos decrecientes
+  estilo Raid): `daño × K / (defensa + K)` con `K = 20`, nunca absorbido del todo
+  (mínimo 1), en lugar de la resta `daño − armadura` que se rompía a gran escala.
+  Es un cambio de balance; la cadena de 14 enemigos se recalibrará más adelante.
+- `quemado` ahora es solo físico — ya no se derrite con cualquier golpe mágico,
+  solo con uno marcado explícitamente como de fuego.
+- El Gólem de Piedra ahora es débil a `hielo` e inmune a `rayo` (antes era débil
+  a `rayo`).
+- Un jugador paralizado / congelado ahora recibe el menú de turno normal (usar
+  objetos, intentar huir con la mitad de probabilidad) en vez de saltarse el
+  turno automáticamente; no puede "Defender" mientras está inmovilizado.
+- Orden de los mensajes de combate: la nota de golpe crítico y la de estado
+  infligido salen ahora después de la línea de daño, no antes.
+
+### Corregido
+
+- El Bandido ya no puede volver a desarmar a un jugador ya desarmado (peleas que
+  consistían solo en desarmes repetidos).
+- Los lanzadores de hechizos enemigos (Mago) ahora muestran el número de daño de
+  cada hechizo.
+- Un enemigo paralizado / congelado ya no imprime cabecera de turno ni barras de
+  vida duplicadas en un turno en el que no hace nada.
+- Los ataques de un jugador desarmado ya no llevan el elemento ni el estado del
+  arma (ahora caída).
+
 ## [0.8.0] - 2026-09-08
 
 ### Corregido
