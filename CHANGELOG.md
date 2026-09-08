@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   test suite no longer require Windows.
 - Static type checking with `pyright` (basic mode) as a required CI check.
 - Boot smoke test (`app.main()` starts and exits cleanly).
+- README screenshot generated from a real battle (`tools/capture_screenshot.py`).
+- CI `build-check` — builds the `.exe` when packaging files change.
 
 ### Changed
 

@@ -20,6 +20,8 @@ A living document of what exists and what is planned. See the
 - Branch protection on `main` (PR + `all-green` check); boot smoke test.
 - Cross-platform keyboard input (`ui/keyboard.py`) — the game and test suite no longer need Windows.
 - Ruff `UP`/`B`/`SIM`, `__version__` via `importlib.metadata`, CI `concurrency`.
+- README screenshot; repo description and topics.
+- CI `build-check` — builds the `.exe` when packaging files change.
 
 ## Game — planned
 
@@ -34,18 +36,15 @@ A living document of what exists and what is planned. See the
 
 High impact:
 
-- **README screenshot / gameplay recording** — the repo currently shows only
-  badges and text.
 - **Auto-updater** — a distributed `.exe` pulls and applies a new version
   without a reinstall and without touching `saved_games/` / `config.ini`.
 
 Medium / polish:
 
-- **GitHub repo metadata** — description, topics, social-preview image.
+- **Gameplay recording (GIF / asciinema)** for the README, beyond the static screenshot.
+- **Social-preview image** for the repo (via GitHub settings).
 - Extend `pyright` to also check `tests/`, and step up from `basic` to `standard`.
 - Tidy the auto-generated release notes; link the CHANGELOG.
-- Optional CI job that builds the PyInstaller package without publishing
-  (only when the `.spec` changes) so a broken spec is caught before a release.
 
 ## Ideas (no commitment)
 

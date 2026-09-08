@@ -47,6 +47,7 @@ pyright                 # basic mode, `src` only, must stay at 0 errors
 - **Branch protection**: `main` has a ruleset requiring a PR (0 approvals) with the `all-green` check green. Work on a branch, open a PR, let CI pass, merge.
 - **Coverage** (`[tool.coverage.run]` in `pyproject.toml`): `ui/menus.py` and `app.py` are `omit`ted — they are interactive menu loops / startup orchestration, mostly chained `input()`/`print()` calls; the metric tracks the game logic instead. Target is ≥90% of the measured code.
 - **Release** (`.github/workflows/release.yml`): pushing a `v*` tag builds the PyInstaller package from `JuegoRolTexto.spec` (now version-controlled), zips `dist/JuegoRolTexto`, and attaches it to the GitHub Release. `.github/scripts/write_secrets.py` writes `config/secrets.py` from repo secrets first (skipped if none set). See `CONTRIBUTING.md` for the full release steps.
+- **Build check** (`.github/workflows/build-check.yml`): only when packaging files change (`JuegoRolTexto.spec`, `main.py`, `pyproject.toml`, …) — builds the `.exe`, runs it with stdin `4` (menu "Salir") expecting exit 0, and uploads the folder as an artifact. Not a required check.
 
 ## Architecture
 
