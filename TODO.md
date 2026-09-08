@@ -133,3 +133,30 @@
 - [x] Regeneración de Salud: nuevo `Stats.regen` (curación pasiva por turno, distinta del status temporal "regeneración" de las pociones — ambas pueden coexistir y se suman). El jugador tiene el stat base siempre a 0 y no sube al subir de nivel (a petición del usuario): solo se consigue vía objetos. `Armor` gana un campo `regen` sumado en `Player.get_total_regen()` y aplicado cada turno en `Player.on_turn_start()`. Dos fuentes ya craftables: Armadura Regenerativa (peto, +8, ver arriba) y el nuevo Anillo de Vitalidad (+2, receta con 2x Fragmento de Hueso). Para enemigos, `Enemy.on_turn_end()` aplica `self.stats.regen` de forma genérica (0 por defecto = sin efecto) para que futuros enemigos "aptos" lo hereden gratis sin código a medida; el Troll (el único "apto" hoy) mantiene su curación aleatoria pero ahora anclada al stat (`regen=10`, cura entre `regen-5` y `regen+5`, el mismo rango 5-15 que ya tenía) y sigue sobrescribiendo el mensaje para conservar su sabor propio.
 - [x] Penetración de Armadura y Penetración Mágica (separadas a petición del usuario, en vez de una única "Penetración de Defensa"): `Stats.armor_penetration`/`magic_penetration`, `Player.get_total_armor_penetration()`/`get_total_magic_penetration()` (solo stat base por ahora). `Player.take_damage()` y `Enemy.take_damage()` (+ el override de `Skeleton`) reducen la mitigación del defensor con la penetración del atacante (`max(0, armadura_o_res.mágica - penetración)`) antes de restar el daño — nunca la vuelven negativa. Conectada en los dos sitios que ya reparten daño: `combat/battle.py::_execute_turn` (ataque físico del jugador) y `Enemy.perform_turn()` (ataque físico del enemigo) pasan `armor_penetration`; los 4 hechizos del Mago (`mage.py`) pasan `magic_penetration`. Valores: Goblin armor_pen=1 (esquiva defensas), Orco armor_pen=3 (el más perforante), Esqueleto/Troll=0, Mago magic_pen=3 (el único con efecto inmediato en partida real hoy, ya que es el único que inflige daño mágico). El Orco en furia sigue fuera (mismo hueco que precisión/evasión/crítico).
 - [x] La velocidad ya suma bonus de equipo, no solo el stat base — ver "Bonus de velocidad en el slot botas" en la sección de Slots de Equipamiento, arriba.
+## Clases y habilidades (v0.10.0) — números provisionales
+
+Decisiones de diseño cerradas con el usuario en la revisión de §6.1/§6.2 del GDD
+(ver §6.2.1 del GDD para el detalle completo). **Todos los números de aquí son
+provisionales** y se recalibran en la fase de presupuesto de poder (v0.14), junto
+con el rebalanceo completo de la cadena de 14 enemigos que ya quedó pendiente por
+el cambio a mitigación multiplicativa.
+
+- [ ] **Deltas de stats por clase** (sobre la base actual del Vagabundo, que no
+  cambia):
+  - Guerrero: +15% vida máx., +2 armadura base, +1 ataque mín./máx.; crecimiento
+    de armadura x1.3.
+  - Pícaro: +3 velocidad, +5% evasión, +5% prob. crítico, -10% vida máx.;
+    crecimiento de velocidad x1.3.
+  - Arcanista: -15% vida máx., -2 armadura base; stat nuevo `poder_magico` que
+    crece cada nivel (tasa por definir; empezar ~2.0/nivel y medir).
+- [ ] **`poder_magico`**: campo nuevo de `Stats`, 0 para el resto de clases. El
+  ataque estándar del Arcanista en `_execute_turn` usa `poder_magico` como fuente
+  de daño en vez del rango del arma y va con `is_magical=True`. Las armas le
+  aportan stats secundarios y `element`, no daño base. Elemento por defecto:
+  `arcano` (la pasiva Sintonía lo cambia al empezar el combate).
+- [ ] **Niveles de desbloqueo provisionales**: habilidades M1 al crear (nivel 1),
+  M2 al nivel 4. Exactos a v0.14.
+- [ ] **Primeras 3 habilidades por clase** (M1 activa + M1 pasiva + M2): tabla de
+  §6.2 del GDD. Balancear cada efecto tras implementarlas.
+- [ ] **Guardado**: v0.10.0 solo añade `clase` (back-fill "vagabundo") y
+  `habilidades_equipadas` (back-fill []). El bloque `mundo` completo va en v0.12.0.

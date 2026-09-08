@@ -343,6 +343,42 @@ Esbozo (tipos: `fís` físico, `mág` mágico, `ele` elemental, `util` utilidad;
 | 6 | Botín Afortunado — p: +25 % oro, +10 % prob. de drop | Golpe Sísmico — a5 fís: daño alto, ignora la evasión | Marca de Muerte — a5 util: el enemigo recibe +30 % de todo el daño 3 turnos | Mente Aguda — p: −1 turno a todos los enfriamientos |
 | 7 | Voluntad de Hierro — p: sobrevives a un golpe letal con 1 de vida (1 vez/combate) | Último Bastión — a7 util: 2 turnos inmune a daño físico | Asalto — a7 fís: 3 golpes rápidos | Cataclismo — a8 arc: daño mágico masivo, ignora toda mitigación |
 
+#### 6.2.1 Decisiones fijadas para v0.10.0
+
+Revisadas y cerradas con el mantenedor; los números son provisionales y se
+revisarán en la fase de presupuesto de poder de v0.14 (anotado en `TODO.md`).
+
+1. **Deltas de stats / crecimiento por clase (provisionales).** Se aplican sobre
+   la base actual del Vagabundo al crear; los ajustes de crecimiento van sobre
+   los `_*_GROWTH_RATE` actuales:
+   - **Vagabundo** — sin cambios (el personaje de hoy exactamente).
+   - **Guerrero** — +15 % vida máx., +2 armadura base, +1 ataque mín./máx.;
+     crecimiento de armadura ×1.3; sin ninguna interacción con magia.
+   - **Pícaro** — +3 velocidad, +5 % evasión, +5 % prob. crítico, −10 % vida
+     máx.; crecimiento de velocidad ×1.3.
+   - **Arcanista** — −15 % vida máx., −2 armadura base; gana el stat
+     `poder_mágico` (ver abajo) que crece cada nivel.
+2. **`poder_mágico` y el ataque del Arcanista.** Campo nuevo de `Stats`, `0` para
+   el resto de clases. El ataque estándar del Arcanista en `_execute_turn` usa
+   `poder_mágico` como fuente de daño **en vez del** rango de ataque del arma, y
+   se marca `is_magical=True`. Las armas le siguen aportando sus stats
+   secundarios y su `element`, pero no daño base.
+3. **Elemento del ataque básico del Arcanista.** Por defecto `arcano` (encaja con
+   Proyectil Arcano y alimenta `fractura mágica`). La pasiva **Sintonía** (M1)
+   deja al jugador cambiar el elemento al empezar el combate.
+4. **Niveles de desbloqueo provisionales.** Las habilidades M1 se conceden al
+   **crear el personaje (nivel 1)**; las M2 al **nivel 4**. Los valores exactos
+   pasan a v0.14; hasta entonces cada habilidad va atada a su hito.
+5. **Esquema de guardado.** v0.10.0 añade solo dos claves, no el bloque `mundo`
+   completo: `clase` (back-fill a `"vagabundo"`) y `habilidades_equipadas`
+   (back-fill a `[]`). El bloque `mundo` entero (§9.4) sigue en v0.12.0.
+6. **Modelo de datos de `Skill`.** Una dataclass — `id`, `nombre`, `clase`,
+   `tipo` (`pasiva` / `activa`), `hito`, `enfriamiento` — más un hook de efecto
+   por habilidad. Las pasivas se consultan con `player.has_passive(id)` en los
+   sitios relevantes (`take_damage`, `_execute_turn`, `_handle_victory`,
+   procesado de estados); las activas se resuelven con un dispatch en el bucle de
+   combate. Vive en `characters/skills.py` (§9.3).
+
 ### 6.3 Bonus de conjunto de armadura *(diseño en revisión por el mantenedor)*
 
 `Armor` gana un `set_name` opcional. `Player` cuenta las piezas equipadas por
