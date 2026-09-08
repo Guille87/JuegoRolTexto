@@ -17,7 +17,7 @@ de versiones, mira el [CHANGELOG](CHANGELOG_es.md); para el registro de balance,
 - Guardado/carga en JSON con copia de seguridad; reconocimiento del jugador por
   nombre sin distinguir mayúsculas/minúsculas.
 - Registro de errores en disco e informe opcional (opt-in) a Discord.
-- CI (Ruff, pyright, tests en Python 3.10–3.13 Linux + un job de Windows), badge de cobertura, workflow de release (v0.7.0).
+- CI (Ruff, pyright, tests en Python 3.10–3.13 Linux + un job de Windows), badge de cobertura, workflow de release (v0.8.0).
 - Protección de la rama `main` (PR + check `all-green`); smoke test de arranque.
 - Entrada de teclado multiplataforma (`ui/keyboard.py`) — el juego y los tests ya no necesitan Windows.
 - Ruff `UP`/`B`/`SIM`, `__version__` vía `importlib.metadata`, `concurrency` en el CI.
