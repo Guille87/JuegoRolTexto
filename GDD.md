@@ -389,10 +389,18 @@ Curve TBD in the power-budget phase (§4.4). Levels also gate skills (§6.2).
 
 ### 7.2 Bestiary — progressive reveal
 
-Keyed on `enemy_kill_counts`: **1** → name, HP, attack range, gold · **3** →
-armour, magic resist, speed, crit · **5** → weaknesses, resistances, immunities
-· **10** → full drop table (first time it is ever shown). Below 1 kill: not
-listed (as today).
+Keyed on `enemy_kill_counts`, each threshold adding to the sheet:
+
+- **1** → name, HP, attack range, gold, **a lore line / short description**, and —
+  once enemies have elemental attacks (v0.11+) — **the element their attacks deal**.
+- **3** → armour, magic resist, speed, crit, plus **the enemy's signature ability**
+  (its `perform_turn` gimmick: pack bite, disarm, self-heal, earthquake…).
+- **5** → elemental weaknesses, resistances and immunities, **the statuses it can
+  inflict on you**, and **its standalone status immunities** (what it can't be
+  frozen/poisoned/… with).
+- **10** → full drop table (first time it is ever shown).
+
+Below 1 kill: not listed (as today). Implementation lands in v0.14.0.
 
 ### 7.3 Loot scaling & drop-scaling
 

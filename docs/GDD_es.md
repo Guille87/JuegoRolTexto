@@ -409,10 +409,20 @@ para no-Arcanistas, creciente para el Arcanista.
 
 ### 7.2 Bestiario — revelado progresivo
 
-Según `enemy_kill_counts`: **1** → nombre, vida, rango de ataque, oro · **3** →
-armadura, res. mágica, velocidad, crítico · **5** → debilidades, resistencias,
-inmunidades · **10** → tabla de drops completa (primera vez que se muestra). Con
-0 kills: no aparece (como hoy).
+Según `enemy_kill_counts`, cada umbral añade cosas a la ficha:
+
+- **1** → nombre, vida, rango de ataque, oro, **una frase de lore / descripción
+  breve** y —cuando los enemigos tengan ataques elementales (v0.11+)— **el
+  elemento de sus ataques**.
+- **3** → armadura, res. mágica, velocidad, crítico, más **la habilidad
+  distintiva del enemigo** (su truco de `perform_turn`: mordisco en manada,
+  desarme, autocuración, terremoto…).
+- **5** → debilidades, resistencias e inmunidades elementales, **los estados que
+  te puede infligir** y **sus inmunidades a estados sueltos** (con qué no se le
+  puede congelar/envenenar/…).
+- **10** → tabla de drops completa (primera vez que se muestra).
+
+Con 0 kills: no aparece (como hoy). La implementación llega en v0.14.0.
 
 ### 7.3 Escalado del botín y drop-scaling
 
