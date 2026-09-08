@@ -82,6 +82,7 @@ in before building; without it the game runs fine, just without crash reports.
 ## Documentation
 
 - [Contributing](CONTRIBUTING.md) — workflow and conventions.
+- [GDD](GDD.md) — game design document (world, story, RPG direction).
 - [Roadmap](ROADMAP.md) — what is done and what is planned.
 - [Changelog](CHANGELOG.md) — version history.
 - [CLAUDE.md](CLAUDE.md) — detailed architecture notes.
