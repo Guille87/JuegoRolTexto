@@ -66,6 +66,15 @@ def test_update_check_does_not_clash_with_the_other_sections(config_file):
     assert settings.load_update_check() is False
 
 
+def test_language_defaults_to_es_and_round_trips(config_file):
+    assert settings.load_language() == "es"
+    settings.save_language("en")
+    assert settings.load_language() == "en"
+
+    settings.save_config(0.2, 0.3)
+    assert settings.load_language() == "en"  # no lo pisa otra sección
+
+
 def test_crash_reporting_unset_when_value_is_garbage(config_file):
     config_file.write_text("[REPORTS]\nsend_crash_reports = quizás\n", encoding="utf-8")
     assert settings.load_crash_reporting() == settings.CRASH_REPORTS_UNSET

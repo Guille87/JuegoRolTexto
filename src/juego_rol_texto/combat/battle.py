@@ -2,7 +2,9 @@ import random
 import time
 from typing import TYPE_CHECKING
 
+from juego_rol_texto import i18n
 from juego_rol_texto.audio.resource_manager import ResourceManager
+from juego_rol_texto.characters.enemies.enemy_base import status_label
 from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
 from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
@@ -280,7 +282,7 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) 
     # Estados alterados: veneno/quemadura (daño), parálisis/congelación (pierde turno).
     can_act = enemy.on_turn_start()
     if not enemy.is_alive():
-        console.info(f"{enemy.name} sucumbe a sus heridas.")
+        console.info(i18n.t("combat.enemy_succumbs", name=enemy.name))
         enemy.decay_status_effects()
         return
 
@@ -360,18 +362,23 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     if is_crit:
         print(console.colorize("¡Golpe crítico!", console.Fore.YELLOW, bright=True))
 
+    element_name = i18n.t(f"element.{element}") if element else ""
     if is_super_effective:
         print(
             console.colorize(
-                f"¡Es supereficaz! El {element} causa estragos en {defender.name}.", console.Fore.RED, bright=True
+                i18n.t("combat.super_effective", element=element_name, name=defender.name),
+                console.Fore.RED,
+                bright=True,
             )
         )
     elif is_immune_hit:
         print(
-            console.colorize(f"{defender.name} es inmune al {element}: el ataque no le hace nada.", console.Fore.BLUE)
+            console.colorize(i18n.t("combat.immune_hit", element=element_name, name=defender.name), console.Fore.BLUE)
         )
     elif is_resisted_hit:
-        print(console.colorize(f"{defender.name} resiste el {element}.", console.Fore.BLUE))
+        print(
+            console.colorize(i18n.t("combat.resisted_hit", element=element_name, name=defender.name), console.Fore.BLUE)
+        )
 
     # Estado alterado del arma elemental (p. ej. veneno -> "veneno"). Solo el
     # jugador; si el enemigo resiste el elemento, la probabilidad y la duración
@@ -417,7 +424,7 @@ def _try_inflict_weapon_status(player: "Player", enemy, element: str | None) -> 
         duration = max(1, duration // 2)
 
     if random.random() < chance and enemy.apply_status(inflicts["status"], duration, inflicts.get("power", 0)):
-        console.warning(f"¡{enemy.name} sufre {inflicts['status']}!")
+        console.warning(i18n.t("combat.status_inflicted", name=enemy.name, status=status_label(inflicts["status"])))
 
 
 def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> tuple:

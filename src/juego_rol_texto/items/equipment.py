@@ -81,7 +81,9 @@ class Weapon(Item):
             info += f" ({self.element.capitalize()})"
         inflicts = self.get_inflicts()
         if inflicts:
-            info += f" · inflige {inflicts['status']} {int(inflicts['chance'] * 100)}%"
+            from juego_rol_texto.i18n import t
+
+            info += f" · inflige {t('status.' + inflicts['status'])} {int(inflicts['chance'] * 100)}%"
         return console.colorize(info, console.Fore.RED)
 
     def to_dict(self) -> dict:

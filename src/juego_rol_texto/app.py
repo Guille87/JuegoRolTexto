@@ -6,7 +6,7 @@ import threading
 import pygame
 from colorama import init
 
-from juego_rol_texto import updater
+from juego_rol_texto import i18n, updater
 from juego_rol_texto.audio.catalog import AUDIO_ASSETS
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.config import crash_reporting, paths, settings
@@ -74,6 +74,9 @@ def main() -> None:
     # Registro de errores en disco: a partir de aquí cualquier fallo queda
     # escrito en logs/juego.log (junto al .exe si está empaquetado).
     setup_logging()
+
+    # Idioma de los textos del juego (config.ini [IDIOMA]).
+    i18n.set_locale(settings.load_language())
 
     # Inicialización de librerías
     init(autoreset=True)  # Colorama

@@ -1,8 +1,14 @@
 import random
 
+from juego_rol_texto import i18n
 from juego_rol_texto.characters.stats import Stats, resolve_hit
 from juego_rol_texto.combat.elements import affinity_multiplier
 from juego_rol_texto.ui import console
+
+
+def status_label(name: str) -> str:
+    """Nombre legible de un estado alterado (`fractura_magica` -> `fractura mágica`)."""
+    return i18n.t(f"status.{name}")
 
 
 class Enemy:
@@ -128,25 +134,25 @@ class Enemy:
         for effect in self.status_effects[:]:
             if effect["name"] == "congelado":
                 if random.random() < 0.20:
-                    console.info(f"El hielo que envuelve a {self.name} se resquebraja.")
+                    console.info(i18n.t("combat.enemy_thaws", name=self.name))
                     self.status_effects.remove(effect)
                 else:
-                    print(console.colorize(f"❄️  {self.name} está congelado y no puede moverse.", console.Fore.BLUE))
+                    print(console.colorize(i18n.t("combat.enemy_frozen", name=self.name), console.Fore.BLUE))
                     can_act = False
                     break
             elif effect["name"] == "paralizado" and random.random() < 0.5:
-                console.warning(f"⚡ ¡{self.name} está paralizado y pierde el turno!")
+                console.warning(i18n.t("combat.enemy_paralysed", name=self.name))
                 can_act = False
 
         for effect in self.status_effects[:]:
             if effect["name"] == "quemado":
                 dmg = max(1, self.stats.max_health // 16)
                 self.stats.health -= dmg
-                console.error(f"🔥 La quemadura le quita {dmg} HP a {self.name}.")
+                console.error(i18n.t("combat.enemy_burn", amount=dmg, name=self.name))
             elif effect["name"] == "veneno":
                 dmg = max(1, self.stats.max_health // 8)
                 self.stats.health -= dmg
-                console.success(f"☣️ El veneno le quita {dmg} HP a {self.name}.")
+                console.success(i18n.t("combat.enemy_poison", amount=dmg, name=self.name))
 
         return can_act
 
@@ -157,7 +163,7 @@ class Enemy:
         if self.stats.regen > 0 and self.is_alive() and self.stats.health < self.stats.max_health:
             healed = self.heal(self.stats.regen)
             if healed > 0:
-                console.success(f"💚 {self.name} regenera {healed} HP.")
+                console.success(i18n.t("combat.enemy_regen", name=self.name, amount=healed))
 
     def decay_status_effects(self) -> None:
         """Descuenta un turno a cada estado y elimina los caducados. Se llama al
@@ -165,7 +171,7 @@ class Enemy:
         for effect in self.status_effects[:]:
             effect["duration"] -= 1
             if effect["duration"] <= 0:
-                console.info(f"✨ El efecto de {effect['name']} sobre {self.name} ha desaparecido.")
+                console.info(i18n.t("combat.status_faded_enemy", status=status_label(effect["name"]), name=self.name))
                 self.status_effects.remove(effect)
 
     # --- TURNO ---
