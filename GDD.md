@@ -143,6 +143,10 @@ Each zone's ~10 enemies:
 | 5, 7, 9 | **elite** | tougher and rarer, a strong signature ability — above standard, below the guardian |
 | 10 | **guardian** | a mini-boss; defeating it once opens the next zone. Stays farmable afterwards |
 
+The **three elites and the guardian each drop one of the zone's four in-zone
+set pieces** (§6.3) — so an elite is always worth hunting, and completing a
+set's story-mode half means clearing its zone thoroughly.
+
 ### 4.2 The final confrontation
 
 The **guardian of El Corazón de la Brecha is the Dragón** — the kingdom's
@@ -229,9 +233,9 @@ signature **status** on hit.
 dropped** — a hard cast-lockout was useless against non-casters and
 back-breaking against the Mago. `fractura mágica` is always at least somewhat
 useful when you deal magical damage, never a hard shutdown, and thematically
-"crack the magic that shields it". (Open — see §11.)
+"crack the magic that shields it".
 
-### Affinity model (data layer) *(needs your confirm — see §11)*
+### Affinity model (data layer)
 
 - **Weakness** — base **×1.5**. It becomes **×2.0** only when the damage
   combines *two* elements the enemy is weak to (an elemental reaction, a
@@ -331,8 +335,9 @@ applies bonuses at **2, 4 and 6 pieces** — **tiers stack** (with 6 pieces you
 have the 2-, 4- and 6-piece bonuses at once). Design goal, Diablo-3-inspired but
 adapted to turn-based text: **one set per zone (7 sets)**, each 6 pieces across
 6 of the 11 slots (which 6 varies by set), leaving 5 slots for mix-and-match.
-Pieces **1–4 drop in the zone**; pieces **5–6 come from the Arena** (§6.5) — so
-story mode gets you the 4-piece bonus, the Arena completes the set.
+Pieces **1–4 drop in the zone** — one each from the three elite enemies (tiers
+5, 7, 9) and the guardian (tier 10); pieces **5–6 come from the Arena** (§6.5).
+So story mode gets you the 4-piece bonus, the Arena completes the set.
 
 - **2-piece** — a modest, always-useful stat.
 - **4-piece** — a strong situational effect.
@@ -528,15 +533,10 @@ is a living document and any of this can change.
 
 ## 11. Open questions
 
-- **Affinity model** (§5) — confirm the "×2 weakness / ×0.25 resist only when
-  two matching elements combine" reading, and that resistance also scales the
-  status down.
-- **`arcano`'s status** — `fractura mágica` (magic resist → 0) replaces the
-  scrapped `silenciado`. Is that the right effect, or something else? If nothing
-  balanced emerges, `arcano` can just be a damage element with no status.
-- **Set bonuses** (§6.3) — 7 sets (one per zone), 2/4/6 tiers, pieces 5–6 from
-  the Arena: the direction is set, the names / which-6-slots / exact numbers
-  are not. Mine Diablo 3's set catalogue for adaptable ideas.
+- **Set bonuses** (§6.3) — 7 sets (one per zone), 2/4/6 tiers, pieces 1–4 from
+  the elites + guardian, 5–6 from the Arena: the direction is set, the names /
+  which-6-slots / exact numbers are not. Mine Diablo 3's set catalogue for
+  adaptable ideas.
 - **Elemental reactions** (§5) — final rules and, above all, that they don't
   break elite/guardian fights.
 - **Skill unlocks** — split between "by level" (early) and "by guardian defeat"

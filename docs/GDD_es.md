@@ -150,6 +150,11 @@ Los ~10 enemigos de cada zona:
 | 5, 7, 9 | **élite** | más duros y raros, una habilidad distintiva fuerte — por encima del estándar, por debajo del guardián |
 | 10 | **guardián** | mini-jefe; derrotarlo una vez abre la siguiente zona. Sigue farmeable después |
 
+Los **tres élites y el guardián sueltan cada uno una de las cuatro piezas de
+conjunto de la zona** (§6.3) — así un élite siempre merece la pena cazarlo, y
+completar la mitad de "modo historia" de un conjunto significa limpiar bien su
+zona.
+
 ### 4.2 La confrontación final
 
 El **guardián de El Corazón de la Brecha es el Dragón** — el antagonista
@@ -239,9 +244,9 @@ El estado de `arcano` sustituye a la idea de "silencio": **`silenciado` se
 descarta** — un bloqueo total de hechizos era inútil contra los no-lanzadores y
 destrozaba al Mago. `fractura mágica` siempre sirve algo cuando haces daño
 mágico, nunca es un apagón total, y temáticamente "agrieta la magia que lo
-escuda". (Abierto — ver §11.)
+escuda".
 
-### Modelo de afinidades (capa de datos) *(pendiente de tu confirmación — ver §11)*
+### Modelo de afinidades (capa de datos)
 
 - **Debilidad** — base **×1.5**. Pasa a **×2.0** solo cuando el daño combina
   *dos* elementos a los que el enemigo es débil (una reacción elemental, una
@@ -346,8 +351,9 @@ conjunto y aplica bonus a **2, 4 y 6 piezas** — **los tramos se acumulan** (co
 en los conjuntos de Diablo 3 pero adaptado al texto por turnos: **un conjunto
 por zona (7 conjuntos)**, cada uno de 6 piezas repartidas en 6 de los 11 huecos
 (cuáles 6 varía por conjunto), dejando 5 huecos para combinar libremente. Las
-piezas **1–4 sueltan en la zona**; las piezas **5–6 se consiguen en la Arena**
-(§6.5) — el modo historia te da el bonus de 4, la Arena completa el conjunto.
+piezas **1–4 sueltan en la zona** — una de cada uno de los tres élites (tiers
+5, 7, 9) y del guardián (tier 10); las piezas **5–6 se consiguen en la Arena**
+(§6.5). El modo historia te da el bonus de 4, la Arena completa el conjunto.
 
 - **2 piezas** — un stat modesto y siempre útil.
 - **4 piezas** — un efecto situacional fuerte.
@@ -557,15 +563,10 @@ cambiar; el GDD es un documento vivo y cualquier cosa de aquí puede cambiar.
 
 ## 11. Preguntas abiertas
 
-- **Modelo de afinidades** (§5) — confirmar la lectura "×2 débil / ×0.25 resiste
-  solo cuando se combinan dos elementos que casan", y que la resistencia también
-  reduce el estado.
-- **El estado de `arcano`** — `fractura mágica` (res. mágica → 0) sustituye al
-  descartado `silenciado`. ¿Es el efecto correcto, u otra cosa? Si no sale nada
-  balanceado, `arcano` puede quedarse como elemento de daño sin estado.
 - **Bonus de conjunto** (§6.3) — 7 conjuntos (uno por zona), tramos 2/4/6,
-  piezas 5–6 de la Arena: la dirección está fijada, los nombres / qué 6 huecos /
-  los números no. Minar el catálogo de conjuntos de Diablo 3 en busca de ideas.
+  piezas 1–4 de los élites + guardián, 5–6 de la Arena: la dirección está
+  fijada, los nombres / qué 6 huecos / los números no. Minar el catálogo de
+  conjuntos de Diablo 3 en busca de ideas.
 - **Reacciones elementales** (§5) — las reglas finales y, sobre todo, que no
   rompan las peleas de élite/guardián.
 - **Desbloqueo de habilidades** — repartido entre "por nivel" (tempranas) y "al
