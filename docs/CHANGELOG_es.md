@@ -32,6 +32,11 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   al nivel. El panel de combate muestra además el daño crítico del jugador y la
   prob. de crítico + daño crítico del enemigo.
 - El personaje admin también elige clase, para poder probarlas con stats de cheat.
+- El aviso de "versión nueva disponible" aparece ahora cada vez que se dibuja el
+  menú principal y de nuevo al entrar en "Nueva Partida" / "Cargar Partida"
+  (antes de pedir el nombre), en vez de solo una vez por sesión — si no, es fácil
+  pasarlo por alto. Dentro de la partida sigue mostrándose una sola vez, al
+  entrar.
 
 ## [0.9.0] - 2026-09-09
 
