@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Auto-update: the relauncher `.bat` is now started with `os.startfile`
+  (ShellExecute) instead of `subprocess.Popen`, which intermittently failed with
+  `0xC0000142` (cmd.exe init failure) when spawned during the game's shutdown.
+  A short grace period was also added before the game exits.
+
 ## [0.7.0] - 2026-09-08
 
 ### Added

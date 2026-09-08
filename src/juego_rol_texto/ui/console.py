@@ -78,8 +78,18 @@ def say(message: str) -> None:
 
 
 def ask(prompt: str) -> str:
-    """Wrapper fino de input(), punto único para interceptar/testear entradas."""
-    return input(prompt)
+    """Wrapper fino de input(), punto único para interceptar/testear entradas.
+
+    Si stdin se cierra (Ctrl+Z, entrada canalizada agotada, consola sin TTY),
+    salimos limpiamente en vez de dejar que el `EOFError` burbujee hasta
+    `app.main()` y se registre como un cierre inesperado (con su informe a
+    Discord incluido).
+    """
+    try:
+        return input(prompt)
+    except EOFError:
+        print()
+        raise SystemExit(0) from None
 
 
 # --- Color por estadística ----------------------------------------------------

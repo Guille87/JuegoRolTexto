@@ -9,6 +9,13 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido
+
+- Auto-actualización: el `.bat` relanzador ahora se arranca con `os.startfile`
+  (ShellExecute) en vez de `subprocess.Popen`, que a veces fallaba con
+  `0xC0000142` (fallo al inicializar cmd.exe) al lanzarse mientras el juego se
+  cerraba. También se añade un pequeño margen antes de que el juego cierre.
+
 ## [0.7.0] - 2026-09-08
 
 ### Añadido
