@@ -41,15 +41,17 @@ esté listo para salir. El orden puede cambiar.
 
 | Fase | Tema | Contenido |
 |------|------|-----------|
-| **v0.9.0** | Fundaciones | capa de strings i18n + migrar el núcleo de combate/menús · modelo de afinidades de enemigos (debilidades / resistencias / inmunidades a estados) + los 3 elementos nuevos como datos · armas que infligen estados + procesado de estados en `Enemy` |
-| **v0.10.0** | Clases y habilidades | 4 clases al crear · árboles de habilidades por clase (pasivas + activas con enfriamiento) · menú "Habilidades" en combate · stat `poder mágico` |
-| **v0.11.0** | Equipo y afinidades | 4 conjuntos de armadura · resistencia elemental en armadura · debilidades / resistencias / inmunidades reales en los 14 enemigos actuales · armas elementales nuevas (sagrado / oscuridad / arcano) |
-| **v0.12.0** | El mundo, parte 1 | zonas + mapa + bucle de exploración + migración de guardado v2 · tienda / herrería / descanso reubicados · encuentros aleatorios + hallazgos |
-| **v0.13.0** | Bestiario y enemigos I | bestiario progresivo · herramienta de presupuesto de poder · rellenar 2–3 zonas a ~10 enemigos cada una |
-| **v0.14.0** | Enemigos II | terminar el roster hasta ~70 · escalado del botín (únicos + comunes tirados) |
-| **v0.15.0** | Historia y misiones | sistema de misiones · questline "La Brecha" (7 actos) + secundarias · diálogo de NPC · notas de lore + Diario |
-| **v0.16.0** | La Arena | modo de oleadas crecientes |
-| **más adelante** | Endgame y pulido | ajuste final del Dragón (necesita el roster completo) · rebalanceo completo de la cadena · firma Ed25519 del updater · GIF de gameplay · MVC más limpia · *(ampliación)* combate multi-enemigo |
+| **v0.9.0** | Fundaciones | capa de strings i18n + migrar el núcleo de combate/menús · modelo de afinidades completo (×1.5/×2 débil, ×0.5/×0.25 resiste, ×0 inmune = sin daño, sin estado) + los 3 elementos nuevos como datos · el jugador y `Enemy` procesan estados (armas que infligen estados) · `quemado` solo penaliza el ataque físico |
+| **v0.10.0** | Clases y primeras habilidades | 4 clases al crear · stat `poder mágico` · sistema de habilidades (pasivas / activas con enfriamiento) · menú "Habilidades" + elegir 4 activas equipadas · las primeras ~2-3 habilidades por clase |
+| **v0.11.0** | Equipo y afinidades reales | 4 conjuntos de armadura · resistencia elemental en armadura · debilidades / resistencias / inmunidades reales en los 14 enemigos actuales · armas elementales nuevas (sagrado / oscuridad / arcano) · reacciones elementales |
+| **v0.12.0** | El mundo, parte 1 | zonas + mapa + bucle de exploración · posada / descanso (coste por nivel) · viaje frontera + viaje rápido · migración de guardado v2 · tienda / herrería reubicadas · encuentros aleatorios + hallazgos |
+| **v0.13.0** | Diálogo y NPCs | diálogo ramificado con respuestas del jugador · conversaciones únicas vs repetibles · NPCs de Piedrablanca + las 6 regiones actuales · notas de lore + Diario |
+| **v0.14.0** | Bestiario y enemigos I | bestiario progresivo · herramienta de presupuesto de poder (fija la curva de nivel) · Los Yermos + Bosque rellenados a ~10 · habilidades de clase de nivel medio atadas a esos enemigos |
+| **v0.15.0** | Enemigos II | Ciénaga (nueva) + Cañón + Torre/Necrópolis a ~10 · escalado del botín (únicos + comunes tirados) · drop-scaling entre zonas · más habilidades de clase |
+| **v0.16.0** | Enemigos III | Ciudadela a ~10 · habilidades de clase de hito alto · misiones secundarias de esas regiones |
+| **v0.17.0** | Historia principal | sistema de misiones · questline "La Brecha" (7 actos) enganchada a los NPCs / guardianes existentes · progresión por historia en vez de elegir enemigo |
+| **v0.18.0** | La Arena | modo de oleadas crecientes · recompensas de Arena (títulos + algunas piezas de conjunto + un único difícil) |
+| **más adelante** | Endgame y pulido | roster completo → ajuste final del Dragón + El Corazón de la Brecha · rebalanceo completo de la cadena · firma Ed25519 del updater · GIF de gameplay · MVC más limpia · *(ampliación)* combate multi-enemigo · *(muy a largo plazo)* posibles actos nuevos |
 | **1.0** | — | la declara el mantenedor cuando el juego esté listo para salir |
 
 ## Tareas menores de herramientas (sin fecha)

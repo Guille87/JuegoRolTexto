@@ -39,15 +39,17 @@ versions ship until the game is launch-ready. Order may shuffle.
 
 | Phase | Theme | Contents |
 |-------|-------|----------|
-| **v0.9.0** | Foundations | i18n strings layer + migrate combat/menu core · enemy affinity model (weaknesses / resistances / status immunities) + the 3 new elements as data · status-inflicting weapons + `Enemy` status processing |
-| **v0.10.0** | Classes & skills | 4 classes at creation · class skill trees (passives + cooldown actives) · "Habilidades" combat menu · `poder mágico` stat |
-| **v0.11.0** | Gear & affinities | 4 armour sets · elemental resistance on armour · real weaknesses / resistances / immunities on the current 14 enemies · new elemental weapons (sagrado / oscuridad / arcano) |
-| **v0.12.0** | The world, part 1 | zones + map + exploration loop + save migration v2 · shop / forge / rest relocated · random encounters + discoveries |
-| **v0.13.0** | Bestiary & enemies I | progressive bestiary · power-budget tool · flesh out 2–3 zones to ~10 enemies each |
-| **v0.14.0** | Enemies II | finish the roster to ~70 · loot scaling (uniques + rolled commons) |
-| **v0.15.0** | Story & quests | quest system · "La Brecha" questline (7 acts) + side quests · NPC dialogue · lore notes + Diario |
-| **v0.16.0** | The Arena | escalating-wave mode |
-| **later** | Endgame & polish | Dragón final tuning (needs the full roster) · full chain rebalance · Ed25519 updater signature · gameplay GIF · cleaner MVC · *(stretch)* multi-enemy combat |
+| **v0.9.0** | Foundations | i18n strings layer + migrate combat/menu core · full affinity model (×1.5/×2 weak, ×0.5/×0.25 resist, ×0 immune = no damage, no status) + the 3 new elements as data · player & `Enemy` status processing (status-inflicting weapons) · `quemado` penalises physical attack only |
+| **v0.10.0** | Classes & first skills | 4 classes at creation · `poder mágico` stat · skill system (passives / cooldown actives) · "Habilidades" menu + choose 4 equipped actives · first ~2–3 skills per class |
+| **v0.11.0** | Gear & real affinities | 4 armour sets · elemental resistance on armour · real weaknesses / resistances / immunities on the current 14 enemies · new elemental weapons (sagrado / oscuridad / arcano) · elemental reactions |
+| **v0.12.0** | The world, part 1 | zones + map + exploration loop · inn / rest (cost scales with level) · frontier travel + fast-travel · save migration v2 · shop / forge relocated · random encounters + discoveries |
+| **v0.13.0** | Dialogue & NPCs | branching dialogue with player choices · one-time vs repeatable conversations · NPCs for Piedrablanca + the 6 existing regions · lore notes + Diario |
+| **v0.14.0** | Bestiary & enemies I | progressive bestiary · power-budget tool (sets the level curve) · Los Yermos + Bosque fleshed to ~10 · mid-progression class skills tied to those enemies |
+| **v0.15.0** | Enemies II | Ciénaga (new) + Cañón + Torre/Necrópolis to ~10 · loot scaling (uniques + rolled commons) · cross-zone drop-scaling · more class skills |
+| **v0.16.0** | Enemies III | Ciudadela to ~10 · high-milestone class skills · side quests for those regions |
+| **v0.17.0** | Main story | quest system · "La Brecha" questline (7 acts) wired to the existing NPCs / guardians · progression by story instead of picking an enemy |
+| **v0.18.0** | The Arena | escalating-wave mode · Arena rewards (titles + some set pieces + a hard-to-get unique) |
+| **later** | Endgame & polish | full roster → Dragón final tuning + El Corazón de la Brecha · full chain rebalance · Ed25519 updater signature · gameplay GIF · cleaner MVC · *(stretch)* multi-enemy combat · *(very long term)* possible extra acts |
 | **1.0** | — | called by the maintainer when the game is launch-ready |
 
 ## Smaller tooling items (unscheduled)
