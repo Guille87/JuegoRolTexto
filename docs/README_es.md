@@ -14,6 +14,8 @@ a una cadena de 14 enemigos, gestiona equipo y pociones, fabrica objetos en la
 herrería y haz crecer a tu personaje. Se juega enteramente en la terminal — no hay
 ventana gráfica; `colorama` da color y `pygame` (solo el mixer) pone la música.
 
+<p align="center"><img src="../docs/screenshot.svg" alt="Un combate contra un Goblin: ataque, turnos ATB, victoria y subida de nivel" width="640"></p>
+
 ## Características
 
 - Combate **ATB (Active Time Battle)**: el combatiente más rápido actúa más veces,

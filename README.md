@@ -14,6 +14,8 @@ through a chain of 14 enemies, manage gear and potions, craft equipment and grow
 your character. It is played entirely in the console — there is no graphical
 window; `colorama` adds colour and `pygame` (mixer only) plays background music.
 
+<p align="center"><img src="docs/screenshot.svg" alt="A Goblin battle: attack, ATB turns, victory and level-up" width="640"></p>
+
 ## Features
 
 - **Active Time Battle** combat: the faster combatant acts more often, not just

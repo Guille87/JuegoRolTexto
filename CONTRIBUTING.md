@@ -47,6 +47,16 @@ The full pattern is in [CLAUDE.md](CLAUDE.md):
 
 Any logic change comes with its test.
 
+## Regenerating the README screenshot
+
+`docs/screenshot.svg` is produced by `tools/capture_screenshot.py` (a real,
+seeded battle rendered as a terminal SVG). To refresh it:
+
+```bash
+pip install ansitoimg
+python tools/capture_screenshot.py
+```
+
 ## Releasing a version
 
 - Bump `version` in `pyproject.toml`, then re-run `pip install -e .` so
