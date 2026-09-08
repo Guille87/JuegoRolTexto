@@ -31,41 +31,26 @@ balance, [TODO.md](../TODO.md).
 ## Planeado — plan por fases
 
 Diseño completo en el [GDD](GDD_es.md). Dirección: mantener el combate y
-construir un mundo alrededor (zonas en un mapa con vuelta atrás libre, NPCs,
-una questline de fantasía oscura). Cada fase es una release; **las releases se
-etiquetan solo con la luz verde del mantenedor** — las funcionalidades se
-acumulan en `main` por PRs.
+construir un mundo alrededor — 7 zonas en un mapa con vuelta atrás libre, ~10
+enemigos por zona (~70 en total), 4 clases, habilidades por nivel, 7 elementos
+de daño con debilidades / resistencias / inmunidades, una questline de fantasía
+oscura. Cada fase es una release; **las releases se etiquetan solo con la luz
+verde del mantenedor** — las funcionalidades se acumulan en `main` por PRs. **No
+hay objetivo de 1.0**; se publican versiones pre-lanzamiento hasta que el juego
+esté listo para salir. El orden puede cambiar.
 
-### v0.9.0 — Profundidad de combate *(sin rework de mundo)*
-- Armas que infligen estados + procesado de estados en `Enemy` (cierra el hueco
-  de "los enemigos tienen `magic_resist` pero nada les aplica estados").
-- Bonus de conjunto de armadura (4 conjuntos temáticos, tramos a 2/4 piezas).
-- Clases de personaje al crear (Vagabundo / Guerrero / Pícaro / Arcanista).
-- Rebalanceo ligero por lo anterior.
-
-### v0.10.0 — El mundo, parte 1
-- Sistema de zonas + grafo de viaje + bucle de exploración en vez del menú plano.
-- La cadena de 14 enemigos migrada a 6 zonas + una aldea hub.
-- Sub-lugares; tienda / herrería / descanso de pago reubicados. Encuentros
-  aleatorios + hallazgos. Migración de guardado v1 → v2.
-
-### v0.11.0 — Historia y misiones
-- Sistema de misiones; questline principal "La Brecha" (6 actos) + 3
-  secundarias.
-- Diálogo de NPC condicional al estado de misión/historia. Notas de lore + Diario.
-
-### v0.12.0 — La Arena y pulido
-- Modo Arena / oleadas crecientes (combina con la auto-batalla turbo).
-- Firma Ed25519 en el auto-updater (sobre SHA-256 + HTTPS — ver `SECURITY.md`).
-- GIF de gameplay, imagen de social-preview.
-
-### v1.0.0 — Valeterna
-- Recalibrado completo de la cadena de 14 enemigos (post `BASE_HIT_CHANCE`
-  90→100) contra el ritmo de la questline.
-- Playthrough completo verificado de principio a fin.
-- Separación MVC más limpia en la capa de presentación.
-- *(Ampliación)* combate multi-enemigo de verdad — hoy varios enemigos lo
-  fingen con un «golpe extra» en vez de un segundo combatiente con su medidor.
+| Fase | Tema | Contenido |
+|------|------|-----------|
+| **v0.9.0** | Fundaciones | capa de strings i18n + migrar el núcleo de combate/menús · modelo de afinidades de enemigos (debilidades / resistencias / inmunidades a estados) + los 3 elementos nuevos como datos · armas que infligen estados + procesado de estados en `Enemy` |
+| **v0.10.0** | Clases y habilidades | 4 clases al crear · árboles de habilidades por clase (pasivas + activas con enfriamiento) · menú "Habilidades" en combate · stat `poder mágico` |
+| **v0.11.0** | Equipo y afinidades | 4 conjuntos de armadura · resistencia elemental en armadura · debilidades / resistencias / inmunidades reales en los 14 enemigos actuales · armas elementales nuevas (sagrado / oscuridad / arcano) |
+| **v0.12.0** | El mundo, parte 1 | zonas + mapa + bucle de exploración + migración de guardado v2 · tienda / herrería / descanso reubicados · encuentros aleatorios + hallazgos |
+| **v0.13.0** | Bestiario y enemigos I | bestiario progresivo · herramienta de presupuesto de poder · rellenar 2–3 zonas a ~10 enemigos cada una |
+| **v0.14.0** | Enemigos II | terminar el roster hasta ~70 · escalado del botín (únicos + comunes tirados) |
+| **v0.15.0** | Historia y misiones | sistema de misiones · questline "La Brecha" (7 actos) + secundarias · diálogo de NPC · notas de lore + Diario |
+| **v0.16.0** | La Arena | modo de oleadas crecientes |
+| **más adelante** | Endgame y pulido | ajuste final del Dragón (necesita el roster completo) · rebalanceo completo de la cadena · firma Ed25519 del updater · GIF de gameplay · MVC más limpia · *(ampliación)* combate multi-enemigo |
+| **1.0** | — | la declara el mantenedor cuando el juego esté listo para salir |
 
 ## Tareas menores de herramientas (sin fecha)
 

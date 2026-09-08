@@ -30,40 +30,25 @@ A living document of what exists and what is planned. See the
 ## Planned — phased plan
 
 Full design in the [GDD](GDD.md). Direction: keep the combat, build a world
-around it (zones on a map with free backtracking, NPCs, a dark-fantasy
-questline). Each phase is one release; **releases are tagged only on the
-maintainer's go-ahead** — features accumulate on `main` via PRs.
+around it — 7 zones on a map with free backtracking, ~10 enemies per zone
+(~70 total), 4 classes, level-learned skills, 7 damage elements with
+weaknesses / resistances / immunities, a dark-fantasy questline. Each phase is
+one release; **releases are tagged only on the maintainer's go-ahead** —
+features accumulate on `main` via PRs. There is **no 1.0 target**; pre-release
+versions ship until the game is launch-ready. Order may shuffle.
 
-### v0.9.0 — Combat depth *(no world rework)*
-- Status-inflicting weapons + `Enemy` status processing (closes the "enemies
-  have `magic_resist` but nothing uses statuses on them" gap).
-- Equipment set bonuses (4 themed sets, tiers at 2/4 pieces).
-- Character classes at creation (Vagabundo / Guerrero / Pícaro / Arcanista).
-- Light rebalance for the above.
-
-### v0.10.0 — The world, part 1
-- Zone system + travel graph + exploration loop replacing the flat menu.
-- The 14-enemy chain migrated into 6 zones + a hub village.
-- Sub-locations; shop / forge / paid rest relocated. Random encounters +
-  discoveries. Save migration v1 → v2.
-
-### v0.11.0 — Story & quests
-- Quest system; main questline "La Brecha" (6 acts) + 3 side quests.
-- NPC dialogue conditional on quest/story state. Lore notes + Diario.
-
-### v0.12.0 — The Arena & polish
-- Arena / escalating-wave mode (pairs with turbo auto-battle).
-- Ed25519 signature on the auto-updater (on top of SHA-256 + HTTPS — see
-  `SECURITY.md`).
-- Gameplay GIF, social-preview image.
-
-### v1.0.0 — Valeterna
-- Full rebalance of the 14-enemy chain (post `BASE_HIT_CHANCE` 90→100) against
-  the questline pacing.
-- Full playthrough verified end to end.
-- Cleaner MVC separation in the presentation layer.
-- *(Stretch)* real multi-enemy combat — today several enemies fake it with an
-  "extra hit" instead of a second combatant with its own turn gauge.
+| Phase | Theme | Contents |
+|-------|-------|----------|
+| **v0.9.0** | Foundations | i18n strings layer + migrate combat/menu core · enemy affinity model (weaknesses / resistances / status immunities) + the 3 new elements as data · status-inflicting weapons + `Enemy` status processing |
+| **v0.10.0** | Classes & skills | 4 classes at creation · class skill trees (passives + cooldown actives) · "Habilidades" combat menu · `poder mágico` stat |
+| **v0.11.0** | Gear & affinities | 4 armour sets · elemental resistance on armour · real weaknesses / resistances / immunities on the current 14 enemies · new elemental weapons (sagrado / oscuridad / arcano) |
+| **v0.12.0** | The world, part 1 | zones + map + exploration loop + save migration v2 · shop / forge / rest relocated · random encounters + discoveries |
+| **v0.13.0** | Bestiary & enemies I | progressive bestiary · power-budget tool · flesh out 2–3 zones to ~10 enemies each |
+| **v0.14.0** | Enemies II | finish the roster to ~70 · loot scaling (uniques + rolled commons) |
+| **v0.15.0** | Story & quests | quest system · "La Brecha" questline (7 acts) + side quests · NPC dialogue · lore notes + Diario |
+| **v0.16.0** | The Arena | escalating-wave mode |
+| **later** | Endgame & polish | Dragón final tuning (needs the full roster) · full chain rebalance · Ed25519 updater signature · gameplay GIF · cleaner MVC · *(stretch)* multi-enemy combat |
+| **1.0** | — | called by the maintainer when the game is launch-ready |
 
 ## Smaller tooling items (unscheduled)
 
