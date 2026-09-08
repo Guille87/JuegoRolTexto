@@ -94,10 +94,10 @@ class Inventory:
             is_eq = f"{console.colorize('(E)', console.Fore.BLUE)} " if is_equipped else ""
             qty_str = console.colorize(f" x{qty}", console.Fore.YELLOW) if qty > 1 else ""
 
-            print(f"{idx}. {is_eq}{item.name}{qty_str} | {item.description}")
+            print(console.tint_status(f"{idx}. {is_eq}{item.name}{qty_str} | {item.description}"))
             stats_info = item.get_stats_info()
             if stats_info:
-                print(f"   [{stats_info}]")
+                print(console.tint_status(f"   [{stats_info}]"))
 
         print(f"\n{console.colorize(f'Oro: {self.gold}', console.Fore.YELLOW)}")
         print("=" * 45)

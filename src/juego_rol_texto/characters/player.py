@@ -356,23 +356,32 @@ class Player(Character):
 
     def show_stats(self) -> None:
         print(f"\n{console.colorize('=' * 10 + ' ESTADÍSTICAS ' + '=' * 10, console.Fore.CYAN)}")
-        print(f"Nombre: {self.name.ljust(15)} Nivel: {self.level}")
-        print(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}")
-        print(f"Ataque: {self.get_attack_range()} | Armadura: {self.get_total_armor()}")
-        print(f"Resistencia Mágica: {self.get_total_magic_resist()}")
+        print(f"Nombre: {self.name.ljust(15)} {console.stat_line(f'Nivel: {self.level}', 'nivel')}")
+        print(console.stat_line(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}", "vida"))
+        print(console.stat_line(f"Ataque: {self.get_attack_range()}", "ataque"))
+        print(console.stat_line(f"Armadura: {self.get_total_armor()}", "armadura"))
+        print(console.stat_line(f"Resistencia Mágica: {self.get_total_magic_resist()}", "magica"))
         print(
-            f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
-            f"Daño Crítico: x{self.get_total_crit_damage():.2f}"
+            console.stat_line(
+                f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
+                f"Daño Crítico: x{self.get_total_crit_damage():.2f}",
+                "critico",
+            )
         )
+        print(console.stat_line(f"Velocidad: {self.get_total_speed()}", "velocidad"))
+        print(console.stat_line(f"Precisión: {self.get_total_precision()}", "precision"))
+        print(console.stat_line(f"Evasión: {self.get_total_evasion()}", "evasion"))
         print(
-            f"Velocidad: {self.get_total_speed()} | "
-            f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}"
+            console.stat_line(
+                f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
+                f"Penetración Mágica: {self.get_total_magic_penetration()}",
+                "penetracion",
+            )
         )
-        print(
-            f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
-            f"Penetración Mágica: {self.get_total_magic_penetration()}"
-        )
-        print(f"XP: {self.experience} / {self.required_xp()}")
+        regen = self.get_total_regen()
+        if regen:
+            print(console.stat_line(f"Regeneración: {regen} HP/turno", "regen"))
+        print(console.stat_line(f"XP: {self.experience} / {self.required_xp()}", "xp"))
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")
 

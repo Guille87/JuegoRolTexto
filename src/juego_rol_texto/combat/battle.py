@@ -66,7 +66,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
     if hasattr(enemy, "check_ambush"):
-        if enemy.check_ambush(player):
+        if enemy.check_ambush(player, defeated_enemies):
             # Mostramos el estado inmediatamente después del daño de emboscada
             print_status(player, enemy, defeated_enemies)
 
@@ -76,10 +76,15 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
             return
 
+    # Ficha de ambos combatientes al empezar, pase lo que pase con el orden de
+    # turnos. El enemigo sale con "???" mientras no se haya derrotado (igual que
+    # la barra de vida).
+    print_player_enemy_info(player, enemy, defeated_enemies)
+
     # Guardamos estado inicial para restaurar después
     snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
 
-    is_auto = False
+    is_auto: bool | str = False
     player_won = False
     player_fled = False
     gauge_player = 0.0
@@ -116,14 +121,15 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         # --- TURNO DEL ENEMIGO (solo si su gauge también está lista) ---
         if player.is_alive() and gauge_enemy >= ATB_THRESHOLD:
             gauge_enemy -= ATB_THRESHOLD
-            _run_enemy_turn(player, enemy, defeated_enemies)
+            _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo")
 
         if not player.is_alive():
             _handle_defeat(player)
             break
 
-        # Si estamos en modo auto, esperamos para poder leer el resultado
-        if is_auto and player.is_alive() and enemy.is_alive():
+        # En auto normal, una pausa para poder leer el resultado. En turbo no
+        # hay pausas (el objetivo es farmear lo más rápido posible).
+        if is_auto == "auto" and player.is_alive() and enemy.is_alive():
             print(console.colorize("(Esperando siguiente turno...)", console.Fore.BLACK, bright=True))
             time.sleep(1)  # Pequeña pausa para asimilar el daño recibido
 
@@ -136,11 +142,12 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     rm.set_mood("adventure")
     rm.play_random_adventure_music()
 
-    if player_won:
+    if player_won and is_auto != "turbo":
         # Pausa deliberada: victoria, oro, botín y curación tras el combate
         # imprimen bastante texto seguido; sin esta pausa el menú se
         # reescribía encima antes de que el jugador pudiera leerlo (podía
-        # pasarle por alto un objeto conseguido, por ejemplo).
+        # pasarle por alto un objeto conseguido, por ejemplo). En turbo se
+        # omite: el jugador está farmeando y quiere volver al menú ya.
         console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
 
 
@@ -150,6 +157,7 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
         options = ["1. Atacar", "2. Objetos", "3. Info", "4. Huir", "5. Defender"]
         if enemy.name in defeated_enemies:
             options.append("6. Auto-Batalla")
+            options.append("7. Auto-Batalla Turbo")
 
         print("\n" + " | ".join(options))
         choice = console.ask("Selección: ")
@@ -169,6 +177,8 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
             return "defender"
         elif choice == "6" and enemy.name in defeated_enemies:
             return "auto"
+        elif choice == "7" and enemy.name in defeated_enemies:
+            return "turbo"
         else:
             console.error("Opción no válida.")
 
@@ -186,11 +196,12 @@ def _attempt_flee(player, enemy) -> bool:
     return random.random() < flee_chance
 
 
-def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tuple:
+def _run_player_turn(player, enemy, defeated_enemies: list, is_auto):
     """Ejecuta el turno del jugador cuando su gauge ATB está lista.
 
-    Devuelve (señal, is_auto actualizado). señal es "huir" si el combate debe
-    terminar, o "ok" en cualquier otro caso.
+    `is_auto` es `False`, `"auto"` (auto normal, con pausas) o `"turbo"` (auto
+    sin pausas, para farmear). Devuelve `(señal, is_auto actualizado)`; señal es
+    `"huir"` si el combate debe terminar, o `"ok"` en cualquier otro caso.
     """
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
@@ -201,9 +212,11 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tu
 
     # --- COMPROBAR CANCELACIÓN DE AUTO ---
     if is_auto and check_for_interrupt():
+        was_turbo = is_auto == "turbo"
         is_auto = False
         console.warning("\n🛑 ¡Auto-batalla cancelada! Volviendo al menú...")
-        time.sleep(1)  # Pausa para que el usuario lo vea
+        if not was_turbo:
+            time.sleep(1)  # Pausa para que el usuario lo vea
 
     action = None
     if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
@@ -220,9 +233,10 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tu
                         console.error(f"¡No has podido escapar de {enemy.name}!")
                         turn_consumed = True
 
-                if action == "auto":
-                    is_auto = True
-                    print(console.colorize(">>> MODO AUTO: ACTIVADO. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+                if action in ("auto", "turbo"):
+                    is_auto = action
+                    modo = "TURBO (sin pausas)" if action == "turbo" else "ACTIVADO"
+                    print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
 
                 if action == "defender":
                     player.defending = True
@@ -248,12 +262,15 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tu
     return "ok", is_auto
 
 
-def _run_enemy_turn(player, enemy, defeated_enemies: list) -> None:
-    """Ejecuta el turno del enemigo cuando su gauge ATB está lista."""
-    time.sleep(1)
+def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) -> None:
+    """Ejecuta el turno del enemigo cuando su gauge ATB está lista. En `turbo`
+    no hay pausa ni barra de vida por turno (solo el texto del ataque)."""
+    if not turbo:
+        time.sleep(1)
     print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
     enemy.perform_turn(player)
-    print_status(player, enemy, defeated_enemies)
+    if not turbo:
+        print_status(player, enemy, defeated_enemies)
 
     if hasattr(enemy, "on_turn_end"):
         enemy.on_turn_end()

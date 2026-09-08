@@ -39,7 +39,7 @@ class CraftingRecipe:
 
     def __str__(self) -> str:
         materials_str = ", ".join(f"{name} x{qty}" for name, qty in self.materials.items())
-        return (
+        return console.tint_status(
             f"{self.name} | Requiere: {materials_str} + {self.gold_cost} oro "
             f"| [{self.result_template.get_stats_info()}]"
         )

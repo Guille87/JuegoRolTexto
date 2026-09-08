@@ -1,52 +1,55 @@
 from juego_rol_texto.ui import console
 
+_HIDDEN = "???"
+
+
+def _p(text: str, key: str) -> None:
+    """Imprime una línea de estadística sangrada y coloreada por concepto."""
+    print(f"  {console.stat_line(text, key)}")
+
 
 def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
-    """Muestra estadísticas detalladas."""
+    """Muestra estadísticas detalladas del jugador y del enemigo. Si el enemigo
+    no se ha derrotado todavía, sus valores salen como `???` (igual que la barra
+    de vida en combate)."""
     print(f"\nInformación de {console.colorize(player.name, console.Fore.GREEN)}:")
-    print(f"  {console.colorize(f'Nivel: {player.level}', console.Fore.CYAN)}")
+    _p(f"Nivel: {player.level}", "nivel")
+    _p(f"Vida: {player.stats.health}/{player.stats.max_health}", "vida")
 
-    # Usamos las propiedades de la clase Stats que ya manejan los topes
-    print(
-        f"  {console.colorize(f'Vida: {player.stats.health}/{player.stats.max_health}', console.Fore.GREEN, bright=True)}"
-    )
-
-    # Delegamos el cálculo del ataque y armadura al objeto Player (que ya sabe sumar su equipo)
     atk_min, atk_max = player.get_attack_range()
-    print(f"  {console.colorize(f'Ataque: {atk_min}-{atk_max}', console.Fore.RED, bright=True)}")
-    print(f"  {console.colorize(f'Armadura: {player.get_total_armor()}', console.Fore.BLUE, bright=True)}")
-    print(
-        f"  {console.colorize(f'Resistencia Mágica: {player.get_total_magic_resist()}', console.Fore.CYAN, bright=True)}"
-    )
-    print(
-        f"  {console.colorize(f'Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}%', console.Fore.YELLOW, bright=True)}"
-    )
-    print(f"  {console.colorize(f'Velocidad: {player.get_total_speed()}', console.Fore.MAGENTA, bright=True)}")
-    print(
-        f"  {console.colorize(f'Precisión: {player.get_total_precision()} | Evasión: {player.get_total_evasion()}', console.Fore.MAGENTA, bright=True)}"
-    )
-    print(
-        f"  {console.colorize(f'Penetración de Armadura: {player.get_total_armor_penetration()} | Penetración Mágica: {player.get_total_magic_penetration()}', console.Fore.MAGENTA, bright=True)}"
+    _p(f"Ataque: {atk_min}-{atk_max}", "ataque")
+    _p(f"Armadura: {player.get_total_armor()}", "armadura")
+    _p(f"Resistencia Mágica: {player.get_total_magic_resist()}", "magica")
+    _p(f"Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}%", "critico")
+    _p(f"Velocidad: {player.get_total_speed()}", "velocidad")
+    _p(f"Precisión: {player.get_total_precision()}", "precision")
+    _p(f"Evasión: {player.get_total_evasion()}", "evasion")
+    _p(
+        f"Penetración de Armadura: {player.get_total_armor_penetration()} | "
+        f"Penetración Mágica: {player.get_total_magic_penetration()}",
+        "penetracion",
     )
     print()
 
-    # Lógica de información oculta para enemigos
-    if enemy.name in defeated_enemies:
-        print(f"Información de {console.colorize(enemy.name, console.Fore.RED)}:")
-        print(f"  Vida: {enemy.stats.health}/{enemy.stats.max_health}")
-        print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
-        print(f"  Armadura: {enemy.stats.armor}")
-        print(f"  Resistencia Mágica: {enemy.stats.magic_resist}")
-        print(f"  Velocidad: {enemy.stats.speed}")
-        print(f"  Precisión: {enemy.stats.precision} | Evasión: {enemy.stats.evasion}")
-        print(
-            f"  Penetración de Armadura: {enemy.stats.armor_penetration} | Penetración Mágica: {enemy.stats.magic_penetration}"
-        )
-    else:
-        print(
-            f"Enemigo {console.colorize(enemy.name, console.Fore.RED)}: "
-            f"{console.colorize('??? [Información oculta]', console.Fore.BLACK, bright=True)}"
-        )
+    revealed = enemy.name in defeated_enemies
+    print(f"Información de {console.colorize(enemy.name, console.Fore.RED)}:")
+    if not revealed:
+        print(f"  {console.colorize('??? [Información oculta hasta derrotarlo]', console.Fore.BLACK, bright=True)}")
+
+    def ev(value) -> str:
+        return str(value) if revealed else _HIDDEN
+
+    _p(f"Vida: {ev(enemy.stats.health)}/{ev(enemy.stats.max_health)}", "vida")
+    _p(f"Ataque: {ev(enemy.stats.min_atk)}-{ev(enemy.stats.max_atk)}", "ataque")
+    _p(f"Armadura: {ev(enemy.stats.armor)}", "armadura")
+    _p(f"Resistencia Mágica: {ev(enemy.stats.magic_resist)}", "magica")
+    _p(f"Velocidad: {ev(enemy.stats.speed)}", "velocidad")
+    _p(f"Precisión: {ev(enemy.stats.precision)} | Evasión: {ev(enemy.stats.evasion)}", "precision")
+    _p(
+        f"Penetración de Armadura: {ev(enemy.stats.armor_penetration)} | "
+        f"Penetración Mágica: {ev(enemy.stats.magic_penetration)}",
+        "penetracion",
+    )
 
     print("\n" + "=" * 60)
 
@@ -54,25 +57,30 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
 def print_bestiary_entry(enemy, kill_count: int = 0) -> None:
     """Muestra la ficha completa de un enemigo (llamar solo si ya ha sido derrotado)."""
     print(f"\n{console.colorize(f'--- {enemy.name} ---', console.Fore.RED, bright=True)}")
-    print(f"  Veces derrotado: {kill_count}")
-    print(f"  Vida máxima: {enemy.stats.max_health}")
-    print(f"  Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}")
-    print(f"  Armadura: {enemy.stats.armor} | Resistencia Mágica: {enemy.stats.magic_resist}")
-    print(f"  Velocidad: {enemy.stats.speed}")
-    print(f"  Precisión: {enemy.stats.precision} | Evasión: {enemy.stats.evasion}")
-    print(f"  Prob. Crítico: {enemy.stats.crit_chance * 100:.0f}% | Daño Crítico: x{enemy.stats.crit_damage:.2f}")
-    print(
-        f"  Penetración de Armadura: {enemy.stats.armor_penetration} | Penetración Mágica: {enemy.stats.magic_penetration}"
+    _p(f"Veces derrotado: {kill_count}", "kills")
+    _p(f"Vida máxima: {enemy.stats.max_health}", "vida")
+    _p(f"Ataque: {enemy.stats.min_atk}-{enemy.stats.max_atk}", "ataque")
+    _p(f"Armadura: {enemy.stats.armor} | Resistencia Mágica: {enemy.stats.magic_resist}", "armadura")
+    _p(f"Velocidad: {enemy.stats.speed}", "velocidad")
+    _p(f"Precisión: {enemy.stats.precision} | Evasión: {enemy.stats.evasion}", "precision")
+    _p(
+        f"Prob. Crítico: {enemy.stats.crit_chance * 100:.0f}% | Daño Crítico: x{enemy.stats.crit_damage:.2f}",
+        "critico",
+    )
+    _p(
+        f"Penetración de Armadura: {enemy.stats.armor_penetration} | "
+        f"Penetración Mágica: {enemy.stats.magic_penetration}",
+        "penetracion",
     )
     if enemy.stats.regen:
-        print(f"  Regeneración: {enemy.stats.regen} HP/turno")
+        _p(f"Regeneración: {enemy.stats.regen} HP/turno", "regen")
 
     weaknesses = getattr(type(enemy), "ELEMENTAL_WEAKNESSES", {})
     if weaknesses:
         weak_str = ", ".join(f"{elem.capitalize()} (x{mult:.1f})" for elem, mult in weaknesses.items())
-        print(f"  {console.colorize(f'Debilidad elemental: {weak_str}', console.Fore.CYAN, bright=True)}")
+        _p(f"Debilidad elemental: {weak_str}", "elemento")
 
-    print(f"  Oro al derrotarlo: {enemy.gold_min}-{enemy.gold_max}")
+    _p(f"Oro al derrotarlo: {enemy.gold_min}-{enemy.gold_max}", "oro")
     print("=" * 60)
 
 

@@ -19,7 +19,7 @@ class ShopItem:
         return item_factory(self.template.to_dict())
 
     def __str__(self) -> str:
-        return (
+        return console.tint_status(
             f"{self.template.name} - Compra: {self.buy_price} oro | {self.template.description} "
             f"| [{self.template.get_stats_info()}]"
         )

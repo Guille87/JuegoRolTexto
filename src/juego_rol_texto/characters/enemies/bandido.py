@@ -33,8 +33,9 @@ class Bandido(Enemy):
         )
         self.ambush_done = False
 
-    def check_ambush(self, player) -> bool:
-        """Ataque sorpresa desde las sombras, igual que la emboscada del Goblin."""
+    def check_ambush(self, player, defeated_enemies: list | None = None) -> bool:
+        """Ataque sorpresa desde las sombras. A diferencia del Goblin, el Bandido
+        sí embosca desde el primer encuentro (`defeated_enemies` no se usa)."""
         if not self.ambush_done and random.random() <= 0.35:
             self.ambush_done = True
             damage = self.get_attack_damage() + 4

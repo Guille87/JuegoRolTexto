@@ -9,6 +9,25 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- Al empezar un combate se muestran siempre las fichas de jugador y enemigo,
+  sin importar quién tenga el turno primero; un enemigo que aún no has derrotado
+  aparece como `???`.
+- Auto-batalla Turbo: una segunda opción de auto-batalla sin pausas entre
+  turnos, sin barra de vida por turno y sin el "Presiona Enter" de victoria —
+  para farmear rápido enemigos que ya te resultan fáciles.
+- Las fichas de estadísticas (jugador, enemigo, bestiario) van coloreadas por
+  estadística.
+- Cualquier texto que mencione un estado alterado se colorea igual en todo el
+  juego: veneno en verde, quemadura en rojo, parálisis en amarillo, congelación
+  en azul.
+
+### Cambiado
+
+- El Goblin no embosca hasta que se le ha derrotado al menos una vez (la
+  primera pelea del juego siempre es limpia).
+
 ## [0.6.0] - 2026-09-08
 
 ### Corregido
