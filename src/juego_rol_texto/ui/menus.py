@@ -108,7 +108,14 @@ def _update_flow(info: updater.UpdateInfo) -> None:
     if not new_dir:
         console.error("No se pudo descargar o verificar la actualización. Inténtalo más tarde.")
         return
-    console.success("Descarga verificada. Cerrando para aplicar la actualización...")
+    console.success("Descarga verificada. Se abrirá una ventana para aplicar la actualización.")
+    print(
+        console.colorize(
+            "El juego se cerrará ahora. Si no vuelve a abrirse solo en unos segundos, ábrelo tú: "
+            "la actualización ya estará aplicada.",
+            console.Fore.YELLOW,
+        )
+    )
     updater.apply_and_restart(new_dir)
 
 

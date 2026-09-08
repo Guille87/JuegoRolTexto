@@ -237,34 +237,85 @@ def download_and_stage(info: UpdateInfo, on_progress: Callable[[float], None] | 
     return inner if inner.is_dir() else None
 
 
+_GAME_EXE = "JuegoRolTexto.exe"
+
+
 def _apply_bat(pid: int) -> str:
-    """Contenido del .bat relanzador (ASCII puro). `%~dp0` = carpeta del .bat
-    (`.update/`), así que `%~dp0..` es la carpeta del juego."""
+    """Contenido del `.bat` relanzador (ASCII puro), escrito en `.update/`.
+
+    `%~dp0` es la carpeta del `.bat` (`.update/`, con `\\` final); `HERE\\..`
+    normalizado es la carpeta del juego. Todo tiene que funcionar en una consola
+    nueva y sin depender del `cwd`:
+
+    - la espera usa el **nombre del proceso** (`find /i`), no el PID a pelo
+      (el PID podía colar como subcadena de otro dato de `tasklist`);
+    - `ping` en vez de `timeout` como pausa (no necesita stdin);
+    - `robocopy /MIR` (espeja: copia lo nuevo y **borra lo obsoleto**)
+      protegiendo los datos del jugador con `/XD` y `/XF`. Sin ese borrado, el
+      `*.dist-info` de la versión anterior quedaba junto al nuevo e
+      `importlib.metadata` seguía devolviendo la versión vieja;
+    - `/R:3 /W:2` para que un archivo bloqueado no lo cuelgue un millón de
+      reintentos (el valor por defecto);
+    - antes de espejar comprueba que `SRC` y `DST` contienen el `.exe` del
+      juego (`/MIR` sobre la carpeta equivocada sería destructivo);
+    - deja un `apply.log` al lado del `.bat` para diagnosticar.
+    """
     return (
         "@echo off\r\n"
-        f"set PID={pid}\r\n"
+        "setlocal\r\n"
+        "title Actualizando JuegoRolTexto\r\n"
+        f'set "PID={pid}"\r\n'
+        'set "HERE=%~dp0"\r\n'
+        'for %%I in ("%HERE%..") do set "DST=%%~fI"\r\n'
+        'set "SRC=%HERE%new\\JuegoRolTexto"\r\n'
+        'set "LOG=%HERE%apply.log"\r\n'
+        "echo Aplicando la actualizacion, espera unos segundos...\r\n"
+        'echo [%date% %time%] inicio pid=%PID% SRC=%SRC% DST=%DST% > "%LOG%"\r\n'
+        f'if not exist "%SRC%\\{_GAME_EXE}" goto badpaths\r\n'
+        f'if not exist "%DST%\\{_GAME_EXE}" goto badpaths\r\n'
+        "set /a n=0\r\n"
         ":wait\r\n"
-        'tasklist /fi "PID eq %PID%" 2>nul | find "%PID%" >nul\r\n'
-        "if not errorlevel 1 (\r\n"
-        "  timeout /t 1 /nobreak >nul\r\n"
-        "  goto wait\r\n"
-        ")\r\n"
-        'robocopy "%~dp0new\\JuegoRolTexto" "%~dp0.." /E /NJH /NJS /NP '
-        '/XD "%~dp0..\\saved_games" "%~dp0..\\logs" "%~dp0..\\.update"\r\n'
-        "if %ERRORLEVEL% GEQ 8 (\r\n"
-        "  echo Error aplicando la actualizacion.\r\n"
+        f'tasklist /fi "PID eq %PID%" /nh 2>nul | find /i "{_GAME_EXE}" >nul\r\n'
+        "if errorlevel 1 goto copy\r\n"
+        "set /a n+=1\r\n"
+        "if %n% geq 60 goto copy\r\n"
+        "ping -n 2 127.0.0.1 >nul\r\n"
+        "goto wait\r\n"
+        ":copy\r\n"
+        'robocopy "%SRC%" "%DST%" /MIR /R:3 /W:2 /NFL /NDL /NJH /NJS /NP '
+        '/XD "%DST%\\saved_games" "%DST%\\logs" "%DST%\\.update" '
+        '/XF "%DST%\\config.ini" >> "%LOG%" 2>&1\r\n'
+        'set "RC=%ERRORLEVEL%"\r\n'
+        'echo [%date% %time%] robocopy RC=%RC% >> "%LOG%"\r\n'
+        "if %RC% geq 8 (\r\n"
+        "  echo.\r\n"
+        "  echo ERROR: no se pudo aplicar la actualizacion ^(codigo %RC%^).\r\n"
+        "  echo Detalles en: %LOG%\r\n"
+        "  echo Abre el juego normalmente; se te volvera a ofrecer la actualizacion.\r\n"
+        "  echo.\r\n"
         "  pause\r\n"
         "  exit /b 1\r\n"
         ")\r\n"
-        'start "" "%~dp0..\\JuegoRolTexto.exe"\r\n'
+        'echo [%date% %time%] relanzando >> "%LOG%"\r\n'
+        f'start "" /d "%DST%" "%DST%\\{_GAME_EXE}"\r\n'
+        "exit /b 0\r\n"
+        ":badpaths\r\n"
+        'echo [%date% %time%] rutas invalidas SRC=%SRC% DST=%DST% >> "%LOG%"\r\n'
+        "echo ERROR: no se encontro la carpeta del juego; actualiza manualmente.\r\n"
+        "pause\r\n"
+        "exit /b 1\r\n"
     )
 
 
 def apply_and_restart(new_dir: Path) -> NoReturn:  # pragma: no cover - lanza proceso y sale
-    """Escribe `apply.bat`, lo lanza desprendido y cierra el juego. El `.bat`
-    espera a que el proceso muera, copia la versión nueva y relanza."""
+    """Escribe `apply.bat`, lo lanza en una consola nueva e independiente y
+    cierra el juego. El `.bat` espera a que el proceso muera, copia la versión
+    nueva encima y relanza `JuegoRolTexto.exe`."""
     bat = _staging_dir() / "apply.bat"
     bat.write_text(_apply_bat(os.getpid()), encoding="ascii")
-    flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    # CREATE_NEW_CONSOLE: el .bat se ve en su propia ventana (mejor que una
+    # ventana fantasma), sobrevive al cierre del juego, y `timeout`/`pause`/
+    # `start` funcionan porque hay consola de verdad.
+    flags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
     subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, close_fds=True)
     sys.exit(0)
