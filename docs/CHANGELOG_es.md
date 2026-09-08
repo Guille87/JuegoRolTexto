@@ -9,6 +9,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-08
+
 ### Añadido
 
 - Acción de combate "Defender": gastas el turno para reducir a la mitad el daño
@@ -105,6 +107,7 @@ cambios anteriores no se registraron formalmente.
 
 - Versión inicial: combate por turnos básico en consola.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Guille87/JuegoRolTexto/releases/tag/v0.3.0
