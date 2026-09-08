@@ -9,6 +9,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-09
+
 ### Añadido
 
 - **Modelo de afinidades elementales** (GDD §5): los enemigos ahora pueden ser
@@ -208,7 +210,8 @@ cambios anteriores no se registraron formalmente.
 
 - Versión inicial: combate por turnos básico en consola.
 
-[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/Guille87/JuegoRolTexto/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Guille87/JuegoRolTexto/compare/v0.5.0...v0.6.0
