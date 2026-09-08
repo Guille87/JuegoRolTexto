@@ -44,9 +44,14 @@ def test_on_turn_start_paralysis_skips_the_turn(goblin, monkeypatch):
 def test_frozen_enemy_skips_the_turn_but_can_thaw(goblin, monkeypatch):
     goblin.apply_status("congelado", 3)
 
-    monkeypatch.setattr("random.random", lambda: 0.9)  # no se descongela
+    # 1er turno: siempre pierde el turno (no se tira el 20%), aunque random dé 0.
+    monkeypatch.setattr("random.random", lambda: 0.0)
     assert goblin.on_turn_start() is False
     assert any(e["name"] == "congelado" for e in goblin.status_effects)
+
+    # A partir del 2º: 20% de descongelarse.
+    monkeypatch.setattr("random.random", lambda: 0.9)  # no se descongela
+    assert goblin.on_turn_start() is False
 
     monkeypatch.setattr("random.random", lambda: 0.0)  # < 0.20 -> se descongela
     goblin.on_turn_start()

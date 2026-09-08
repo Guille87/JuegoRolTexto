@@ -93,6 +93,18 @@ def print_bestiary_entry(enemy, kill_count: int = 0) -> None:
     print("=" * 60)
 
 
+_STATUS_SHORT = {"fractura_magica": "fractura", "regeneración": "regen"}
+
+
+def _status_badge(combatant) -> str:
+    """`  [quemado 2 · veneno 1]` con los estados activos y sus turnos restantes."""
+    effects = getattr(combatant, "status_effects", None)
+    if not effects:
+        return ""
+    parts = [console.tint_status(f"{_STATUS_SHORT.get(e['name'], e['name'])} {e['duration']}") for e in effects]
+    return "  [" + " · ".join(parts) + "]"
+
+
 def print_status(player, enemy, defeated_enemies: list) -> None:
     """Muestra las barras de salud gráficas de forma profesional."""
 
@@ -110,11 +122,12 @@ def print_status(player, enemy, defeated_enemies: list) -> None:
 
     # Barra del Jugador
     player_bar = create_bar(player.stats.health, player.stats.max_health, console.Fore.GREEN)
-    print(f"{console.colorize(player.name.ljust(max_name), console.Fore.CYAN)}: {player_bar}")
+    print(f"{console.colorize(player.name.ljust(max_name), console.Fore.CYAN)}: {player_bar}{_status_badge(player)}")
 
-    # Barra del Enemigo
+    # Barra del Enemigo (los estados solo se ven si ya lo has derrotado antes)
     is_hidden = enemy.name not in defeated_enemies
     enemy_bar = create_bar(enemy.stats.health, enemy.stats.max_health, console.Fore.RED, is_hidden)
-    print(f"{console.colorize(enemy.name.ljust(max_name), console.Fore.LIGHTRED_EX)}: {enemy_bar}")
+    enemy_badge = "" if is_hidden else _status_badge(enemy)
+    print(f"{console.colorize(enemy.name.ljust(max_name), console.Fore.LIGHTRED_EX)}: {enemy_bar}{enemy_badge}")
 
     print("=" * 60)

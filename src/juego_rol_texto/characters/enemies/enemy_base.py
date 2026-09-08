@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto import i18n
-from juego_rol_texto.characters.stats import Stats, resolve_hit
+from juego_rol_texto.characters.stats import Stats, apply_mitigation, resolve_hit
 from juego_rol_texto.combat.elements import affinity_multiplier
 from juego_rol_texto.ui import console
 
@@ -92,10 +92,10 @@ class Enemy:
             # "fractura mágica": la resistencia mágica cuenta como 0 mientras dure.
             fractured = any(e["name"] == "fractura_magica" for e in self.status_effects)
             base_resist = 0 if fractured else self.stats.magic_resist
-            mitigation = max(0, base_resist - magic_penetration)
+            mitigation = base_resist - magic_penetration
         else:
-            mitigation = max(0, self.stats.armor - armor_penetration)
-        actual_damage = max(0, damage - mitigation)
+            mitigation = self.stats.armor - armor_penetration
+        actual_damage = apply_mitigation(damage, mitigation)
         self.stats.health -= actual_damage
         return actual_damage
 
@@ -135,7 +135,7 @@ class Enemy:
                 effect["duration"] = max(effect["duration"], duration)
                 effect["power"] = max(effect.get("power", 0), power)
                 return True
-        self.status_effects.append({"name": name, "duration": duration, "power": power})
+        self.status_effects.append({"name": name, "duration": duration, "power": power, "fresh": True})
         return True
 
     def on_turn_start(self) -> bool:
@@ -144,16 +144,20 @@ class Enemy:
         can_act = True
         for effect in self.status_effects[:]:
             if effect["name"] == "congelado":
-                if random.random() < 0.20:
+                # Primer turno congelado seguro; después, 20% por turno de romperlo.
+                if not effect.get("fresh") and random.random() < 0.20:
                     console.info(i18n.t("combat.enemy_thaws", name=self.name))
                     self.status_effects.remove(effect)
                 else:
+                    effect["fresh"] = False
                     print(console.colorize(i18n.t("combat.enemy_frozen", name=self.name), console.Fore.BLUE))
                     can_act = False
                     break
-            elif effect["name"] == "paralizado" and random.random() < 0.5:
-                console.warning(i18n.t("combat.enemy_paralysed", name=self.name))
-                can_act = False
+            elif effect["name"] == "paralizado":
+                if effect.get("fresh") or random.random() < 0.5:
+                    console.warning(i18n.t("combat.enemy_paralysed", name=self.name))
+                    can_act = False
+                effect["fresh"] = False
 
         for effect in self.status_effects[:]:
             if effect["name"] == "quemado":

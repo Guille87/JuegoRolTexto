@@ -48,8 +48,12 @@ class Bandido(Enemy):
         return False
 
     def perform_turn(self, player) -> None:
-        # Un turno de cada cuatro, de media, intenta desarmar en vez de atacar.
-        if random.random() < 0.25:
+        # Un turno de cada cuatro, de media, intenta desarmar en vez de atacar —
+        # pero solo si el jugador NO está ya desarmado (si no, se limita a
+        # atacar: no tiene sentido "desarmar" a alguien que ya lo está, ni
+        # encadenar desarmes sin fin).
+        already_disarmed = any(e["name"] == "desarmado" for e in player.status_effects)
+        if not already_disarmed and random.random() < 0.25:
             self._attempt_disarm(player)
         else:
             super().perform_turn(player)

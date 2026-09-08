@@ -1,10 +1,28 @@
+import pytest
+
 from juego_rol_texto.characters.stats import (
     BASE_HIT_CHANCE,
     MAX_HIT_CHANCE,
     MIN_HIT_CHANCE,
     Stats,
+    apply_mitigation,
     resolve_hit,
 )
+
+
+@pytest.mark.parametrize(
+    ("amount", "mitigation", "expected"),
+    [
+        (20, 0, 20),  # sin mitigación
+        (20, 5, 15),  # resta normal
+        (20, 100, 1),  # mitigación enorme -> suelo del 5% (mín. 1)
+        (100, 999, 5),  # 5% de 100
+        (20, -3, 20),  # mitigación negativa se trata como 0
+        (0, 50, 0),  # daño 0 sigue siendo 0
+    ],
+)
+def test_apply_mitigation_keeps_a_minimum_chip(amount, mitigation, expected):
+    assert apply_mitigation(amount, mitigation) == expected
 
 
 def test_health_is_clamped_to_max_health():

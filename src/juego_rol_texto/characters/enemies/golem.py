@@ -9,8 +9,10 @@ from juego_rol_texto.ui import console
 
 
 class GolemDePiedra(Enemy):
-    # La piedra empapada de minerales conduce la electricidad mucho mejor que la carne.
-    ELEMENTAL_WEAKNESSES = {"rayo": 2.0}
+    # Mole de roca: el rayo se disipa en la tierra sin hacer nada (inmune), pero
+    # el hielo se cuela por las grietas y las revienta al expandirse (débil).
+    WEAKNESSES = frozenset({"hielo"})
+    IMMUNE_ELEMENTS = frozenset({"rayo"})
 
     def __init__(self):
         # Defensa casi impenetrable: la armadura más alta de todos los enemigos.

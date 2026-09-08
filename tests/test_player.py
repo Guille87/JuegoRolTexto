@@ -19,9 +19,18 @@ def test_take_damage_magical_uses_magic_resist_instead_of_armor(player):
     assert player.stats.health == 93
 
 
-def test_take_damage_never_negative(player):
-    dealt = player.take_damage(1)
-    assert dealt == 0
+def test_take_damage_has_a_minimum_chip_and_never_heals(player):
+    # Un golpe que acierta nunca hace 0 solo por armadura: siempre pasa un
+    # mínimo (~5%, mínimo 1). Y nunca cura (daño negativo).
+    player.stats.armor = 999
+    dealt = player.take_damage(20)
+    assert dealt == 1  # max(1, round(20*0.05)) = 1
+    assert player.stats.health == 99
+
+
+def test_take_damage_of_zero_stays_zero(player):
+    player.stats.armor = 999
+    assert player.take_damage(0) == 0
     assert player.stats.health == 100
 
 

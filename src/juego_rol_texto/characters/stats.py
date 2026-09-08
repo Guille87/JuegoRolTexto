@@ -10,6 +10,22 @@ MIN_HIT_CHANCE = 5
 MAX_HIT_CHANCE = 100
 
 
+# Porción del daño en crudo que SIEMPRE atraviesa la mitigación (armadura o
+# resistencia mágica): así un golpe que acierta nunca hace 0 solo por defensa.
+# Inspirado en juegos como Raid: Shadow Legends, que evitan el "0 de daño".
+MIN_DAMAGE_FRACTION = 0.05
+
+
+def apply_mitigation(amount: int, mitigation: int) -> int:
+    """Resta `mitigation` a `amount` dejando pasar siempre al menos el
+    `MIN_DAMAGE_FRACTION` del daño en crudo (mínimo 1). Un `amount` de 0
+    (p. ej. un ataque de daño 0) sigue haciendo 0."""
+    if amount <= 0:
+        return 0
+    floor = max(1, round(amount * MIN_DAMAGE_FRACTION))
+    return max(floor, amount - max(0, mitigation))
+
+
 def resolve_hit(attacker_precision: int, defender_evasion: int) -> bool:
     """Tirada de acierto: precisión del atacante vs evasión del defensor.
 

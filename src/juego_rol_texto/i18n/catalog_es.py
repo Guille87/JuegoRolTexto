@@ -14,6 +14,14 @@ CATALOG: dict[str, str] = {
     "status.consagrado": "consagración",
     "status.marchito": "marchitamiento",
     "status.fractura_magica": "fractura mágica",
+    # --- Participios para "X ha sido {verbo}" al aplicar un estado ---
+    "status.verb.quemado": "quemado",
+    "status.verb.veneno": "envenenado",
+    "status.verb.paralizado": "paralizado",
+    "status.verb.congelado": "congelado",
+    "status.verb.consagrado": "consagrado",
+    "status.verb.marchito": "marchitado",
+    "status.verb.sangrado": "herido de gravedad",
     # --- Nombres legibles de elementos ---
     "element.fuego": "fuego",
     "element.veneno": "veneno",
@@ -26,7 +34,8 @@ CATALOG: dict[str, str] = {
     "combat.super_effective": "¡Es supereficaz! El {element} causa estragos en {name}.",
     "combat.immune_hit": "{name} es inmune al {element}: el ataque no le hace nada.",
     "combat.resisted_hit": "{name} resiste el {element}.",
-    "combat.status_inflicted": "¡{name} sufre {status}!",
+    "combat.status_inflicted": "¡{name} ha sido {verb}!",
+    "combat.status_inflicted.fractura_magica": "¡La magia que escuda a {name} se resquebraja!",
     # --- Combate: estados en el enemigo ---
     "combat.enemy_burn": "🔥 La quemadura le quita {amount} HP a {name}.",
     "combat.enemy_poison": "☣️ El veneno le quita {amount} HP a {name}.",

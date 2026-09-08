@@ -22,6 +22,11 @@ def available_locales() -> list[str]:
     return sorted(_CATALOGS)
 
 
+def has(key: str) -> bool:
+    """¿Existe esta clave en el idioma activo o en el catálogo `es`?"""
+    return key in _CATALOGS.get(_locale, {}) or key in _CATALOG_ES
+
+
 def get_locale() -> str:
     return _locale
 

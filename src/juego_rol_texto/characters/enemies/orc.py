@@ -1,7 +1,7 @@
 import random
 
 from juego_rol_texto.characters.enemies.enemy_base import Enemy
-from juego_rol_texto.characters.stats import Stats, resolve_hit
+from juego_rol_texto.characters.stats import Stats, apply_mitigation, resolve_hit
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
 from juego_rol_texto.items.potions import StatBuffPotion
@@ -51,9 +51,9 @@ class Orc(Enemy):
                 base_damage = int(base_damage * self.stats.crit_damage)
 
             # 2. Calculamos cuánto daño pasaría la defensa total del jugador
-            # (Ataque - Defensa, con penetración de armadura, mínimo 0 para no curar al jugador)
-            mitigation = max(0, player.get_total_armor() - self.stats.armor_penetration)
-            damage_after_def = max(0, base_damage - mitigation)
+            # (mismo suelo de daño mínimo que take_damage: nunca 0 por armadura).
+            mitigation = player.get_total_armor() - self.stats.armor_penetration
+            damage_after_def = apply_mitigation(base_damage, mitigation)
 
             # 3. Multiplicamos el resultado por 2
             final_dmg = damage_after_def * 2

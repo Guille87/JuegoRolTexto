@@ -91,6 +91,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     player_fled = False
     gauge_player = 0.0
     gauge_enemy = 0.0
+    enemy_acted = True  # el primer turno del jugador no cuenta como "repetido"
     while player.is_alive() and enemy.is_alive():
         rm.update()
 
@@ -104,7 +105,8 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         # huida nunca puede ser interrumpida por un enemigo más rápido.
         if gauge_player >= ATB_THRESHOLD:
             gauge_player -= ATB_THRESHOLD
-            signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto)
+            signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted)
+            enemy_acted = False
             if signal == "huir":
                 player_fled = True
                 break
@@ -124,6 +126,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         if player.is_alive() and gauge_enemy >= ATB_THRESHOLD:
             gauge_enemy -= ATB_THRESHOLD
             _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo")
+            enemy_acted = True
 
         # El enemigo pudo morir por veneno/quemadura al empezar su turno.
         if not enemy.is_alive():
@@ -162,10 +165,15 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
 
 
-def _player_menu(player, enemy, defeated_enemies: list) -> str:
-    """Maneja la interfaz de usuario durante el combate."""
+def _player_menu(player, enemy, defeated_enemies: list, immobilized: bool = False) -> str:
+    """Maneja la interfaz de usuario durante el combate. Si `immobilized`
+    (parálisis/congelación), no se ofrece "Defender" y "Atacar" pierde el turno,
+    pero sí se puede usar un objeto (poción, antídoto) o intentar huir."""
     while True:
-        options = ["1. Atacar", "2. Objetos", "3. Info", "4. Huir", "5. Defender"]
+        atacar = "1. Atacar (no puedes moverte)" if immobilized else "1. Atacar"
+        options = [atacar, "2. Objetos", "3. Info", "4. Huir"]
+        if not immobilized:
+            options.append("5. Defender")
         if enemy.name in defeated_enemies:
             options.append("6. Auto-Batalla")
             options.append("7. Auto-Batalla Turbo")
@@ -184,7 +192,7 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
             continue
         elif choice == "4":
             return "huir"
-        elif choice == "5":
+        elif choice == "5" and not immobilized:
             return "defender"
         elif choice == "6" and enemy.name in defeated_enemies:
             return "auto"
@@ -194,25 +202,27 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
             console.error("Opción no válida.")
 
 
-def _attempt_flee(player, enemy) -> bool:
+def _attempt_flee(player, enemy, chance_mult: float = 1.0) -> bool:
     """Probabilidad de huir con éxito.
 
     Si el jugador es igual o más rápido que el enemigo, la huida es siempre
     segura (100%). Por debajo de eso, la probabilidad baja junto con la
-    velocidad relativa, pero nunca llega a 0.
+    velocidad relativa, pero nunca llega a 0. `chance_mult` la reduce (0.5 si el
+    jugador está inmovilizado por parálisis/congelación).
     """
     player_speed = max(1, player.get_total_speed())
     enemy_speed = max(1, enemy.stats.speed)
-    flee_chance = min(1.0, player_speed / enemy_speed)
+    flee_chance = min(1.0, player_speed / enemy_speed) * chance_mult
     return random.random() < flee_chance
 
 
-def _run_player_turn(player, enemy, defeated_enemies: list, is_auto):
+def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: bool = False):
     """Ejecuta el turno del jugador cuando su gauge ATB está lista.
 
     `is_auto` es `False`, `"auto"` (auto normal, con pausas) o `"turbo"` (auto
-    sin pausas, para farmear). Devuelve `(señal, is_auto actualizado)`; señal es
-    `"huir"` si el combate debe terminar, o `"ok"` en cualquier otro caso.
+    sin pausas, para farmear). `repeated` = el jugador vuelve a actuar sin que el
+    enemigo haya actuado por el medio (es más rápido). Devuelve `(señal, is_auto
+    actualizado)`; señal es `"huir"` si el combate debe terminar, o `"ok"`.
     """
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
@@ -222,10 +232,15 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto):
     can_act = player.on_turn_start()
     turn_consumed = False
 
-    # Si el veneno/quemadura le hizo daño, mostramos las barras para que el
-    # jugador vea con cuánta vida se ha quedado antes de decidir su acción.
+    # Si el veneno/quemadura le hizo daño, una línea con su vida para que sepa
+    # con cuánta se queda antes de decidir (sin repetir todo el resumen).
     if player.is_alive() and player.stats.health != hp_before:
-        print_status(player, enemy, defeated_enemies)
+        print(
+            console.colorize(f"{player.name}: {player.stats.health}/{player.stats.max_health} HP", console.Fore.GREEN)
+        )
+
+    if repeated and not is_auto and player.is_alive():
+        print(console.colorize(f"⏩ Eres más rápido: actúas de nuevo antes que {enemy.name}.", console.Fore.CYAN))
 
     # --- COMPROBAR CANCELACIÓN DE AUTO ---
     if is_auto and check_for_interrupt():
@@ -238,38 +253,36 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto):
     action = None
     if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
         if not is_auto:
-            if can_act:
-                action = _player_menu(player, enemy, defeated_enemies)
-                if action == "huir":
-                    # La huida siempre se resuelve antes que cualquier otra acción,
-                    # sea el jugador más rápido o más lento que el enemigo.
-                    if _attempt_flee(player, enemy):
-                        console.warning("Has huido del combate...")
-                        return "huir", is_auto
-                    else:
-                        console.error(f"¡No has podido escapar de {enemy.name}!")
-                        turn_consumed = True
+            action = _player_menu(player, enemy, defeated_enemies, immobilized=not can_act)
+            if action == "huir":
+                # Inmovilizado, la probabilidad de huir baja a la mitad.
+                if _attempt_flee(player, enemy, chance_mult=1.0 if can_act else 0.5):
+                    console.warning("Has huido del combate...")
+                    return "huir", is_auto
+                console.error(f"¡No has podido escapar de {enemy.name}!")
+                turn_consumed = True
 
-                if action in ("auto", "turbo"):
-                    is_auto = action
-                    modo = "TURBO (sin pausas)" if action == "turbo" else "ACTIVADO"
-                    print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+            if action in ("auto", "turbo"):
+                is_auto = action
+                modo = "TURBO (sin pausas)" if action == "turbo" else "ACTIVADO"
+                print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
 
-                if action == "defender":
-                    player.defending = True
-                    turn_consumed = True
-                    print(
-                        console.colorize(
-                            f"{player.name} adopta una postura defensiva: el daño recibido hasta su "
-                            "siguiente turno se reduce a la mitad.",
-                            console.Fore.CYAN,
-                        )
+            if action == "defender":
+                player.defending = True
+                turn_consumed = True
+                print(
+                    console.colorize(
+                        f"{player.name} adopta una postura defensiva: el daño recibido hasta su "
+                        "siguiente turno se reduce a la mitad.",
+                        console.Fore.CYAN,
                     )
+                )
 
-                if action == "objeto_usado":
-                    turn_consumed = True
-            else:
-                console.ask(f"\n{console.colorize('Presiona Enter para pasar turno...', console.Fore.YELLOW)}")
+            if action == "objeto_usado":
+                turn_consumed = True
+
+            if action == "atacar" and not can_act:
+                console.warning("Intentas moverte, pero no puedes. Pierdes el turno.")
 
         # --- ATAQUE DEL JUGADOR (Si puede actuar) ---
         if (is_auto or action == "atacar") and can_act and not turn_consumed:
@@ -437,7 +450,19 @@ def _try_inflict_weapon_status(player: "Player", enemy, element: str | None) -> 
         duration = max(1, duration // 2)
 
     if random.random() < chance and enemy.apply_status(inflicts["status"], duration, inflicts.get("power", 0)):
-        console.warning(i18n.t("combat.status_inflicted", name=enemy.name, status=status_label(inflicts["status"])))
+        console.warning(_status_inflicted_message(enemy.name, inflicts["status"]))
+
+
+def _status_inflicted_message(name: str, status: str) -> str:
+    """'X ha sido envenenado/quemado/...' (o un mensaje propio para estados sin
+    participio natural como `fractura_magica`)."""
+    override = f"combat.status_inflicted.{status}"
+    if i18n.has(override):
+        return i18n.t(override, name=name)
+    verb = i18n.t(f"status.verb.{status}")
+    if verb == f"status.verb.{status}":  # sin participio -> forma genérica
+        verb = status_label(status)
+    return i18n.t("combat.status_inflicted", name=name, verb=verb)
 
 
 def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> tuple:
