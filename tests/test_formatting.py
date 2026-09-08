@@ -37,6 +37,28 @@ def test_print_player_enemy_info_shows_stats_of_defeated_enemy(player, capsys):
     assert f"Vida: {enemy.stats.health}/{enemy.stats.max_health}" in out
 
 
+def test_print_player_enemy_info_pairs_related_stats_on_one_line(player, capsys):
+    enemy = Goblin()
+    print_player_enemy_info(player, enemy, defeated_enemies=[enemy.name])
+    out = capsys.readouterr().out
+    # Contraparte / relación en la misma línea, para el jugador y el enemigo.
+    assert "Armadura:" in out and "| Resistencia Mágica:" in out
+    assert "Precisión:" in out and "| Evasión:" in out
+    # El daño crítico del jugador y el crítico del enemigo ahora se muestran.
+    assert out.count("Daño Crítico:") == 2
+
+
+def test_print_player_enemy_info_shows_magic_attack_for_arcanist(capsys):
+    from juego_rol_texto.characters.classes import CharClass, starting_stats
+    from juego_rol_texto.characters.player import Player
+
+    arc = Player("A", starting_stats(CharClass.ARCANISTA), char_class=CharClass.ARCANISTA)
+    print_player_enemy_info(arc, Goblin(), defeated_enemies=[])
+    out = capsys.readouterr().out
+    assert "Ataque mágico:" in out
+    assert "Poder Mágico:" in out
+
+
 def test_print_bestiary_entry_includes_kill_count_and_gold(capsys):
     enemy = Goblin()
     print_bestiary_entry(enemy, kill_count=7)

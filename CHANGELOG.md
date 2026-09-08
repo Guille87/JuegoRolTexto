@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Save files now record `clase` and `habilidades_equipadas` (the latter unused
   until the skill system lands).
 
+### Changed
+
+- Stat sheets (the "Estadísticas" menu and both in-combat info panels) group
+  related stats on one line: armour + magic resist, precision + evasion, crit
+  chance + crit damage; XP now sits next to the level. The combat info panel also
+  shows the player's crit damage and the enemy's crit chance + crit damage.
+- The admin character now picks a class too, so the classes can be tested with
+  cheat stats.
+
 ## [0.9.0] - 2026-09-09
 
 ### Added

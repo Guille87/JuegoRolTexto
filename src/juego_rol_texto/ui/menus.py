@@ -205,9 +205,15 @@ def start_new_game() -> None:
     # --- LÓGICA DE CHEATS / ADMIN ---
     if is_admin:
         print(console.colorize("⚠️  MODO DESARROLLADOR ACTIVADO ⚠️", console.Fore.MAGENTA))
+        # El admin también elige clase, para poder probarlas con stats de cheat.
+        char_class = _choose_class()
         # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
         initial_stats = Stats(500, 500, 20, 40, 10, crit_chance=0.15)
-        player = Player(name, initial_stats)
+        if char_class == CharClass.ARCANISTA:
+            # Poder mágico acorde a las stats de cheat para que su ataque mágico pegue igual de fuerte.
+            initial_stats.magic_power = 40
+        player = Player(name, initial_stats, char_class=char_class)
+        console.success(f"Empiezas como {PROFILES[char_class].name}.")
         player.level = 10
         player.inventory.gold = 5000
 

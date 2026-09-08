@@ -24,6 +24,15 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 - Los guardados registran ahora `clase` y `habilidades_equipadas` (esta última
   sin uso hasta que llegue el sistema de habilidades).
 
+### Cambiado
+
+- Las fichas de estadísticas (menú "Estadísticas" y los dos paneles de info en
+  combate) agrupan en una línea las stats relacionadas: armadura + resistencia
+  mágica, precisión + evasión, prob. crítico + daño crítico; la XP va ahora junto
+  al nivel. El panel de combate muestra además el daño crítico del jugador y la
+  prob. de crítico + daño crítico del enemigo.
+- El personaje admin también elige clase, para poder probarlas con stats de cheat.
+
 ## [0.9.0] - 2026-09-09
 
 ### Añadido
