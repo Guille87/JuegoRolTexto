@@ -7,6 +7,7 @@ from juego_rol_texto.characters.enemies.gargola import Gargola
 from juego_rol_texto.characters.enemies.golem import GolemDePiedra
 from juego_rol_texto.characters.enemies.huargo import Huargo
 from juego_rol_texto.characters.enemies.nigromante import Nigromante
+from juego_rol_texto.characters.stats import apply_mitigation
 from juego_rol_texto.combat.battle import ENEMY_PROGRESSION
 from juego_rol_texto.items.equipment import Weapon
 
@@ -143,7 +144,7 @@ def test_nigromante_dark_bolt_uses_magic_resist_not_armor(player, monkeypatch):
     nigromante.perform_turn(player)
     dealt = before - player.stats.health
 
-    assert dealt == 10 - max(0, 10 - nigromante.stats.magic_penetration)  # ignora los 100 de armadura
+    assert dealt == apply_mitigation(10, 10 - nigromante.stats.magic_penetration)  # ignora los 100 de armadura
 
 
 def test_nigromante_summon_deals_physical_damage_using_armor(player, monkeypatch):
@@ -159,7 +160,7 @@ def test_nigromante_summon_deals_physical_damage_using_armor(player, monkeypatch
     nigromante.perform_turn(player)
     dealt = before - player.stats.health
 
-    assert dealt == 10 - max(0, 4 - nigromante.stats.armor_penetration)
+    assert dealt == apply_mitigation(10, 4 - nigromante.stats.armor_penetration)
 
 
 def test_angel_caido_self_heals_when_health_is_low(player, monkeypatch):

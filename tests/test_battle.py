@@ -137,11 +137,11 @@ def test_troll_regen_is_anchored_to_its_regen_stat(monkeypatch):
 def test_enemy_take_damage_magical_uses_magic_resist_instead_of_armor():
     mago = Mago()
     mago.stats.armor = 100  # no debería influir en absoluto en daño mágico
-    mago.stats.magic_resist = 5
+    mago.stats.magic_resist = 20
 
-    dealt = mago.take_damage(20, is_magical=True)
+    dealt = mago.take_damage(40, is_magical=True)
 
-    assert dealt == 15  # 20 - magic_resist(5), ignora los 100 de armadura
+    assert dealt == 20  # 40 * 20/(20+20), con res. mágica, ignora la armadura
 
 
 def test_enemy_take_damage_physical_still_uses_armor_by_default():
@@ -354,17 +354,19 @@ def test_execute_turn_uses_attacker_armor_penetration(player, monkeypatch):
     monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
     monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)
 
-    player.stats.armor_penetration = 2
+    player.stats.armor_penetration = 20
 
     goblin = Goblin()
-    goblin.stats.armor = 3
+    goblin.stats.armor = 40
     goblin.stats.health = goblin.stats.max_health = 1000
 
     before = goblin.stats.health
     _execute_turn(player, goblin, defeated_enemies=[])
     dealt = before - goblin.stats.health
 
-    assert dealt == 9  # 10 base - max(0, armor(3) - penetración(2))
+    # 10 base, armadura efectiva 40-20=20 -> round(10 * 20/40) = 5.
+    # Sin la penetración serían round(10 * 20/60) = 3.
+    assert dealt == 5
 
 
 def test_execute_turn_uses_element_from_bracers_when_no_elemental_weapon(player, monkeypatch):

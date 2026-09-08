@@ -90,7 +90,7 @@ def test_consagrado_makes_the_target_take_25_percent_more(goblin):
 
 
 def test_fractura_magica_zeroes_magic_resist(goblin):
-    goblin.stats.magic_resist = 40
-    assert goblin.take_damage(50, is_magical=True) == 10  # 50 - 40
+    goblin.stats.magic_resist = 60
+    assert goblin.take_damage(40, is_magical=True) == 10  # 40 * 20/(60+20)
     goblin.apply_status("fractura_magica", 3)
-    assert goblin.take_damage(50, is_magical=True) == 50  # resistencia -> 0
+    assert goblin.take_damage(40, is_magical=True) == 40  # resistencia -> 0, daño íntegro

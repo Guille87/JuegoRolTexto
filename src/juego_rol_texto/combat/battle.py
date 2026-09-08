@@ -7,7 +7,7 @@ from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.enemies.enemy_base import status_label
 from juego_rol_texto.characters.stats import resolve_hit
 from juego_rol_texto.ui import console
-from juego_rol_texto.ui.formatting import print_player_enemy_info, print_status
+from juego_rol_texto.ui.formatting import print_combatant_bar, print_player_enemy_info, print_status
 from juego_rol_texto.ui.keyboard import key_pressed
 
 if TYPE_CHECKING:
@@ -232,12 +232,10 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
     can_act = player.on_turn_start()
     turn_consumed = False
 
-    # Si el veneno/quemadura le hizo daño, una línea con su vida para que sepa
-    # con cuánta se queda antes de decidir (sin repetir todo el resumen).
+    # Si el veneno/quemadura le hizo daño, una línea con su vida (barra +
+    # estados) para que sepa con cuánta se queda antes de decidir.
     if player.is_alive() and player.stats.health != hp_before:
-        print(
-            console.colorize(f"{player.name}: {player.stats.health}/{player.stats.max_health} HP", console.Fore.GREEN)
-        )
+        print_combatant_bar(player, is_player=True)
 
     if repeated and not is_auto and player.is_alive():
         print(console.colorize(f"⏩ Eres más rápido: actúas de nuevo antes que {enemy.name}.", console.Fore.CYAN))

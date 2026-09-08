@@ -10,20 +10,24 @@ MIN_HIT_CHANCE = 5
 MAX_HIT_CHANCE = 100
 
 
-# Porción del daño en crudo que SIEMPRE atraviesa la mitigación (armadura o
-# resistencia mágica): así un golpe que acierta nunca hace 0 solo por defensa.
-# Inspirado en juegos como Raid: Shadow Legends, que evitan el "0 de daño".
-MIN_DAMAGE_FRACTION = 0.05
+# Curva de reducción de daño por defensa, estilo Raid: Shadow Legends. En vez de
+# restar la armadura (lineal: o es inútil o es un muro), se reduce un porcentaje
+# con rendimientos decrecientes: reduccion = DEF / (DEF + K). Cada punto de
+# armadura vale un poco menos que el anterior y el daño nunca llega a 0.
+# K está escalado a los números de este juego (armaduras de ~2 a ~25): con K=20,
+# armadura 20 reduce el 50%, armadura 5 reduce el 20%.
+DEFENSE_SOFTENING = 20
 
 
 def apply_mitigation(amount: int, mitigation: int) -> int:
-    """Resta `mitigation` a `amount` dejando pasar siempre al menos el
-    `MIN_DAMAGE_FRACTION` del daño en crudo (mínimo 1). Un `amount` de 0
-    (p. ej. un ataque de daño 0) sigue haciendo 0."""
+    """Aplica la reducción de daño por defensa (`mitigation` = armadura o
+    resistencia mágica, ya con la penetración del atacante restada). Un `amount`
+    de 0 sigue haciendo 0; cualquier golpe real hace al menos 1."""
     if amount <= 0:
         return 0
-    floor = max(1, round(amount * MIN_DAMAGE_FRACTION))
-    return max(floor, amount - max(0, mitigation))
+    mitigation = max(0, mitigation)
+    reduced = amount * DEFENSE_SOFTENING / (mitigation + DEFENSE_SOFTENING)
+    return max(1, round(reduced))
 
 
 def resolve_hit(attacker_precision: int, defender_evasion: int) -> bool:

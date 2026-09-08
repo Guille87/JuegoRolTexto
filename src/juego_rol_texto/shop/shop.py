@@ -3,8 +3,38 @@ from juego_rol_texto.items.factory import item_factory
 from juego_rol_texto.items.potions.antidote_potion import AntidotePotion
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
+from juego_rol_texto.items.potions.potion_base import Potion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
 from juego_rol_texto.ui import console
+
+# Máximo de un mismo consumible que se puede llevar / comprar de una vez.
+MAX_STACK = 99
+
+
+def _gold(amount) -> str:
+    return console.colorize(f"{amount} oro", console.Fore.YELLOW, bright=True)
+
+
+def _item_name(item) -> str:
+    """Nombre del objeto coloreado por tipo (arma por su elemento, armadura azul,
+    consumible verde, material gris)."""
+    if isinstance(item, Weapon):
+        return console.colorize(item.name, console.element_color(item.element))
+    if isinstance(item, Armor):
+        return console.colorize(item.name, console.Fore.BLUE, bright=True)
+    if isinstance(item, Potion):
+        return console.colorize(item.name, console.Fore.GREEN)
+    return console.colorize(item.name, console.Fore.LIGHTBLACK_EX)
+
+
+def _ask_quantity(available: int) -> int:
+    """Pregunta cuántas unidades (1..available). 0 o entrada no válida -> 0 (cancela)."""
+    if available <= 1:
+        return available
+    raw = console.ask(f"¿Cuántas? (1-{available}, 0 para cancelar): ")
+    if not raw.isdigit():
+        return 0
+    return max(0, min(int(raw), available))
 
 
 class ShopItem:
@@ -14,13 +44,17 @@ class ShopItem:
         self.template = template
         self.buy_price = buy_price
 
+    @property
+    def stackable(self) -> bool:
+        return not isinstance(self.template, (Weapon, Armor))
+
     def create_item(self):
         """Crea una copia independiente de la plantilla para entregar al jugador."""
         return item_factory(self.template.to_dict())
 
     def __str__(self) -> str:
         return console.tint_status(
-            f"{self.template.name} - Compra: {self.buy_price} oro | {self.template.description} "
+            f"{_item_name(self.template)} - Compra: {_gold(self.buy_price)} | {self.template.description} "
             f"| [{self.template.get_stats_info()}]"
         )
 
@@ -55,11 +89,11 @@ class Shop:
     def open(self, player) -> None:
         """Punto de entrada del menú interactivo de la tienda."""
         while True:
-            print(console.colorize("\n--- TIENDA ---", console.Fore.YELLOW))
-            print(f"Oro disponible: {console.colorize(str(player.inventory.gold), console.Fore.YELLOW)}")
-            print("1. Comprar")
-            print("2. Vender")
-            print("3. Volver")
+            print(console.colorize("\n--- TIENDA ---", console.Fore.YELLOW, bright=True))
+            print(f"Oro disponible: {_gold(player.inventory.gold)}")
+            print(f"{console.colorize('1.', console.Fore.CYAN)} Comprar")
+            print(f"{console.colorize('2.', console.Fore.CYAN)} Vender")
+            print(f"{console.colorize('3.', console.Fore.CYAN)} Volver")
 
             choice = console.ask("\nSelecciona una opción: ")
             if choice == "1":
@@ -76,10 +110,10 @@ class Shop:
             print("No hay objetos en venta.")
             return
 
-        print(console.colorize("\n--- OBJETOS EN VENTA ---", console.Fore.CYAN))
+        print(console.colorize("\n--- OBJETOS EN VENTA ---", console.Fore.CYAN, bright=True))
         for idx, shop_item in enumerate(self.catalog, 1):
-            print(f"{idx}. {shop_item}")
-        print(f"{len(self.catalog) + 1}. Volver")
+            print(f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {shop_item}")
+        print(f"{console.colorize(f'{len(self.catalog) + 1}.', console.Fore.CYAN)} Volver")
 
         choice = console.ask(f"\nElige qué comprar (1-{len(self.catalog) + 1}): ")
         if not choice.isdigit():
@@ -95,12 +129,22 @@ class Shop:
 
         shop_item = self.catalog[idx]
         if player.inventory.gold < shop_item.buy_price:
-            console.error("No tienes suficiente oro para comprar este objeto.")
+            console.error("No tienes suficiente oro ni para una unidad.")
             return
 
-        player.inventory.gold -= shop_item.buy_price
-        player.inventory.add_item(shop_item.create_item())
-        console.success(f"Has comprado {shop_item.template.name}.")
+        # Consumibles: se pueden comprar varios a la vez (hasta lo que permita el
+        # oro, con tope de MAX_STACK). Armas/armaduras: siempre una.
+        max_affordable = min(MAX_STACK, player.inventory.gold // shop_item.buy_price)
+        quantity = _ask_quantity(max_affordable) if shop_item.stackable else 1
+        if quantity <= 0:
+            return
+
+        total = shop_item.buy_price * quantity
+        player.inventory.gold -= total
+        for _ in range(quantity):
+            player.inventory.add_item(shop_item.create_item())
+        unidades = f"{quantity}x " if quantity > 1 else ""
+        console.success(f"Has comprado {unidades}{shop_item.template.name} por {total} oro.")
 
     def _sell_menu(self, player) -> None:
         items = player.inventory.items
@@ -108,12 +152,14 @@ class Shop:
             print("No tienes objetos para vender.")
             return
 
-        print(console.colorize("\n--- VENDER OBJETOS ---", console.Fore.CYAN))
+        print(console.colorize("\n--- VENDER OBJETOS ---", console.Fore.CYAN, bright=True))
         for idx, item in enumerate(items, 1):
             qty = player.inventory.quantities.get(item.name, 1)
-            qty_str = f" x{qty}" if qty > 1 else ""
-            print(f"{idx}. {item.name}{qty_str} - Venta: {item.value} oro")
-        print(f"{len(items) + 1}. Volver")
+            qty_str = console.colorize(f" x{qty}", console.Fore.YELLOW) if qty > 1 else ""
+            print(
+                f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {_item_name(item)}{qty_str} · vale {_gold(item.value)}"
+            )
+        print(f"{console.colorize(f'{len(items) + 1}.', console.Fore.CYAN)} Volver")
 
         choice = console.ask(f"\nElige qué vender (1-{len(items) + 1}): ")
         if not choice.isdigit():
@@ -128,6 +174,17 @@ class Shop:
             return
 
         item = items[idx]
-        gold_gained = player.inventory.sell_item(item)
-        if gold_gained is not None:
-            console.success(f"Has vendido {item.name} por {gold_gained} oro.")
+        available = player.inventory.quantities.get(item.name, 1)
+        quantity = _ask_quantity(available)
+        if quantity <= 0:
+            return
+
+        gained = 0
+        for _ in range(quantity):
+            result = player.inventory.sell_item(item)
+            if result is None:  # equipado -> no se puede vender
+                break
+            gained += result
+        if gained:
+            unidades = f"{quantity}x " if quantity > 1 else ""
+            console.success(f"Has vendido {unidades}{item.name} por {gained} oro.")

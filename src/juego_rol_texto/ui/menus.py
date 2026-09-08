@@ -524,6 +524,7 @@ def _admin_panel_flow(player, unlocked_enemies: list, defeated_enemies: list) ->
                 lambda: _admin_give_all_materials(player),
             ),
             ("Conseguir todas las armas y armaduras de los enemigos", lambda: _admin_give_all_equipment(player)),
+            ("Conseguir todas las pociones (x20 de cada)", lambda: _admin_give_all_potions(player)),
             ("Volver", "break"),
         ]
 
@@ -700,6 +701,19 @@ def _admin_give_all_equipment(player) -> None:
     console.success(
         f"Conseguidas {len(equipment)} armas y armaduras: una de cada objeto que puede soltar algún enemigo."
     )
+
+
+def _admin_give_all_potions(player) -> None:
+    """Da 20 unidades de cada poción de la tienda (salud, regeneración, fuerza, antídoto)."""
+    from juego_rol_texto.items.factory import item_factory
+    from juego_rol_texto.shop.shop import Shop
+
+    potions = [entry.template for entry in Shop().catalog if entry.stackable]
+    with _quiet_pickups():
+        for template in potions:
+            for _ in range(20):
+                player.inventory.add_item(item_factory(template.to_dict()))
+    console.success(f"Conseguidas 20 unidades de cada una de las {len(potions)} pociones.")
 
 
 def _get_enemy_instance(name: str):

@@ -62,8 +62,8 @@ def test_open_loop_buy_then_back(player, monkeypatch):
     """open(): comprar (1) -> volver del submenú -> salir (3)."""
     shop = Shop()
     player.inventory.gold = 100
-    # "1" abre comprar, "1" compra el primer objeto, "3" sale del bucle.
-    _answers(monkeypatch, "1", "1", "3")
+    # "1" abre comprar, "1" elige el primer objeto, "1" cantidad, "3" sale.
+    _answers(monkeypatch, "1", "1", "1", "3")
     shop.open(player)
 
     assert player.inventory.gold == 100 - shop.catalog[0].buy_price
@@ -83,6 +83,42 @@ def test_open_loop_rejects_invalid_option_then_exits(player, monkeypatch, capsys
     Shop().open(player)
 
     assert "Opción no válida." in capsys.readouterr().out
+
+
+def test_buy_multiple_of_a_stackable_item(player, monkeypatch):
+    shop = Shop()
+    player.inventory.gold = 100
+    healing = shop.catalog[0]  # Poción de Salud, apilable
+
+    _answers(monkeypatch, "1", "3")  # elige item 1, compra 3
+    shop._buy_menu(player)
+
+    assert player.inventory.quantities[healing.template.name] == 3
+    assert player.inventory.gold == 100 - healing.buy_price * 3
+
+
+def test_buy_quantity_is_capped_by_gold(player, monkeypatch):
+    shop = Shop()
+    player.inventory.gold = 12  # solo llega para 2 pociones de 5
+    _answers(monkeypatch, "1", "99")  # pide 99, solo puede 2
+    shop._buy_menu(player)
+
+    assert player.inventory.quantities["Poción de Salud"] == 2
+    assert player.inventory.gold == 2
+
+
+def test_sell_multiple_units(player, monkeypatch):
+    from juego_rol_texto.items.potions.healing_potion import HealingPotion
+
+    shop = Shop()
+    for _ in range(4):
+        player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20))
+
+    _answers(monkeypatch, "1", "3")  # vende 3 de 4
+    shop._sell_menu(player)
+
+    assert player.inventory.quantities["Poción de Salud"] == 1
+    assert player.inventory.gold == 2 * 3
 
 
 @pytest.mark.parametrize("choice", ["abc", "999", "0"])
