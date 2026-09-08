@@ -82,6 +82,7 @@ antes de compilar; sin él el juego funciona igual, solo sin informes de errores
 ## Documentación
 
 - [Guía de contribución](CONTRIBUTING_es.md) — flujo de trabajo y convenciones.
+- [GDD](GDD_es.md) — documento de diseño (mundo, historia, dirección RPG).
 - [Roadmap](ROADMAP_es.md) — qué está hecho y qué está planeado.
 - [Changelog](CHANGELOG_es.md) — historial de versiones.
 - [CLAUDE.md](../CLAUDE.md) — notas de arquitectura detalladas (en inglés).

@@ -3,7 +3,8 @@
 <p align="center"><a href="ROADMAP.md">English</a> · <a href="docs/ROADMAP_es.md">Español</a></p>
 
 A living document of what exists and what is planned. See the
-[CHANGELOG](CHANGELOG.md) for the detailed version history and
+[CHANGELOG](CHANGELOG.md) for the detailed version history, the
+[GDD](GDD.md) for the full design of the world/story/RPG direction, and
 [TODO.md](TODO.md) for the balance-tuning log.
 
 ## Done
@@ -26,28 +27,47 @@ A living document of what exists and what is planned. See the
   verify (SHA-256) and apply an update, restarting itself without a reinstall and
   without touching `saved_games/` / `config.ini`.
 
-## Game — planned
+## Planned — phased plan
 
-- **Re-balance the 14-enemy chain** after `BASE_HIT_CHANCE` changed from 90 to
-  100 — only the Goblin has been re-verified so far.
-- **Armour set bonuses** (2/4/6-piece bonuses for themed sets).
-- **Real multi-enemy fights** — today several enemies fake it with an "extra
-  hit" instead of a second combatant with its own turn gauge.
+Full design in the [GDD](GDD.md). Direction: keep the combat, build a world
+around it (zones on a map with free backtracking, NPCs, a dark-fantasy
+questline). Each phase is one release; **releases are tagged only on the
+maintainer's go-ahead** — features accumulate on `main` via PRs.
+
+### v0.9.0 — Combat depth *(no world rework)*
+- Status-inflicting weapons + `Enemy` status processing (closes the "enemies
+  have `magic_resist` but nothing uses statuses on them" gap).
+- Equipment set bonuses (4 themed sets, tiers at 2/4 pieces).
+- Character classes at creation (Vagabundo / Guerrero / Pícaro / Arcanista).
+- Light rebalance for the above.
+
+### v0.10.0 — The world, part 1
+- Zone system + travel graph + exploration loop replacing the flat menu.
+- The 14-enemy chain migrated into 6 zones + a hub village.
+- Sub-locations; shop / forge / paid rest relocated. Random encounters +
+  discoveries. Save migration v1 → v2.
+
+### v0.11.0 — Story & quests
+- Quest system; main questline "La Brecha" (6 acts) + 3 side quests.
+- NPC dialogue conditional on quest/story state. Lore notes + Diario.
+
+### v0.12.0 — The Arena & polish
+- Arena / escalating-wave mode (pairs with turbo auto-battle).
+- Ed25519 signature on the auto-updater (on top of SHA-256 + HTTPS — see
+  `SECURITY.md`).
+- Gameplay GIF, social-preview image.
+
+### v1.0.0 — Valeterna
+- Full rebalance of the 14-enemy chain (post `BASE_HIT_CHANCE` 90→100) against
+  the questline pacing.
+- Full playthrough verified end to end.
 - Cleaner MVC separation in the presentation layer.
+- *(Stretch)* real multi-enemy combat — today several enemies fake it with an
+  "extra hit" instead of a second combatant with its own turn gauge.
 
-## Project & tooling — planned
+## Smaller tooling items (unscheduled)
 
-Medium / polish:
-
-- **Ed25519 signature** on the auto-update, on top of the current SHA-256 +
-  HTTPS, to also defend against a compromised GitHub account (see `SECURITY.md`).
-
-- **Gameplay recording (GIF / asciinema)** for the README, beyond the static screenshot.
-- **Social-preview image** for the repo (via GitHub settings).
 - Extend `pyright` to also check `tests/`, and step up from `basic` to `standard`.
 - Tidy the auto-generated release notes; link the CHANGELOG.
-
-## Ideas (no commitment)
-
 - In-game feedback channel (a menu option that posts to Discord, like the crash report).
 - Localisation / multi-language support in the game itself.
