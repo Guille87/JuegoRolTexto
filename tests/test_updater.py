@@ -179,10 +179,15 @@ def test_download_and_stage_aborts_and_cleans_on_bad_hash(staging, tmp_path, mon
 
 def test_apply_bat_content():
     bat = updater._apply_bat(4321)
-    assert "set PID=4321" in bat
+    assert 'set "PID=4321"' in bat
+    assert 'find /i "JuegoRolTexto.exe"' in bat  # espera por nombre de proceso, no por PID a pelo
     assert "robocopy" in bat
-    assert '/XD "%~dp0..\\saved_games"' in bat
-    assert 'start "" "%~dp0..\\JuegoRolTexto.exe"' in bat
+    assert "/MIR" in bat  # espeja: borra ficheros obsoletos (p. ej. el .dist-info viejo)
+    assert "/R:3 /W:2" in bat  # no colgarse con reintentos infinitos
+    assert '/XD "%DST%\\saved_games" "%DST%\\logs" "%DST%\\.update"' in bat
+    assert '/XF "%DST%\\config.ini"' in bat  # /MIR no debe borrar los ajustes
+    assert 'start "" /d "%DST%" "%DST%\\JuegoRolTexto.exe"' in bat
+    assert "timeout " not in bat  # timeout no funciona sin stdin
 
 
 def test_apply_and_restart_writes_the_bat_spawns_and_exits(staging, monkeypatch):

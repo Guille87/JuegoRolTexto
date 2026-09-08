@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Auto-update apply step: the relauncher `.bat` now runs in its own console
+  (so it survives the game closing and its commands actually work), waits for
+  the game by process name, mirrors the new build with `robocopy /MIR` (removing
+  stale files — notably the old version's `*.dist-info`, which left the updated
+  game still reporting the previous version), protects `config.ini` and the save
+  folder, and writes an `apply.log`.
+
 ## [0.5.0] - 2026-09-08
 
 ### Added

@@ -9,6 +9,16 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido
+
+- Paso de aplicación de la auto-actualización: el `.bat` relanzador ahora corre
+  en su propia consola (así sobrevive al cierre del juego y sus comandos
+  funcionan), espera al juego por nombre de proceso, espeja la versión nueva con
+  `robocopy /MIR` (borrando ficheros obsoletos — sobre todo el `*.dist-info` de
+  la versión anterior, que dejaba al juego ya actualizado informando de la
+  versión vieja), protege `config.ini` y la carpeta de partidas, y deja un
+  `apply.log`.
+
 ## [0.5.0] - 2026-09-08
 
 ### Añadido
