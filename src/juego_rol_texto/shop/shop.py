@@ -1,5 +1,6 @@
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.factory import item_factory
+from juego_rol_texto.items.potions.antidote_potion import AntidotePotion
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
@@ -36,6 +37,10 @@ class Shop:
             ),
             ShopItem(
                 StatBuffPotion("Poción de Fuerza", "Aumenta el ataque temporalmente", 5, "max_atk", 5, 3), buy_price=12
+            ),
+            ShopItem(
+                AntidotePotion("Antídoto", "Purga veneno, quemadura, parálisis y congelación al instante.", 6),
+                buy_price=15,
             ),
             ShopItem(
                 Weapon("Espada de Hierro", "Una espada bien forjada, superior a las improvisadas", 10, damage=6),

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- "Defender" combat action: spend your turn to halve the damage you take until
+  your next turn.
+- Antidote potion: instantly clears poison, burn, paralysis and freeze. Sold in
+  the shop.
+- The game version is shown under the main-menu and in-game menu titles.
+
 ## [0.4.0] - 2026-09-08
 
 ### Added

@@ -58,7 +58,11 @@ class Orc(Enemy):
             # 3. Multiplicamos el resultado por 2
             final_dmg = damage_after_def * 2
 
-            # 4. Aplicamos el daño directamente a la salud del jugador
+            # 4. Aplicamos el daño directamente a la salud del jugador. Este golpe
+            # no pasa por take_damage() (ya lleva la mitigación restada), así que
+            # la reducción por "Defender" se aplica aquí a mano.
+            if getattr(player, "defending", False) and final_dmg > 0:
+                final_dmg //= 2
             player.stats.health -= final_dmg
 
             if is_crit:

@@ -3,6 +3,7 @@ import pytest
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.factory import item_factory
 from juego_rol_texto.items.materials import Material
+from juego_rol_texto.items.potions.antidote_potion import AntidotePotion
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
@@ -21,6 +22,7 @@ ITEM_SAMPLES = [
     HealingPotion("Poción de Salud", "desc", 2, heal_amount=20),
     StatBuffPotion("Poción de Fuerza", "desc", 5, stat_name="max_atk", boost=5, duration=3),
     RegenPotion("Poción de Regeneración", "desc", 8, regen_amount=10, duration=3),
+    AntidotePotion("Antídoto", "desc", 6),
     Material("Piel de Troll", "desc", 150, rarity="Legendario"),
 ]
 

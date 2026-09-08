@@ -359,3 +359,36 @@ def test_run_player_turn_successful_flee_returns_huir_signal(player, weak_enemy,
     signal, is_auto = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
 
     assert signal == "huir"
+
+
+def test_defending_halves_incoming_damage(player):
+    player.stats.armor = 0
+    player.stats.max_health = 100
+    player.stats.health = 100
+
+    player.defending = True
+    dealt = player.take_damage(40)
+
+    assert dealt == 20
+    assert player.stats.health == 80
+
+
+def test_run_player_turn_defender_sets_the_stance_and_consumes_the_turn(player, weak_enemy, monkeypatch):
+    weak_enemy.stats.max_health = 50
+    weak_enemy.stats.health = 50
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "5")  # Defender
+
+    signal, _ = _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
+
+    assert signal == "ok"
+    assert player.defending is True
+    assert weak_enemy.stats.health == 50  # defender no ataca
+
+
+def test_defending_is_cleared_when_the_players_next_turn_begins(player, weak_enemy, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda prompt: "1")  # atacar
+    player.defending = True
+
+    _run_player_turn(player, weak_enemy, defeated_enemies=[], is_auto=False)
+
+    assert player.defending is False

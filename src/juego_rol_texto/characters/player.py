@@ -17,6 +17,10 @@ class Player(Character):
         self.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
         self.just_leveled_up = False
         self.in_combat = False
+        # Postura defensiva (acción "Defender" en combate): mientras está activa,
+        # take_damage() reduce a la mitad el daño recibido. Dura hasta el
+        # siguiente turno del jugador, que la limpia en combat/battle.py.
+        self.defending = False
 
         # Sistema de estados alterados: [{"name": "quemado", "duration": 3, "power": 5}, ...]
         self.status_effects = []
@@ -43,6 +47,12 @@ class Player(Character):
         else:
             mitigation = max(0, self.get_total_armor() - armor_penetration)
         final_damage = max(0, amount - mitigation)
+
+        # Postura defensiva: el golpe entra a la mitad.
+        if self.defending and final_damage > 0:
+            final_damage //= 2
+            console.info(f"🛡️ Tu postura defensiva reduce el golpe a {final_damage}.")
+
         self.stats.health -= final_damage
 
         if is_fire:
