@@ -354,7 +354,18 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
         return
 
     damage = attacker.get_attack_damage()
-    element = attacker.get_equipped_element() if isinstance(attacker, Player) else None
+
+    # Arcanista: su ataque estándar es mágico (escala con poder mágico, no con el
+    # arma) y su elemento es "arcano" por defecto si nada más lo fija.
+    is_magical_attack = isinstance(attacker, Player) and attacker.is_magical_attacker()
+    if is_magical_attack:
+        from juego_rol_texto.characters.classes import ARCANIST_DEFAULT_ELEMENT
+
+        element = attacker.get_equipped_element() or ARCANIST_DEFAULT_ELEMENT
+    elif isinstance(attacker, Player):
+        element = attacker.get_equipped_element()
+    else:
+        element = None
 
     # Golpe crítico: el jugador suma el bonus de su equipo, los enemigos usan su stat base
     attacker_crit_chance = (
@@ -381,9 +392,18 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     attacker_armor_penetration = (
         attacker.get_total_armor_penetration() if isinstance(attacker, Player) else attacker.stats.armor_penetration
     )
-    final_dmg = defender.take_damage(
-        damage, defeated_enemies=defeated_enemies, element=element, armor_penetration=attacker_armor_penetration
-    )
+    if is_magical_attack:
+        final_dmg = defender.take_damage(
+            damage,
+            defeated_enemies=defeated_enemies,
+            element=element,
+            is_magical=True,
+            magic_penetration=attacker.get_total_magic_penetration(),
+        )
+    else:
+        final_dmg = defender.take_damage(
+            damage, defeated_enemies=defeated_enemies, element=element, armor_penetration=attacker_armor_penetration
+        )
 
     element_name = i18n.t(f"element.{element}") if element else ""
     if is_super_effective:

@@ -64,6 +64,7 @@ class Stats:
         armor_penetration: int = 0,
         magic_penetration: int = 0,
         regen: int = 0,
+        magic_power: int = 0,
     ):
         self.max_health = max_health
         self._health = health
@@ -87,6 +88,9 @@ class Stats:
         # Regeneración de salud pasiva (HP curados cada turno, aplicada por
         # quien la use — Player.on_turn_start() / Enemy.on_turn_end()).
         self.regen = regen
+        # Poder mágico: fuente de daño del ataque estándar del Arcanista
+        # (is_magical). 0 para el resto de clases y para todos los enemigos.
+        self.magic_power = magic_power
 
     @property
     def health(self) -> int:
