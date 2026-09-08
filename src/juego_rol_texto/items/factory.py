@@ -2,6 +2,7 @@
 
 from juego_rol_texto.items.equipment import Armor, Weapon
 from juego_rol_texto.items.materials import Material
+from juego_rol_texto.items.potions.antidote_potion import AntidotePotion
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
@@ -11,6 +12,7 @@ _ITEM_CLASSES = {
     "HealingPotion": HealingPotion,
     "StatBuffPotion": StatBuffPotion,
     "RegenPotion": RegenPotion,
+    "AntidotePotion": AntidotePotion,
     "Material": Material,
     "Weapon": Weapon,
     "Armor": Armor,

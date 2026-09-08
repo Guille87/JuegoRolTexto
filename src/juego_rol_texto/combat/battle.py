@@ -147,9 +147,9 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 def _player_menu(player, enemy, defeated_enemies: list) -> str:
     """Maneja la interfaz de usuario durante el combate."""
     while True:
-        options = ["1. Atacar", "2. Objetos", "3. Info", "4. Huir"]
+        options = ["1. Atacar", "2. Objetos", "3. Info", "4. Huir", "5. Defender"]
         if enemy.name in defeated_enemies:
-            options.append("5. Auto-Batalla")
+            options.append("6. Auto-Batalla")
 
         print("\n" + " | ".join(options))
         choice = console.ask("Selección: ")
@@ -165,7 +165,9 @@ def _player_menu(player, enemy, defeated_enemies: list) -> str:
             continue
         elif choice == "4":
             return "huir"
-        elif choice == "5" and enemy.name in defeated_enemies:
+        elif choice == "5":
+            return "defender"
+        elif choice == "6" and enemy.name in defeated_enemies:
             return "auto"
         else:
             console.error("Opción no válida.")
@@ -191,6 +193,9 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tu
     terminar, o "ok" en cualquier otro caso.
     """
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
+    # La postura defensiva del turno anterior solo cubre hasta que al jugador le
+    # vuelve a tocar: al empezar su turno se limpia.
+    player.defending = False
     can_act = player.on_turn_start()
     turn_consumed = False
 
@@ -218,6 +223,17 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto: bool) -> tu
                 if action == "auto":
                     is_auto = True
                     print(console.colorize(">>> MODO AUTO: ACTIVADO. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+
+                if action == "defender":
+                    player.defending = True
+                    turn_consumed = True
+                    print(
+                        console.colorize(
+                            f"{player.name} adopta una postura defensiva: el daño recibido hasta su "
+                            "siguiente turno se reduce a la mitad.",
+                            console.Fore.CYAN,
+                        )
+                    )
 
                 if action == "objeto_usado":
                     turn_consumed = True
@@ -405,6 +421,7 @@ def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> 
 
     # Limpiar estados alterados
     player.status_effects = []
+    player.defending = False
 
     if hasattr(player, "active_effects"):
         player.active_effects = []

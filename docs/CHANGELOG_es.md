@@ -9,6 +9,15 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+
+- Acción de combate "Defender": gastas el turno para reducir a la mitad el daño
+  que recibes hasta tu siguiente turno.
+- Poción de Antídoto: elimina al instante veneno, quemadura, parálisis y
+  congelación. Se vende en la tienda.
+- La versión del juego se muestra bajo el título del menú principal y del menú
+  de partida.
+
 ## [0.4.0] - 2026-09-08
 
 ### Añadido

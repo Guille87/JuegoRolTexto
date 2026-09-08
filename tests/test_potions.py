@@ -1,5 +1,6 @@
 """Tests de `use()` de las pociones (las de combate dependen de `player.in_combat`)."""
 
+from juego_rol_texto.items.potions.antidote_potion import AntidotePotion
 from juego_rol_texto.items.potions.buff_potion import StatBuffPotion
 from juego_rol_texto.items.potions.healing_potion import HealingPotion
 from juego_rol_texto.items.potions.regen_potion import RegenPotion
@@ -34,6 +35,23 @@ def test_buff_potion_needs_combat_and_applies_the_boost(player):
     assert potion.use(player) is True
     assert player.stats.max_atk == base + 5
     assert potion in player.active_effects
+
+
+def test_antidote_removes_debuffs_and_leaves_the_rest(player):
+    player.apply_status("veneno", 3)
+    player.apply_status("quemado", 2)
+    player.apply_status("maldicion", 3, power=4)  # no curable
+
+    assert AntidotePotion("Antídoto", "desc", 6).use(player) is True
+
+    names = {e["name"] for e in player.status_effects}
+    assert names == {"maldicion"}
+
+
+def test_antidote_fails_when_there_is_nothing_to_cure(player):
+    assert AntidotePotion("Antídoto", "desc", 6).use(player) is False
+    player.apply_status("confusion", 3, power=5)  # tampoco es curable por el antídoto
+    assert AntidotePotion("Antídoto", "desc", 6).use(player) is False
 
 
 def test_buff_potion_remove_reverts_the_boost(player):

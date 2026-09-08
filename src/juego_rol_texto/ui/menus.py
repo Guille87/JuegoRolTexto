@@ -5,7 +5,7 @@ import random
 import sys
 from functools import partial
 
-from juego_rol_texto import updater
+from juego_rol_texto import __version__, updater
 from juego_rol_texto.audio.resource_manager import ResourceManager
 from juego_rol_texto.characters.enemies import (
     AngelCaido,
@@ -122,6 +122,7 @@ def main_menu() -> None:
 
         print("\n" + "=" * 30)
         print(console.colorize("⚔️  MENÚ PRINCIPAL  ⚔️", console.Fore.YELLOW))
+        print(console.colorize(f"v{__version__}", console.Fore.BLACK, bright=True))
         print("=" * 30)
 
         options: list[tuple[str, object]] = [
@@ -372,6 +373,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
 
         print("\n" + "=" * 40)
         print(console.colorize(f"ESTADO: {player.name} | Nivel: {player.level}", console.Fore.CYAN))
+        print(console.colorize(f"v{__version__}", console.Fore.BLACK, bright=True))
         print("=" * 40)
 
         # Usamos una lista de tuplas para mantener el orden de las opciones
