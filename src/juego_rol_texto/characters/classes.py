@@ -66,7 +66,7 @@ PROFILES: dict[CharClass, ClassProfile] = {
     CharClass.VAGABUNDO: ClassProfile(
         id=CharClass.VAGABUNDO,
         name="Aventurero",
-        identity="Equilibrado. Estadísticas y curvas de siempre; el pool de habilidades más flexible.",
+        identity="Equilibrado, sin fuertes ni débiles marcados. Buen punto de partida y el pool de habilidades más flexible.",
     ),
     CharClass.GUERRERO: ClassProfile(
         id=CharClass.GUERRERO,
