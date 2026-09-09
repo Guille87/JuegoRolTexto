@@ -182,6 +182,11 @@ def _perform_load(player, path):
     player.stats.magic_power = stats_data.get("magic_power", 0)
     player.char_class = save_data.get("clase")
     player.equipped_skills = list(save_data.get("habilidades_equipadas", []))
+    # Descarta ids inválidos (habilidad desconocida, no aprendida aún, o de otra
+    # clase si la partida es anterior a las clases) y respeta el tope de 4.
+    player.sanitize_equipped_skills()
+    if not player.equipped_skills:
+        player.autoequip_skills()
 
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]

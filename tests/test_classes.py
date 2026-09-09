@@ -128,5 +128,6 @@ def test_legacy_save_without_class_loads_as_vagabundo(tmp_save_dir):
     loaded = Player("Legacy", Stats(1, 1, 1, 1, 1))
     load_game(loaded)
     assert loaded.char_class is CharClass.VAGABUNDO
-    assert loaded.equipped_skills == []
+    # Sin habilidades guardadas, al cargar se auto-equipan las activas conocidas.
+    assert loaded.equipped_skills == ["golpe_firme"]
     assert loaded.stats.magic_power == 0

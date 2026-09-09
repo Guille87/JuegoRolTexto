@@ -11,6 +11,16 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Habilidades** (GDD §6.2): cada clase tiene ahora un pool de habilidades. Las
+  **pasivas** están siempre activas una vez aprendidas; las **activas**
+  reemplazan tu ataque y tienen enfriamiento en turnos — equipas hasta 4 para
+  llevar al combate. Nuevo menú "Habilidades" para gestionarlas y una acción
+  "Habilidades" en combate para usarlas (la auto-batalla usa una activa lista si
+  la hay). Este release trae el hito 1 (1 activa + 1 pasiva por clase, se aprende
+  al crear el personaje): Golpe Firme / Segundo Aliento (Vagabundo), Embate /
+  Piel de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
+  Sintonía (Arcanista). Nuevo estado `sangrado`. Los números son provisionales.
+
 - **Cadenas de auto-batalla**: tras activar la Auto-Batalla o el Turbo contra un
   enemigo ya derrotado, el juego pregunta cuántas peleas seguidas hacer (hasta
   20). Cada una se resuelve como siempre (botín, oro, XP, curación) y la

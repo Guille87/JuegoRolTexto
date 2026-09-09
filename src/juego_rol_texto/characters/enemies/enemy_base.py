@@ -168,6 +168,10 @@ class Enemy:
                 dmg = max(1, self.stats.max_health // 8)
                 self.stats.health -= dmg
                 console.success(i18n.t("combat.enemy_poison", amount=dmg, name=self.name))
+            elif effect["name"] == "sangrado":
+                dmg = max(1, self.stats.max_health // 12)
+                self.stats.health -= dmg
+                console.error(i18n.t("combat.enemy_bleed", amount=dmg, name=self.name))
 
         return can_act
 

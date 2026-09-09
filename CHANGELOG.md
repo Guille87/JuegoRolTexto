@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Skills** (GDD §6.2): each class now has a skill pool. **Passives** are always
+  on once learned; **actives** replace your attack and have a turn cooldown — you
+  equip up to 4 to bring into a fight. New "Habilidades" menu to manage them and a
+  "Habilidades" combat action to use them (auto-battle uses a ready active if it
+  has one). This release ships milestone 1 (one active + one passive per class,
+  learned at creation): Golpe Firme / Segundo Aliento (Vagabundo), Embate / Piel
+  de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
+  Sintonía (Arcanista). New `sangrado` (bleed) status. Numbers are provisional.
+
 - **Auto-battle chains**: after you turn on Auto-Battle or Turbo against an
   already-defeated enemy, the game asks how many fights to run back-to-back (up
   to 20). Each resolves as normal (loot, gold, XP, post-battle heal) and the next

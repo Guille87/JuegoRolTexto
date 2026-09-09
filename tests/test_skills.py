@@ -1,0 +1,164 @@
+from juego_rol_texto.characters.classes import CharClass, starting_stats
+from juego_rol_texto.characters.enemies.goblin import Goblin
+from juego_rol_texto.characters.player import Player
+from juego_rol_texto.characters.skills import CATALOG, MAX_EQUIPPED_ACTIVES, SkillKind, known_skills, pool_for
+from juego_rol_texto.combat import battle
+
+
+def _player(char_class=CharClass.VAGABUNDO, level=1):
+    p = Player("H", starting_stats(char_class), char_class=char_class)
+    p.level = level
+    return p
+
+
+def test_catalog_is_well_formed():
+    for sid, skill in CATALOG.items():
+        assert skill.id == sid
+        assert skill.milestone in range(1, 8)
+        if skill.is_active:
+            assert skill.cooldown >= 1
+        else:
+            assert skill.kind is SkillKind.PASSIVE
+
+
+def test_every_class_has_one_active_and_one_passive_at_m1():
+    for cls in CharClass:
+        m1 = [s for s in pool_for(cls) if s.milestone == 1]
+        assert sum(s.is_active for s in m1) == 1
+        assert sum(s.kind is SkillKind.PASSIVE for s in m1) == 1
+
+
+def test_known_skills_are_gated_by_level():
+    assert {s.id for s in known_skills(CharClass.VAGABUNDO, 1)} == {"golpe_firme", "segundo_aliento"}
+    # M2 (nivel 4) todavía no tiene contenido, así que sigue siendo lo mismo a nivel 5.
+    assert {s.id for s in known_skills(CharClass.VAGABUNDO, 5)} == {"golpe_firme", "segundo_aliento"}
+
+
+def test_has_passive_only_true_for_learned_passives():
+    p = _player(CharClass.GUERRERO)
+    assert p.has_passive("piel_de_piedra") is True
+    assert p.has_passive("segundo_aliento") is False  # otra clase
+    assert p.has_passive("golpe_firme") is False  # es activa, no pasiva
+
+
+def test_reflejos_adds_flat_evasion():
+    picaro = _player(CharClass.PICARO)
+    base = starting_stats(CharClass.PICARO).evasion
+    assert picaro.get_total_evasion() == base + 8
+
+
+def test_piel_de_piedra_reduces_physical_damage_only():
+    guerrero = _player(CharClass.GUERRERO)
+    guerrero.stats.armor = 0
+    guerrero.stats.magic_resist = 0
+    phys = guerrero.take_damage(50)
+    guerrero.stats.health = guerrero.stats.max_health
+    magic = guerrero.take_damage(50, is_magical=True)
+    assert phys < magic  # la pasiva solo mitiga el físico
+
+
+def test_segundo_aliento_heals_on_kill(monkeypatch, weak_enemy):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    vaga = _player(CharClass.VAGABUNDO)
+    vaga.stats.health = 10
+    battle._handle_victory(vaga, weak_enemy, [], ["Goblin"])
+    assert vaga.stats.health > 10
+
+
+def test_autoequip_and_cap():
+    p = _player(CharClass.VAGABUNDO)
+    p.autoequip_skills()
+    assert p.equipped_skills == ["golpe_firme"]
+    p.equipped_skills = ["golpe_firme", "no_existe", "golpe_firme", "segundo_aliento"]
+    p.sanitize_equipped_skills()
+    assert p.equipped_skills == ["golpe_firme"]  # quita repetido, desconocido y la pasiva
+
+
+def test_sanitize_respects_max_equipped():
+    assert MAX_EQUIPPED_ACTIVES == 4
+
+
+def test_execute_skill_golpe_firme_never_misses_and_hits_harder(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.99)  # fallaría un ataque normal
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.99)  # sin crítico
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+
+    p = _player(CharClass.VAGABUNDO)
+    enemy = Goblin()
+    enemy.stats.armor = 0
+    enemy.stats.evasion = 99  # un ataque normal fallaría seguro
+    hp = enemy.stats.health
+
+    battle._execute_skill(p, enemy, CATALOG["golpe_firme"], [])
+
+    assert enemy.stats.health < hp  # acertó pese a la evasión altísima
+    assert hp - enemy.stats.health == 14  # 10 base * 1.4
+
+
+def test_execute_skill_golpe_bajo_crits_and_bleeds(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.99)  # no forzamos crítico por azar
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+
+    p = _player(CharClass.PICARO)
+    enemy = Goblin()
+    enemy.stats.armor = 0
+    battle._execute_skill(p, enemy, CATALOG["golpe_bajo"], [])
+
+    assert any(e["name"] == "sangrado" for e in enemy.status_effects)
+
+
+def test_execute_skill_proyectil_arcano_ignores_magic_resist(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.99)
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 40)
+
+    arc = _player(CharClass.ARCANISTA)
+    arc.stats.magic_power = 40
+    enemy = Goblin()
+    enemy.stats.magic_resist = 100  # enorme; el proyectil la ignora
+    hp = enemy.stats.health
+
+    battle._execute_skill(arc, enemy, CATALOG["proyectil_arcano"], [])
+
+    assert hp - enemy.stats.health >= 30  # casi todo el golpe entra
+
+
+def test_cooldown_decrements_each_player_turn(monkeypatch, weak_enemy):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._player_menu", lambda *a, **k: "atacar")
+    p = _player(CharClass.VAGABUNDO)
+    cooldowns = {"golpe_firme": 3}
+
+    battle._run_player_turn(p, weak_enemy, ["Goblin"], is_auto=False, cooldowns=cooldowns)
+
+    assert cooldowns["golpe_firme"] == 2
+
+
+def test_sintonia_lets_the_arcanist_pick_the_element(monkeypatch):
+    from juego_rol_texto.combat.elements import ELEMENTS
+
+    arc = _player(CharClass.ARCANISTA)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "1")
+    battle._prompt_battle_element(arc)
+    assert arc.battle_element == sorted(ELEMENTS)[0]
+
+
+def test_sintonia_only_prompts_for_the_arcanist(monkeypatch):
+    vaga = _player(CharClass.VAGABUNDO)
+    monkeypatch.setattr(
+        "juego_rol_texto.combat.battle.console.ask",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debería preguntar")),
+    )
+    battle._prompt_battle_element(vaga)
+    assert vaga.battle_element is None
+
+
+def test_enemy_bleed_damages_over_time():
+    enemy = Goblin()
+    enemy.apply_status("sangrado", 3)
+    hp = enemy.stats.health
+    enemy.on_turn_start()
+    assert enemy.stats.health < hp

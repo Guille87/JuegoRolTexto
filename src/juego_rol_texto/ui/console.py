@@ -32,6 +32,7 @@ _STATUS_PATTERNS = (
     (re.compile(r"\b(?:quemad\w*|quemaduras?|quema)\b", re.IGNORECASE), Fore.RED),
     (re.compile(r"\b(?:par[aá]lisis|paraliz\w*)\b", re.IGNORECASE), Fore.YELLOW),
     (re.compile(r"\b(?:congelaci[oó]n|congelad[oa]s?|congela)\b", re.IGNORECASE), Fore.BLUE),
+    (re.compile(r"\b(?:sangrado|sangra\w*)\b", re.IGNORECASE), Fore.RED),
 )
 
 

@@ -17,9 +17,11 @@ class Player(Character):
         self._class_profile = get_profile(char_class)
         self.level = 1
         self.experience = 0
-        # Ids de las habilidades activas equipadas (≤4). Se rellena en v0.10.0-b;
-        # aquí solo se persiste para no romper el guardado al añadirlo luego.
+        # Ids de las habilidades activas equipadas (≤4, GDD §6.2). Se persiste.
         self.equipped_skills: list[str] = []
+        # Elemento elegido para este combate (pasiva "Sintonía" del Arcanista);
+        # lo limpia _restore_player() al terminar la pelea.
+        self.battle_element: str | None = None
         self.inventory = Inventory(self)
         self.equipped_weapon = None
         self.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
@@ -56,6 +58,13 @@ class Player(Character):
             mitigation = self.get_total_armor() - armor_penetration
         final_damage = apply_mitigation(amount, mitigation)
 
+        # Pasivas que reducen el daño físico recibido (p. ej. "Piel de Piedra").
+        if not is_magical and final_damage > 0:
+            for skill in self._active_passives():
+                mult = skill.params.get("phys_dmg_taken_mult")
+                if mult is not None:
+                    final_damage = max(1, round(final_damage * mult))
+
         # Postura defensiva: el golpe entra a la mitad.
         if self.defending and final_damage > 0:
             final_damage //= 2
@@ -83,6 +92,50 @@ class Player(Character):
     def is_magical_attacker(self) -> bool:
         """El ataque estándar es mágico y escala con `poder_magico` (Arcanista)."""
         return self._class_profile.is_magical_attacker
+
+    # --- HABILIDADES (GDD §6.2) ---
+
+    def known_skills(self) -> list:
+        """Habilidades ya aprendidas según clase y nivel."""
+        from juego_rol_texto.characters import skills
+
+        return skills.known_skills(self.char_class, self.level)
+
+    def known_active_skills(self) -> list:
+        return [s for s in self.known_skills() if s.is_active]
+
+    def _active_passives(self) -> list:
+        from juego_rol_texto.characters.skills import SkillKind
+
+        return [s for s in self.known_skills() if s.kind is SkillKind.PASSIVE]
+
+    def has_passive(self, skill_id: str) -> bool:
+        """¿El jugador tiene aprendida esa pasiva?"""
+        return any(s.id == skill_id for s in self._active_passives())
+
+    def get_equipped_active_skills(self) -> list:
+        """Las activas equipadas que además siguen siendo válidas (conocidas)."""
+        known = {s.id: s for s in self.known_active_skills()}
+        return [known[sid] for sid in self.equipped_skills if sid in known]
+
+    def sanitize_equipped_skills(self) -> None:
+        """Deja en `equipped_skills` solo ids de activas conocidas, sin repetir y
+        como mucho `MAX_EQUIPPED_ACTIVES` (tras cargar partida o cambiar de clase)."""
+        from juego_rol_texto.characters.skills import MAX_EQUIPPED_ACTIVES
+
+        known = {s.id for s in self.known_active_skills()}
+        seen: list[str] = []
+        for sid in self.equipped_skills:
+            if sid in known and sid not in seen:
+                seen.append(sid)
+        self.equipped_skills = seen[:MAX_EQUIPPED_ACTIVES]
+
+    def autoequip_skills(self) -> None:
+        """Equipa las activas conocidas que quepan (para no obligar a pasar por el
+        menú cuando solo hay una o dos)."""
+        from juego_rol_texto.characters.skills import MAX_EQUIPPED_ACTIVES
+
+        self.equipped_skills = [s.id for s in self.known_active_skills()][:MAX_EQUIPPED_ACTIVES]
 
     def get_total_magic_power(self) -> int:
         """Poder mágico total (hoy solo el stat base; ningún equipo lo otorga aún)."""
@@ -159,6 +212,7 @@ class Player(Character):
     def get_total_evasion(self) -> int:
         """Devuelve la evasión total sumando todas las piezas equipadas (stat base de las perneras)."""
         bonus = sum(item.evasion for item in self.equipped_armor.values() if item)
+        bonus += sum(s.params.get("evasion", 0) for s in self._active_passives())  # p. ej. "Reflejos"
         total = self.stats.evasion + bonus
 
         # Confusión (Demonio): resta evasión mientras dure el estado.
@@ -187,9 +241,12 @@ class Player(Character):
         return self.stats.magic_penetration
 
     def get_equipped_element(self) -> str | None:
-        """Devuelve el elemento del arma equipada; si no tiene (o estás
-        desarmado), el de los brazales."""
+        """Devuelve el elemento del ataque: el elegido este combate por la pasiva
+        "Sintonía" si lo hay, si no el del arma equipada (salvo desarmado), y en
+        último lugar el de los brazales."""
         is_disarmed = any(e["name"] == "desarmado" for e in self.status_effects)
+        if self.battle_element and not is_disarmed:
+            return self.battle_element
         if self.equipped_weapon and self.equipped_weapon.element and not is_disarmed:
             return self.equipped_weapon.element
         brazales = self.equipped_armor.get("brazales")
@@ -236,6 +293,11 @@ class Player(Character):
                 dmg = max(1, self.stats.max_health // 8)
                 self.stats.health -= dmg
                 console.success(f"☣️ El veneno te quita {dmg} HP.")
+
+            elif effect["name"] == "sangrado":
+                dmg = max(1, self.stats.max_health // 12)
+                self.stats.health -= dmg
+                console.error(f"🩸 El sangrado te quita {dmg} HP.")
 
             elif effect["name"] == "regeneración":
                 heal = effect.get("power", 0)
