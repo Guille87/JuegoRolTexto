@@ -366,6 +366,71 @@ def open_options() -> None:
             _check_updates_now()
 
 
+_MAX_CHAIN_BATTLES = 20
+
+
+def _ask_chain_setup() -> tuple[int, str] | None:
+    """Para un enemigo ya derrotado: pregunta cuántas peleas seguidas y, si son
+    varias, en qué modo automático. Devuelve `(nº peleas, modo)` con modo
+    `"manual"` (1 pelea normal), `"auto"` o `"turbo"`; o `None` si se cancela."""
+    raw = console.ask(f"\n¿Cuántas peleas seguidas? (1-{_MAX_CHAIN_BATTLES}, Enter = 1): ").strip()
+    if not raw:
+        return 1, "manual"
+    if not raw.isdigit():
+        console.error("Entrada no válida.")
+        return None
+    count = max(1, min(int(raw), _MAX_CHAIN_BATTLES))
+    if count == 1:
+        return 1, "manual"
+
+    print(f"\n{console.colorize('1.', console.Fore.CYAN)} Auto-Batalla (con pausas)")
+    print(f"{console.colorize('2.', console.Fore.CYAN)} Auto-Batalla Turbo (sin pausas)")
+    mode_choice = console.ask("Modo para la cadena (Enter = Auto-Batalla): ").strip()
+    if mode_choice == "2":
+        return count, "turbo"
+    if mode_choice in ("", "1"):
+        return count, "auto"
+    console.error("Entrada no válida.")
+    return None
+
+
+def _run_battle_chain(
+    player, enemy_name: str, defeated_enemies: list, unlocked_enemies: list, count: int, mode: str
+) -> None:
+    """Encadena `count` peleas automáticas contra `enemy_name`. Cada pelea es
+    como siempre (botín, oro, XP, curación). Se detiene si el jugador cae, huye
+    o pulsa 'Q' para salir del modo automático."""
+    completed = 0
+    stopped_by_defeat = False
+    for i in range(1, count + 1):
+        print(console.colorize(f"\n=== CADENA DE BATALLA: PELEA {i}/{count} ===", console.Fore.MAGENTA, bright=True))
+        outcome = initiate_battle(
+            player,
+            _get_enemy_instance(enemy_name),
+            defeated_enemies,
+            unlocked_enemies,
+            start_auto=mode,
+            pause_on_victory=False,
+        )
+        if outcome in ("victory", "cancelled"):
+            completed = i
+        if outcome != "victory":
+            motivo = {
+                "defeat": "Has caído en combate",
+                "fled": "Has huido",
+                "cancelled": "Has salido del modo automático",
+            }.get(outcome, "Cadena interrumpida")
+            console.warning(f"🔗 {motivo}. Cadena interrumpida ({completed}/{count} peleas completadas).")
+            stopped_by_defeat = outcome == "defeat"
+            break
+    else:
+        console.success(f"🔗 Cadena completada: {count}/{count} peleas.")
+
+    # En turbo nunca se pausa; tras una derrota, _handle_defeat ya pausó.
+    if mode != "turbo" and not stopped_by_defeat:
+        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+
+
 def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: bool = False) -> None:
     """Bucle principal de la estancia en el mundo"""
 
@@ -382,23 +447,30 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
 
         battle_choice = console.ask(f"\nElige a tu oponente (1-{len(unlocked_enemies) + 1}): ")
 
-        if battle_choice.isdigit():
-            target_idx = int(battle_choice) - 1
-
-            # Si elige un enemigo de la lista
-            if 0 <= target_idx < len(unlocked_enemies):
-                enemy_name = unlocked_enemies[target_idx]
-                enemy_obj = _get_enemy_instance(enemy_name)
-                # Iniciamos la batalla
-                initiate_battle(player, enemy_obj, defeated_enemies, unlocked_enemies)
-
-            # Si elige la opción de volver
-            elif target_idx == len(unlocked_enemies):
-                return
-            else:
-                console.error("Opción fuera de rango.")
-        else:
+        if not battle_choice.isdigit():
             console.error("Entrada no válida.")
+            return
+
+        target_idx = int(battle_choice) - 1
+        if target_idx == len(unlocked_enemies):
+            return
+        if not (0 <= target_idx < len(unlocked_enemies)):
+            console.error("Opción fuera de rango.")
+            return
+
+        enemy_name = unlocked_enemies[target_idx]
+
+        # Enemigo ya derrotado: se puede encadenar varias auto-batallas seguidas.
+        if enemy_name in defeated_enemies:
+            setup = _ask_chain_setup()
+            if setup is None:
+                return
+            count, mode = setup
+            if mode != "manual":
+                _run_battle_chain(player, enemy_name, defeated_enemies, unlocked_enemies, count, mode)
+                return
+
+        initiate_battle(player, _get_enemy_instance(enemy_name), defeated_enemies, unlocked_enemies)
 
     # Dentro de la partida el aviso se muestra una sola vez (al entrar), no en
     # cada redibujado del menú: aquí la llamada a la acción es "guarda y vuelve

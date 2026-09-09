@@ -75,6 +75,35 @@ def test_defeat_penalizes_gold_and_fully_heals_player(player, monkeypatch):
     assert player.inventory.gold == 90 - (90 // 3)
 
 
+def test_initiate_battle_returns_victory_and_auto_start_skips_the_menu(player, weak_enemy, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    # start_auto + pause_on_victory=False: no debe pedir NADA por consola.
+    monkeypatch.setattr(
+        "juego_rol_texto.combat.battle.console.ask",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debería pedir input")),
+    )
+
+    outcome = initiate_battle(player, weak_enemy, [], ["Goblin"], start_auto="auto", pause_on_victory=False)
+
+    assert outcome == "victory"
+    assert player.enemy_kill_counts["Goblin"] == 1
+
+
+def test_initiate_battle_returns_defeat(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.orc import Orc
+
+    strong = Orc()
+    strong.stats.min_atk = strong.stats.max_atk = 500
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "")
+
+    outcome = initiate_battle(
+        player, strong, ["Goblin", "Orco"], ["Goblin", "Orco"], start_auto="turbo", pause_on_victory=False
+    )
+
+    assert outcome == "defeat"
+
+
 def test_troll_takes_double_damage_from_fire():
     troll = Troll()
     troll.stats.armor = 0

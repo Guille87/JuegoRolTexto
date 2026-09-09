@@ -11,6 +11,12 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
+- **Cadenas de auto-batalla**: al elegir un enemigo ya derrotado ahora puedes
+  decidir cuántas peleas seguidas hacer (hasta 20) en Auto-Batalla o Turbo. Cada
+  pelea se resuelve como siempre (botín, oro, XP, curación tras el combate) y la
+  siguiente empieza sola — sin menú, sin "Presiona Enter" por pelea. La cadena se
+  detiene si caes, huyes o pulsas `Q` para salir del modo automático.
+
 - **Clases de personaje** (GDD §6.1): al crear personaje eliges entre
   **Vagabundo** (el personaje equilibrado de siempre), **Guerrero** (tanque),
   **Pícaro** (rápido / crítico / frágil) o **Arcanista** (mágico). Cada una tiene

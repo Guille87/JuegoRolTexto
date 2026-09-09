@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Auto-battle chains**: when you pick an already-defeated enemy you can now
+  choose how many fights to run back-to-back (up to 20) in Auto-Battle or Turbo.
+  Each fight resolves as normal (loot, gold, XP, post-battle heal) and the next
+  starts on its own — no menu, no per-fight "press Enter". The chain stops if you
+  fall, flee or press `Q` to leave auto mode.
+
 - **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
   balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or
   **Arcanista** (magic) at character creation. Each has its own starting stats

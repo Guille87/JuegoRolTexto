@@ -48,8 +48,24 @@ def check_for_interrupt() -> bool:
     return key_pressed() == "q"
 
 
-def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> None:
-    """Punto de entrada principal para cualquier combate."""
+def initiate_battle(
+    player,
+    enemy,
+    defeated_enemies: list,
+    unlocked_enemies: list,
+    *,
+    start_auto: bool | str = False,
+    pause_on_victory: bool = True,
+) -> str:
+    """Punto de entrada principal para cualquier combate.
+
+    `start_auto` (`"auto"` / `"turbo"`) arranca la pelea ya en ese modo, sin
+    pasar por el menú del jugador — lo usan las cadenas de auto-batalla.
+    `pause_on_victory=False` omite el "Presiona Enter" final (la cadena hace una
+    sola pausa al terminar todas las peleas).
+
+    Devuelve el desenlace: `"victory"`, `"defeat"`, `"fled"` o `"cancelled"`
+    (el jugador pulsó 'Q' para salir del modo automático)."""
     print("=" * 60)
     print(f"{console.colorize(f'¡Ha comenzado la batalla contra {enemy.name}!', console.Fore.WHITE, bright=True)}")
     player.in_combat = True
@@ -76,19 +92,25 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         if not player.is_alive():
             _handle_defeat(player)
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
-            return
+            return "defeat"
 
     # Ficha de ambos combatientes al empezar, pase lo que pase con el orden de
     # turnos. El enemigo sale con "???" mientras no se haya derrotado (igual que
-    # la barra de vida).
-    print_player_enemy_info(player, enemy, defeated_enemies)
+    # la barra de vida). En turbo se omite: el jugador está farmeando.
+    if start_auto != "turbo":
+        print_player_enemy_info(player, enemy, defeated_enemies)
 
     # Guardamos estado inicial para restaurar después
     snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
 
-    is_auto: bool | str = False
+    is_auto: bool | str = start_auto
+    if start_auto:
+        modo = "TURBO (sin pausas)" if start_auto == "turbo" else "ACTIVADO"
+        print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+    auto_cancelled = False
     player_won = False
     player_fled = False
+    player_defeated = False
     gauge_player = 0.0
     gauge_enemy = 0.0
     enemy_acted = True  # el primer turno del jugador no cuenta como "repetido"
@@ -105,7 +127,12 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         # huida nunca puede ser interrumpida por un enemigo más rápido.
         if gauge_player >= ATB_THRESHOLD:
             gauge_player -= ATB_THRESHOLD
+            was_auto = bool(is_auto)
             signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted)
+            # El jugador pulsó 'Q': _run_player_turn apaga is_auto. Lo recordamos
+            # para que una cadena de auto-batalla sepa que debe detenerse.
+            if was_auto and not is_auto:
+                auto_cancelled = True
             enemy_acted = False
             if signal == "huir":
                 player_fled = True
@@ -138,7 +165,8 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             break
 
         if not player.is_alive():
-            _handle_defeat(player)
+            _handle_defeat(player)  # cura al jugador por completo, de ahí el flag
+            player_defeated = True
             break
 
         # En auto normal, una pausa para poder leer el resultado. En turbo no
@@ -156,13 +184,22 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     rm.set_mood("adventure")
     rm.play_random_adventure_music()
 
-    if player_won and is_auto != "turbo":
+    if player_won and pause_on_victory and is_auto != "turbo":
         # Pausa deliberada: victoria, oro, botín y curación tras el combate
         # imprimen bastante texto seguido; sin esta pausa el menú se
         # reescribía encima antes de que el jugador pudiera leerlo (podía
         # pasarle por alto un objeto conseguido, por ejemplo). En turbo se
-        # omite: el jugador está farmeando y quiere volver al menú ya.
+        # omite: el jugador está farmeando y quiere volver al menú ya. En una
+        # cadena de auto-batalla la pausa se hace una sola vez al final.
         console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+
+    if player_defeated:
+        return "defeat"
+    if player_fled:
+        return "fled"
+    if auto_cancelled:
+        return "cancelled"
+    return "victory" if player_won else "fled"
 
 
 def _player_menu(player, enemy, defeated_enemies: list, immobilized: bool = False) -> str:
