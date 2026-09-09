@@ -88,6 +88,14 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     # (p. ej. pasar de auto a turbo tras pulsar 'Q').
     chain = {"factory": enemy_factory, "chosen": False, "count": 1, "mode": False}
 
+    # Instantánea para el resumen de botín de la cadena (oro/XP/nivel/objetos).
+    chain_start = {
+        "gold": player.inventory.gold,
+        "xp": player.experience,
+        "level": player.level,
+        "items": dict(player.inventory.quantities),
+    }
+
     fight_index = 1
     current_enemy = enemy
     outcome = "victory"
@@ -120,15 +128,68 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
                 "cancelled": "Has salido del modo automático",
             }.get(outcome, "Cadena interrumpida")
             console.warning(f"🔗 {motivo}. Cadena interrumpida ({done}/{chain['count']} peleas completadas).")
+        # Resumen de todo lo conseguido en la cadena (en 20 peleas es fácil
+        # perder la cuenta) y una única pausa al final, gane o pierda.
+        _print_chain_loot(player, chain_start)
+        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+        return outcome
 
-    # Pausa para leer el resultado: siempre salvo tras una victoria limpia en
-    # turbo (ahí el jugador está farmeando y quiere volver al menú ya) y salvo
-    # tras una derrota (ya pausó _handle_defeat).
+    # Pelea única: pausa salvo tras una victoria limpia en turbo (farmeo) y
+    # salvo tras una derrota (ya pausó _handle_defeat).
     clean_turbo_win = outcome == "victory" and chain["mode"] == "turbo"
     if outcome in ("victory", "cancelled", "fled") and not clean_turbo_win:
         console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
 
     return outcome
+
+
+def _print_chain_loot(player, start: dict) -> None:
+    """Resumen del botín acumulado en una cadena de peleas: oro, XP, niveles y
+    objetos nuevos (por diferencia contra la instantánea del inicio)."""
+    from juego_rol_texto.items.equipment import Armor, Weapon
+    from juego_rol_texto.items.materials import Material
+    from juego_rol_texto.items.potions.potion_base import Potion
+
+    gold_delta = player.inventory.gold - start["gold"]
+    xp_delta = player.experience - start["xp"]
+    levels = player.level - start["level"]
+
+    gained = {
+        name: qty - start["items"].get(name, 0)
+        for name, qty in player.inventory.quantities.items()
+        if qty - start["items"].get(name, 0) > 0
+    }
+
+    print(console.colorize("\n--- BOTÍN DE LA CADENA ---", console.Fore.CYAN, bright=True))
+    gold_sign = "+" if gold_delta >= 0 else ""
+    print(console.stat_line(f"Oro: {gold_sign}{gold_delta}", "oro"))
+    xp_line = f"XP: +{xp_delta}"
+    if levels > 0:
+        xp_line += f"  (subes {levels} nivel{'es' if levels > 1 else ''}: {start['level']} → {player.level})"
+    print(console.stat_line(xp_line, "xp"))
+
+    if not gained:
+        print("Objetos: ninguno")
+        return
+
+    item_by_name = {it.name: it for it in player.inventory.items}
+
+    def _color(name: str) -> str:
+        item = item_by_name.get(name)
+        if isinstance(item, Weapon):
+            return console.colorize(name, console.element_color(item.element))
+        if isinstance(item, Armor):
+            return console.colorize(name, console.Fore.BLUE, bright=True)
+        if isinstance(item, Potion):
+            return console.colorize(name, console.Fore.GREEN)
+        if isinstance(item, Material):
+            return console.colorize(name, console.Fore.LIGHTBLACK_EX)
+        return name
+
+    print("Objetos:")
+    for name, qty in gained.items():
+        suffix = f" x{qty}" if qty > 1 else ""
+        print(f"  {_color(name)}{suffix}")
 
 
 def _run_one_battle(
@@ -154,7 +215,8 @@ def _run_one_battle(
             print_status(player, enemy, defeated_enemies)
 
         if not player.is_alive():
-            _handle_defeat(player)
+            # En una cadena la pausa (y el resumen) van una sola vez al final.
+            _handle_defeat(player, pause=chain["count"] == 1)
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
             return "defeat"
 
@@ -222,7 +284,7 @@ def _run_one_battle(
             break
 
         if not player.is_alive():
-            _handle_defeat(player)  # cura al jugador por completo, de ahí el flag
+            _handle_defeat(player, pause=chain["count"] == 1)  # cura del todo -> de ahí el flag
             player_defeated = True
             break
 
@@ -623,8 +685,10 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     return (player.stats.min_atk, player.stats.max_atk), player.stats.armor
 
 
-def _handle_defeat(player) -> None:
-    """Gestiona lo que ocurre cuando el jugador cae en combate."""
+def _handle_defeat(player, pause: bool = True) -> None:
+    """Gestiona lo que ocurre cuando el jugador cae en combate. `pause=False`
+    cuando estamos en una cadena: la pausa (y el resumen de botín) se hacen una
+    sola vez al final."""
     print("\n" + "x" * 60)
     print(console.colorize("¡HAS SIDO DERROTADO!", console.Fore.RED, bright=True))
 
@@ -639,7 +703,8 @@ def _handle_defeat(player) -> None:
     print(f"Penalización: Has perdido {console.colorize(f'{penalty} de oro', console.Fore.RED)}.")
     console.success("Tu salud ha sido restaurada para que puedas continuar.")
     print("x" * 60)
-    console.ask("\nPresiona Enter para volver...")
+    if pause:
+        console.ask("\nPresiona Enter para volver...")
 
 
 def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> None:

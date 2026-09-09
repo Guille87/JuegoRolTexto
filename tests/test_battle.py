@@ -126,6 +126,36 @@ def test_chain_runs_several_fights_when_player_picks_auto(player, monkeypatch):
     assert player.enemy_kill_counts["Goblin"] == 3
 
 
+def test_chain_prints_a_loot_summary_at_the_end(player, monkeypatch, capsys):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    answers = iter(["6", "2"])
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: next(answers, ""))
+
+    first = Goblin()
+    first.stats.health = first.stats.max_health = 30
+    first.ambush_done = True
+    gold_before = player.inventory.gold
+
+    initiate_battle(player, first, ["Goblin"], ["Goblin"], enemy_factory=_weak_goblin)
+
+    out = capsys.readouterr().out
+    assert "BOTÍN DE LA CADENA" in out
+    assert "Oro: +" in out
+    assert "XP: +" in out
+    assert player.inventory.gold > gold_before
+
+
+def test_single_fight_has_no_chain_loot_summary(player, weak_enemy, monkeypatch, capsys):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "1")
+
+    initiate_battle(player, weak_enemy, ["Goblin"], ["Goblin"], enemy_factory=lambda: weak_enemy)
+
+    assert "BOTÍN DE LA CADENA" not in capsys.readouterr().out
+
+
 def test_chain_mode_can_switch_from_auto_to_turbo_mid_chain(player, weak_enemy, monkeypatch):
     """Tras pulsar 'Q' y volver a elegir en el menú, el modo de la cadena se
     actualiza (auto -> turbo) para las peleas que quedan."""
