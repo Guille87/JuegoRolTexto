@@ -615,7 +615,11 @@ def _try_represalia(player, enemy, defeated_enemies: list) -> None:
     if not player.took_physical_hit or not player.has_passive("represalia"):
         return
     if random.random() < player.passive_param("represalia", "counter_chance", 0.0):
-        print(console.colorize("⚔️  ¡Represalia! Contraatacas al recibir el golpe.", console.Fore.CYAN, bright=True))
+        print(
+            console.colorize(
+                "⚔️  ¡Represalia! Contraatacas al recibir el golpe.", console.Fore.LIGHTMAGENTA_EX, bright=True
+            )
+        )
         _execute_turn(player, enemy, defeated_enemies)
 
 
