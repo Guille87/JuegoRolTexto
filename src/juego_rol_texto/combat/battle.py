@@ -48,6 +48,11 @@ def check_for_interrupt() -> bool:
     return key_pressed() == "q"
 
 
+def _turn_header(turn_no: int, name: str) -> str:
+    """Cabecera tenue con el número de acción global y quién actúa."""
+    return console.colorize(f"\n── Turno {turn_no} · {name} ──", console.Fore.LIGHTBLACK_EX, bright=True)
+
+
 _MAX_CHAIN_BATTLES = 20
 
 
@@ -146,7 +151,8 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 def _print_chain_loot(player, start: dict) -> None:
     """Resumen del botín acumulado en una cadena de peleas: oro, XP, niveles y
     objetos nuevos (por diferencia contra la instantánea del inicio)."""
-    from juego_rol_texto.items.equipment import Armor, Weapon, slot_label
+    from juego_rol_texto.items.equipment import Armor, Weapon
+    from juego_rol_texto.items.factory import item_kind_label
     from juego_rol_texto.items.materials import Material
     from juego_rol_texto.items.potions.potion_base import Potion
 
@@ -186,22 +192,11 @@ def _print_chain_loot(player, start: dict) -> None:
             return console.colorize(name, console.Fore.LIGHTBLACK_EX)
         return name
 
-    def _kind(name: str) -> str:
-        item = item_by_name.get(name)
-        if isinstance(item, Weapon):
-            return f"arma · {item.element}" if item.element else "arma"
-        if isinstance(item, Armor):
-            return f"armadura · {slot_label(item.slot).lower()}"
-        if isinstance(item, Potion):
-            return "poción"
-        if isinstance(item, Material):
-            return "material de herrería"
-        return "objeto"
-
     print("Objetos:")
     for name, qty in gained.items():
         suffix = f" x{qty}" if qty > 1 else ""
-        kind = console.colorize(f"({_kind(name)})", console.Fore.LIGHTBLACK_EX)
+        label = item_kind_label(item_by_name[name]) if name in item_by_name else "objeto"
+        kind = console.colorize(f"({label})", console.Fore.LIGHTBLACK_EX)
         print(f"  {_color(name)}{suffix} {kind}")
 
 
@@ -243,8 +238,22 @@ def _run_one_battle(
     if not start_auto:
         _prompt_battle_element(player)
 
+    # Quién tiene la iniciativa (más velocidad = llega antes al umbral ATB; en
+    # empate va el jugador). Solo informativo — la emboscada es aparte.
+    if start_auto != "turbo":
+        pv, ev = player.get_total_speed(), enemy.stats.speed
+        primero = player.name if pv >= ev else enemy.name
+        print(
+            console.colorize(
+                f"⚡ {primero} tiene la iniciativa (velocidad {pv} vs {ev}).",
+                console.Fore.LIGHTBLACK_EX,
+                bright=True,
+            )
+        )
+
     snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
     cooldowns: dict[str, int] = {}  # enfriamiento de habilidades, solo dura este combate
+    turn_no = 0  # contador global de acciones (jugador o enemigo)
 
     is_auto: bool | str = start_auto
     if start_auto:
@@ -269,9 +278,17 @@ def _run_one_battle(
         # el del enemigo si ambos gauges están listos en el mismo "tick".
         if gauge_player >= ATB_THRESHOLD:
             gauge_player -= ATB_THRESHOLD
+            turn_no += 1
             was_auto = bool(is_auto)
             signal, is_auto = _run_player_turn(
-                player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted, chain=chain, cooldowns=cooldowns
+                player,
+                enemy,
+                defeated_enemies,
+                is_auto,
+                repeated=not enemy_acted,
+                chain=chain,
+                cooldowns=cooldowns,
+                turn_no=turn_no,
             )
             if was_auto and not is_auto:
                 auto_cancelled = True  # pulsó 'Q'; si vuelve a activar auto se corrige abajo
@@ -291,7 +308,8 @@ def _run_one_battle(
         # --- TURNO DEL ENEMIGO (solo si su gauge también está lista) ---
         if player.is_alive() and gauge_enemy >= ATB_THRESHOLD:
             gauge_enemy -= ATB_THRESHOLD
-            _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo")
+            turn_no += 1
+            _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo", turn_no=turn_no)
             enemy_acted = True
 
         # El enemigo pudo morir por veneno/quemadura al empezar su turno.
@@ -380,7 +398,14 @@ def _attempt_flee(player, enemy, chance_mult: float = 1.0) -> bool:
 
 
 def _run_player_turn(
-    player, enemy, defeated_enemies: list, is_auto, repeated: bool = False, chain: dict | None = None, cooldowns=None
+    player,
+    enemy,
+    defeated_enemies: list,
+    is_auto,
+    repeated: bool = False,
+    chain: dict | None = None,
+    cooldowns=None,
+    turn_no: int = 0,
 ):
     """Ejecuta el turno del jugador cuando su gauge ATB está lista.
 
@@ -392,6 +417,9 @@ def _run_player_turn(
     actualiza siempre, para poder cambiar de uno a otro a mitad de una cadena.
     Devuelve `(señal, is_auto actualizado)`; señal es `"huir"` o `"ok"`.
     """
+    if turn_no:
+        print(_turn_header(turn_no, player.name))
+
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
     # vuelve a tocar: al empezar su turno se limpia.
@@ -566,9 +594,10 @@ def _execute_skill(player, enemy, skill, defeated_enemies: list) -> None:
     _execute_turn(player, enemy, defeated_enemies, skill_params=skill.params)
 
 
-def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) -> None:
+def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False, turn_no: int = 0) -> None:
     """Ejecuta el turno del enemigo cuando su gauge ATB está lista. En `turbo`
-    no hay pausa ni barra de vida por turno (solo el texto del ataque)."""
+    solo se saltan las pausas/sleeps; las barras de vida y los avisos se muestran
+    igual, para no perder de vista cómo va el combate."""
     if not turbo:
         time.sleep(1)
 
@@ -582,20 +611,18 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) 
     took_dot = enemy.stats.health != hp_before
 
     if can_act:
-        print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
+        print(_turn_header(turn_no, enemy.name))
         enemy.perform_turn(player)
     enemy.on_turn_end()
     enemy.decay_status_effects()
 
     # Si el enemigo pierde el turno y no hubo daño por veneno/quemadura, no
     # repetimos las barras de vida: el mensaje de parálisis/congelación basta.
-    if not turbo and (can_act or took_dot):
+    if can_act or took_dot:
         print_status(player, enemy, defeated_enemies)
 
-    announcements = enemy.pop_announcements()
-    if not turbo:
-        for message in announcements:
-            print(message)
+    for message in enemy.pop_announcements():
+        print(message)
 
 
 def _execute_turn(
@@ -814,13 +841,18 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     drops = enemy.drop_item()
     if drops:
         print(console.colorize("\n--- BOTÍN ENCONTRADO ---", console.Fore.CYAN))
+        from juego_rol_texto.items.equipment import Armor, Weapon
+        from juego_rol_texto.items.factory import item_kind_label
+
         for item in drops:
             player.inventory.add_item(item)
-            # Imprimimos solo aquí el mensaje del objeto encontrado; para armas y
-            # armaduras, además, las estadísticas que otorga.
-            stats_info = item.get_stats_info() if hasattr(item, "get_stats_info") else ""
-            extra = f" {console.colorize(f'[{stats_info}]', console.Fore.LIGHTBLACK_EX)}" if stats_info else ""
-            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)}: {item.description}{extra}")
+            # Nombre + tipo + (solo armas/armaduras) las estadísticas que otorga.
+            # Las pociones no: su descripción ya dice lo que hacen.
+            kind = console.colorize(f"({item_kind_label(item)})", console.Fore.LIGHTBLACK_EX)
+            extra = ""
+            if isinstance(item, (Weapon, Armor)) and item.get_stats_info():
+                extra = f" {console.colorize(f'[{item.get_stats_info()}]', console.Fore.LIGHTBLACK_EX)}"
+            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)} {kind}: {item.description}{extra}")
 
     # Pasiva "Segundo Aliento" (Vagabundo): curación al derrotar a un enemigo.
     for skill in player._active_passives():

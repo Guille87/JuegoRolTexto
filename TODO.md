@@ -183,3 +183,13 @@ el cambio a mitigación multiplicativa.
   §6.2 del GDD, balancear.
 - [ ] **Guardado**: v0.10.0 solo añade `clase` (back-fill "vagabundo") y
   `habilidades_equipadas` (back-fill []). El bloque `mundo` completo va en v0.12.0.
+
+## Pulido final (casi lo último antes de 1.0)
+
+- [ ] **Más sonidos de ataque por clase / elemento.** Hoy todo ataque suena
+  `hit`/`slash` al azar. El Arcanista debería sonar a magia, el Guerrero a
+  espada/contundente, etc.; los hechizos elementales de enemigos y jugador,
+  a su elemento (fuego, rayo, hielo…). Ampliar `audio/catalog.py` y elegir el
+  SFX según quién ataca y con qué.
+- [ ] **Revisar/mejorar la música** (más pistas, mejor encaje por
+  zona/situación). Junto con la música por élite/guardián ya anotada arriba.

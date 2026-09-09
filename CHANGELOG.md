@@ -60,9 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (When zone elites/guardians exist they'll be what triggers battle music — see
   `TODO.md`.)
 - Combat info sheets now print before a pre-battle ambush, not after, so you see
-  the matchup first.
-- The victory loot line now shows the stats a dropped weapon or armour grants,
-  not just its name and flavour text.
+  the matchup first. A line also states who has the initiative (higher speed),
+  and each action is now headed `── Turno N · Name ──`.
+- The victory loot line shows each dropped item's type (weapon / armour + slot /
+  potion / forge material) and, for weapons and armour, the stats it grants.
+  Potions no longer repeat what they do (it was already in the description).
+- Turbo auto-battle keeps its speed (no pauses / sleeps) but no longer hides the
+  health bars after the enemy's turn — you can see how the fight is going.
 - A dodged attack now reads "X lo esquiva" instead of "falla el golpe" — attacks
   never miss on their own, only when the target dodges (evasion vs precision).
 - More status effects are colour-coded: `sangrado` (light red, distinct from

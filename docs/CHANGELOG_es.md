@@ -64,9 +64,15 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   reinicien la música cada pocos segundos. (Cuando existan élites y guardianes de
   zona serán ellos quienes activen la música de combate — ver `TODO.md`.)
 - Las fichas de combate se imprimen ahora antes de una emboscada previa, no
-  después, para ver el enfrentamiento primero.
-- La línea de botín al ganar muestra ahora las estadísticas que otorga un arma o
-  armadura que cae, no solo su nombre y descripción.
+  después, para ver el enfrentamiento primero. Además una línea indica quién
+  tiene la iniciativa (más velocidad) y cada acción lleva ahora una cabecera
+  `── Turno N · Nombre ──`.
+- La línea de botín al ganar muestra el tipo de cada objeto (arma / armadura +
+  hueco / poción / material de herrería) y, para armas y armaduras, las
+  estadísticas que otorga. Las pociones ya no repiten lo que hacen (ya estaba en
+  la descripción).
+- La auto-batalla Turbo mantiene su velocidad (sin pausas ni esperas) pero ya no
+  oculta las barras de vida tras el turno del enemigo — se ve cómo va la pelea.
 - Un ataque esquivado dice ahora "X lo esquiva" en vez de "falla el golpe" — los
   ataques no fallan por sí solos, solo cuando el objetivo esquiva (evasión vs
   precisión).

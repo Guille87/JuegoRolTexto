@@ -306,6 +306,17 @@ Las clases tocan la creación del personaje, `Stats`, las constantes
 `_*_GROWTH_RATE`, la rama del Arcanista en `_execute_turn`, y de qué pool de
 habilidades tira el jugador (§6.2).
 
+**Pendientes de diseño (para más adelante, no v0.10):**
+
+- **Nombre del Vagabundo.** No convence (suena a personaje "malo" y no lo es).
+  Candidatos: Aventurero, Errante, Nómada, Trotamundos, Mercenario. El valor
+  guardado `clase="vagabundo"` se mantiene por compatibilidad; solo cambiaría el
+  nombre visible.
+- **Armas por clase.** Cada clase solo podría equipar su tipo de arma: Guerrero
+  → contundentes/espadas/hachas/mazas + escudo; Pícaro → dagas y similares;
+  Arcanista → bastones y similares; Vagabundo → cualquiera (o un subconjunto
+  amplio). Requiere una categoría de arma en `Weapon` y un filtro en el equipar.
+
 ### 6.2 Habilidades
 
 Sin barra de maná. Cada clase tiene un **pool de ~8 habilidades** que se

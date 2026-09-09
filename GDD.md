@@ -292,6 +292,17 @@ Classes touch character creation, `Stats`, the per-level `_*_GROWTH_RATE`
 constants, the Arcanista branch in `_execute_turn`, and which skill pool the
 player draws from (§6.2).
 
+**Open design questions (later, not v0.10):**
+
+- **Rename Vagabundo.** It reads as a "bad guy" and the class isn't one.
+  Candidates: Aventurero, Errante, Nómada, Trotamundos, Mercenario. The saved
+  value `clase="vagabundo"` stays for compatibility; only the display name would
+  change.
+- **Per-class weapon types.** Each class could only equip its own weapon family:
+  Guerrero → blunt / swords / axes / maces + shield; Pícaro → daggers and the
+  like; Arcanista → staves; Vagabundo → anything (or a broad subset). Needs a
+  weapon-category field on `Weapon` and a filter in the equip flow.
+
 ### 6.2 Skills
 
 No mana bar. Each class has a **pool of ~8 skills** unlocked across the *whole*
