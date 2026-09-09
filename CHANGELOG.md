@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
   Sintonía (Arcanista). New `sangrado` (bleed) and `aturdido` (stun) statuses,
   each with its own message and colour. Numbers are provisional.
+- **Milestone 2 skills** (learned at level 4, provisional): Aguante (Aventurero —
+  below 30% HP, +15% armour and magic resist), Represalia (Guerrero — 30% to
+  counterattack a physical hit), Veneno de Contacto (Pícaro — 20% to poison on
+  hit), Escudo de Maná (Arcanista — active a4: fully absorbs the next hit).
 
 - **Auto-battle chains**: after you turn on Auto-Battle or Turbo against an
   already-defeated enemy, the game asks how many fights to run back-to-back (up

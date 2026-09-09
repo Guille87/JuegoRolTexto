@@ -156,6 +156,54 @@ _add(
     )
 )
 
+# --- Hito 2 (Bosque de los Susurros) — se aprende al nivel 4 (provisional) -----
+
+_add(
+    Skill(
+        "aguante",
+        "Aguante",
+        CharClass.VAGABUNDO,
+        SkillKind.PASSIVE,
+        2,
+        "Por debajo del 30% de vida, +15% de armadura y de resistencia mágica.",
+        params={"low_hp_defense_pct": 0.15},
+    )
+)
+_add(
+    Skill(
+        "represalia",
+        "Represalia",
+        CharClass.GUERRERO,
+        SkillKind.PASSIVE,
+        2,
+        "30% de contraatacar cuando recibes un golpe físico.",
+        params={"counter_chance": 0.30},
+    )
+)
+_add(
+    Skill(
+        "veneno_de_contacto",
+        "Veneno de Contacto",
+        CharClass.PICARO,
+        SkillKind.PASSIVE,
+        2,
+        "20% de envenenar al enemigo cuando lo golpeas.",
+        params={"on_hit_poison_chance": 0.20},
+    )
+)
+_add(
+    Skill(
+        "escudo_de_mana",
+        "Escudo de Maná",
+        CharClass.ARCANISTA,
+        SkillKind.ACTIVE,
+        2,
+        "Te rodeas de un escudo que absorbe por completo el próximo golpe.",
+        cooldown=4,
+        params={"utility": True, "shield_next_hit": True},
+    )
+)
+
 
 def pool_for(char_class: CharClass) -> list[Skill]:
     """Todas las habilidades de una clase, sin importar el nivel."""

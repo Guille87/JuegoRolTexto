@@ -313,6 +313,8 @@ def _run_one_battle(
             turn_no += 1
             _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo", turn_no=turn_no)
             enemy_acted = True
+            _try_represalia(player, enemy, defeated_enemies)
+            player.took_physical_hit = False
 
         # El enemigo pudo morir por veneno/quemadura al empezar su turno.
         if not enemy.is_alive():
@@ -586,9 +588,35 @@ def _choose_skill(player, cooldowns: dict):
 
 
 def _execute_skill(player, enemy, skill, defeated_enemies: list) -> None:
-    print(console.colorize(f"\n✨ {player.name} usa {skill.name}.", console.Fore.MAGENTA, bright=True))
+    p = skill.params
     ResourceManager().play_sfx("level_up")
-    _execute_turn(player, enemy, defeated_enemies, skill_params=skill.params)
+
+    # Escudo de Maná y otras activas de utilidad: no atacan.
+    if p.get("shield_next_hit"):
+        player.mana_shield = True
+        print(
+            console.colorize(
+                f"\n🛡️ {player.name} usa {skill.name}: un escudo absorbe el próximo golpe.",
+                console.Fore.MAGENTA,
+                bright=True,
+            )
+        )
+        return
+
+    print(console.colorize(f"\n✨ {player.name} usa {skill.name}.", console.Fore.MAGENTA, bright=True))
+    _execute_turn(player, enemy, defeated_enemies, skill_params=p)
+
+
+def _try_represalia(player, enemy, defeated_enemies: list) -> None:
+    """Pasiva "Represalia" (Guerrero): tras recibir un golpe físico, opción de
+    contraatacar de inmediato."""
+    if not (player.is_alive() and enemy.is_alive()):
+        return
+    if not player.took_physical_hit or not player.has_passive("represalia"):
+        return
+    if random.random() < player.passive_param("represalia", "counter_chance", 0.0):
+        print(console.colorize("⚔️  ¡Represalia! Contraatacas al recibir el golpe.", console.Fore.CYAN, bright=True))
+        _execute_turn(player, enemy, defeated_enemies)
 
 
 def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False, turn_no: int = 0) -> None:
@@ -767,6 +795,15 @@ def _execute_turn(
         if p.get("bleed_turns") and defender.apply_status("sangrado", p["bleed_turns"]):
             print(console.colorize(f"🩸 ¡{defender.name} empieza a sangrar!", console.Fore.RED))
 
+        # Pasiva "Veneno de Contacto" (Pícaro): opción de envenenar en cada golpe.
+        poison_chance = (
+            attacker.passive_param("veneno_de_contacto", "on_hit_poison_chance", 0.0)
+            if hasattr(attacker, "passive_param")
+            else 0.0
+        )
+        if poison_chance and random.random() < poison_chance and defender.apply_status("veneno", 3):
+            print(console.colorize(f"🧪 ¡Tu contacto envenena a {defender.name}!", console.Fore.GREEN))
+
     if isinstance(attacker, Player):
         print_status(attacker, defender, defeated_enemies)
     else:
@@ -912,6 +949,8 @@ def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> 
     player.status_effects = []
     player.defending = False
     player.battle_element = None  # el elemento elegido por "Sintonía" solo dura el combate
+    player.mana_shield = False
+    player.took_physical_hit = False
 
     if hasattr(player, "active_effects"):
         player.active_effects = []

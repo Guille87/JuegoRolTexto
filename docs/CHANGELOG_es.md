@@ -21,6 +21,11 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   Piel de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
   Sintonía (Arcanista). Nuevos estados `sangrado` y `aturdido`, cada uno con su
   mensaje y color propios. Los números son provisionales.
+- **Habilidades del hito 2** (se aprenden al nivel 4, provisional): Aguante
+  (Aventurero — por debajo del 30% de vida, +15% armadura y res. mágica),
+  Represalia (Guerrero — 30% de contraatacar un golpe físico), Veneno de Contacto
+  (Pícaro — 20% de envenenar al golpear), Escudo de Maná (Arcanista — activa a4:
+  absorbe por completo el próximo golpe).
 
 - **Cadenas de auto-batalla**: tras activar la Auto-Batalla o el Turbo contra un
   enemigo ya derrotado, el juego pregunta cuántas peleas seguidas hacer (hasta

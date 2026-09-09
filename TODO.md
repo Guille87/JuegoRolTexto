@@ -179,8 +179,15 @@ el cambio a mitigación multiplicativa.
   enemigos algo de `magic_resist` o revisar el poder mágico en la pasada de
   presupuesto de poder (v0.14). De momento el admin arranca con `magic_power=25`
   (antes 40) para que el desajuste no sea tan bestia al probar.
-- [ ] **Hito M2 + más habilidades** (v0.10.0-c): añadir la fila M2 de la tabla
-  §6.2 del GDD, balancear.
+- [x] **Hito M2** (v0.10.0-c): fila M2 de la tabla §6.2 (se aprende al nivel 4,
+  provisional). Aguante (Aventurero: <30% vida → +15% armadura y res. mágica, en
+  `_low_hp_defense_mult`), Represalia (Guerrero: 30% contraataque tras golpe
+  físico, `_try_represalia` + `Player.took_physical_hit`), Veneno de Contacto
+  (Pícaro: 20% envenenar al golpear, en `_execute_turn`), Escudo de Maná
+  (Arcanista: activa a4 de utilidad, `Player.mana_shield` absorbe el próximo
+  golpe). **Números sin verificar** — balanceo en v0.14.
+- [ ] **Hitos M3-M7** (más adelante): filas M3-M7 de la tabla §6.2, atadas a
+  guardianes de zona en la fase de mundo/presupuesto de poder.
 - [ ] **Guardado**: v0.10.0 solo añade `clase` (back-fill "vagabundo") y
   `habilidades_equipadas` (back-fill []). El bloque `mundo` completo va en v0.12.0.
 
