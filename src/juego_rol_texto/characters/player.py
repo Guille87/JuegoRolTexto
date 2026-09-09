@@ -1,6 +1,7 @@
 import random
 
 from juego_rol_texto.characters.base import Character
+from juego_rol_texto.characters.classes import CharClass, get_profile
 from juego_rol_texto.characters.stats import Stats, apply_mitigation
 from juego_rol_texto.inventory.inventory import Inventory
 from juego_rol_texto.items.equipment import ARMOR_SLOTS, slot_label
@@ -8,10 +9,17 @@ from juego_rol_texto.ui import console
 
 
 class Player(Character):
-    def __init__(self, name: str, stats: Stats):
+    def __init__(self, name: str, stats: Stats, char_class: CharClass | str | None = None):
         super().__init__(name, stats)
+        # Clase de personaje (GDD §6.1). Por defecto Vagabundo = el personaje de
+        # siempre. Guía los stats de arranque (ui/menus.py), los multiplicadores
+        # de crecimiento por nivel y si el ataque estándar es mágico.
+        self._class_profile = get_profile(char_class)
         self.level = 1
         self.experience = 0
+        # Ids de las habilidades activas equipadas (≤4). Se rellena en v0.10.0-b;
+        # aquí solo se persiste para no romper el guardado al añadirlo luego.
+        self.equipped_skills: list[str] = []
         self.inventory = Inventory(self)
         self.equipped_weapon = None
         self.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
@@ -64,9 +72,34 @@ class Player(Character):
 
         return final_damage
 
+    @property
+    def char_class(self) -> CharClass:
+        return self._class_profile.id
+
+    @char_class.setter
+    def char_class(self, value: CharClass | str | None) -> None:
+        self._class_profile = get_profile(value)
+
+    def is_magical_attacker(self) -> bool:
+        """El ataque estándar es mágico y escala con `poder_magico` (Arcanista)."""
+        return self._class_profile.is_magical_attacker
+
+    def get_total_magic_power(self) -> int:
+        """Poder mágico total (hoy solo el stat base; ningún equipo lo otorga aún)."""
+        return self.stats.magic_power
+
+    def get_magic_attack_range(self) -> tuple[int, int]:
+        """Rango de daño del ataque mágico estándar del Arcanista, derivado del
+        poder mágico (no del arma). La quemadura —solo física— no lo reduce."""
+        power = self.get_total_magic_power()
+        return power, power + max(1, power // 3)
+
     def get_attack_damage(self) -> int:
         """Genera un valor de daño aleatorio basado en el rango actual."""
-        min_atk, max_atk = self.get_attack_range()
+        if self.is_magical_attacker():
+            min_atk, max_atk = self.get_magic_attack_range()
+        else:
+            min_atk, max_atk = self.get_attack_range()
         return random.randint(min_atk, max_atk)
 
     def get_attack_range(self) -> tuple[int, int]:
@@ -322,8 +355,8 @@ class Player(Character):
         health_gain = self._growth_gain(self._HEALTH_GROWTH_RATE, self.level)
         min_atk_gain = self._growth_gain(self._MIN_ATK_GROWTH_RATE, self.level)
         max_atk_gain = self._growth_gain(self._MAX_ATK_GROWTH_RATE, self.level)
-        armor_gain = self._growth_gain(self._ARMOR_GROWTH_RATE, self.level)
-        speed_gain = self._growth_gain(self._SPEED_GROWTH_RATE, self.level)
+        armor_gain = self._growth_gain(self._ARMOR_GROWTH_RATE * self._class_profile.armor_growth_mult, self.level)
+        speed_gain = self._growth_gain(self._SPEED_GROWTH_RATE * self._class_profile.speed_growth_mult, self.level)
         precision_gain = self._growth_gain(self._PRECISION_GROWTH_RATE, self.level)
         evasion_gain = self._growth_gain(self._EVASION_GROWTH_RATE, self.level)
 
@@ -343,6 +376,12 @@ class Player(Character):
         if gained_magic_resist:
             self.stats.magic_resist += 1
 
+        # Poder mágico: solo crece para la clase que lo usa (Arcanista).
+        magic_power_gain = 0
+        if self._class_profile.magic_power_growth_rate:
+            magic_power_gain = self._growth_gain(self._class_profile.magic_power_growth_rate, self.level)
+            self.stats.magic_power += magic_power_gain
+
         print(f"\n{console.colorize(f'⭐ ¡HAS SUBIDO AL NIVEL {self.level}! ⭐', console.Fore.YELLOW)}")
         stats_line = (
             f"HP Max +{health_gain} | Ataque +{min_atk_gain}-{max_atk_gain} | "
@@ -354,15 +393,32 @@ class Player(Character):
             stats_line += f" | Evasión +{evasion_gain}"
         if gained_magic_resist:
             stats_line += " | Resistencia Mágica +1"
+        if magic_power_gain:
+            stats_line += f" | Poder Mágico +{magic_power_gain}"
         print(console.colorize(stats_line, console.Fore.WHITE))
 
     def show_stats(self) -> None:
         print(f"\n{console.colorize('=' * 10 + ' ESTADÍSTICAS ' + '=' * 10, console.Fore.CYAN)}")
-        print(f"Nombre: {self.name.ljust(15)} {console.stat_line(f'Nivel: {self.level}', 'nivel')}")
+        print(
+            f"Nombre: {self.name.ljust(15)} {console.stat_line(f'Nivel: {self.level}', 'nivel')} | "
+            f"{console.stat_line(f'XP: {self.experience} / {self.required_xp()}', 'xp')}"
+        )
+        print(f"Clase: {console.colorize(self._class_profile.name, console.Fore.MAGENTA)}")
         print(console.stat_line(f"Vida: {str(self.stats.health).rjust(4)} / {self.stats.max_health}", "vida"))
-        print(console.stat_line(f"Ataque: {self.get_attack_range()}", "ataque"))
-        print(console.stat_line(f"Armadura: {self.get_total_armor()}", "armadura"))
-        print(console.stat_line(f"Resistencia Mágica: {self.get_total_magic_resist()}", "magica"))
+        if self.is_magical_attacker():
+            lo, hi = self.get_magic_attack_range()
+            print(
+                console.stat_line(f"Ataque mágico: {lo}-{hi} | Poder Mágico: {self.get_total_magic_power()}", "ataque")
+            )
+        else:
+            lo, hi = self.get_attack_range()
+            print(console.stat_line(f"Ataque: {lo}-{hi}", "ataque"))
+        print(
+            console.stat_line(
+                f"Armadura: {self.get_total_armor()} | Resistencia Mágica: {self.get_total_magic_resist()}",
+                "armadura",
+            )
+        )
         print(
             console.stat_line(
                 f"Prob. Crítico: {self.get_total_crit_chance() * 100:.0f}% | "
@@ -371,8 +427,12 @@ class Player(Character):
             )
         )
         print(console.stat_line(f"Velocidad: {self.get_total_speed()}", "velocidad"))
-        print(console.stat_line(f"Precisión: {self.get_total_precision()}", "precision"))
-        print(console.stat_line(f"Evasión: {self.get_total_evasion()}", "evasion"))
+        print(
+            console.stat_line(
+                f"Precisión: {self.get_total_precision()} | Evasión: {self.get_total_evasion()}",
+                "precision",
+            )
+        )
         print(
             console.stat_line(
                 f"Penetración de Armadura: {self.get_total_armor_penetration()} | "
@@ -383,7 +443,6 @@ class Player(Character):
         regen = self.get_total_regen()
         if regen:
             print(console.stat_line(f"Regeneración: {regen} HP/turno", "regen"))
-        print(console.stat_line(f"XP: {self.experience} / {self.required_xp()}", "xp"))
         if self.equipped_weapon:
             print(f"Arma: {console.colorize(self.equipped_weapon.name, console.Fore.RED)}")
 

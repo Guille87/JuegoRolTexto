@@ -6,6 +6,7 @@ from functools import partial
 
 from juego_rol_texto import __version__, updater
 from juego_rol_texto.audio.resource_manager import ResourceManager
+from juego_rol_texto.characters.classes import PROFILES, CharClass, starting_stats
 from juego_rol_texto.characters.enemies import (
     AngelCaido,
     Bandido,
@@ -155,6 +156,25 @@ def main_menu() -> None:
         action()  # type: ignore[operator]
 
 
+def _choose_class() -> CharClass:
+    """Menú de elección de clase al crear personaje. Enter sin nada = Vagabundo."""
+    options = list(PROFILES.values())
+    print(console.colorize("\n--- ELIGE TU CLASE ---", console.Fore.CYAN))
+    for idx, profile in enumerate(options, 1):
+        print(
+            f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {console.colorize(profile.name, console.Fore.MAGENTA)}"
+        )
+        print(f"   {profile.identity}")
+
+    while True:
+        choice = console.ask(f"\nSelecciona una clase (1-{len(options)}, Enter = Vagabundo): ").strip()
+        if not choice:
+            return CharClass.VAGABUNDO
+        if choice.isdigit() and 1 <= int(choice) <= len(options):
+            return options[int(choice) - 1].id
+        console.error("Opción no válida.")
+
+
 def start_new_game() -> None:
     print(console.colorize("\n--- NUEVA AVENTURA ---", console.Fore.CYAN))
     name = ""  # Inicializa el nombre del jugador como una cadena vacía
@@ -185,9 +205,15 @@ def start_new_game() -> None:
     # --- LÓGICA DE CHEATS / ADMIN ---
     if is_admin:
         print(console.colorize("⚠️  MODO DESARROLLADOR ACTIVADO ⚠️", console.Fore.MAGENTA))
+        # El admin también elige clase, para poder probarlas con stats de cheat.
+        char_class = _choose_class()
         # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
         initial_stats = Stats(500, 500, 20, 40, 10, crit_chance=0.15)
-        player = Player(name, initial_stats)
+        if char_class == CharClass.ARCANISTA:
+            # Poder mágico acorde a las stats de cheat para que su ataque mágico pegue igual de fuerte.
+            initial_stats.magic_power = 40
+        player = Player(name, initial_stats, char_class=char_class)
+        console.success(f"Empiezas como {PROFILES[char_class].name}.")
         player.level = 10
         player.inventory.gold = 5000
 
@@ -197,8 +223,9 @@ def start_new_game() -> None:
         player.enemy_kill_counts = {name: 1 for name in defeated}
 
     else:
-        initial_stats = Stats(100, 100, 5, 10, 2, crit_chance=0.15)
-        player = Player(name, initial_stats)
+        char_class = _choose_class()
+        player = Player(name, starting_stats(char_class), char_class=char_class)
+        console.success(f"Empiezas como {PROFILES[char_class].name}.")
         unlocked = ["Goblin"]
         defeated = []
 

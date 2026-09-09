@@ -16,19 +16,27 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
     _p(f"Nivel: {player.level}", "nivel")
     _p(f"Vida: {player.stats.health}/{player.stats.max_health}", "vida")
 
-    atk_min, atk_max = player.get_attack_range()
-    _p(f"Ataque: {atk_min}-{atk_max}", "ataque")
-    _p(f"Armadura: {player.get_total_armor()}", "armadura")
-    _p(f"Resistencia Mágica: {player.get_total_magic_resist()}", "magica")
-    _p(f"Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}%", "critico")
+    if player.is_magical_attacker():
+        atk_min, atk_max = player.get_magic_attack_range()
+        _p(f"Ataque mágico: {atk_min}-{atk_max} | Poder Mágico: {player.get_total_magic_power()}", "ataque")
+    else:
+        atk_min, atk_max = player.get_attack_range()
+        _p(f"Ataque: {atk_min}-{atk_max}", "ataque")
+    _p(f"Armadura: {player.get_total_armor()} | Resistencia Mágica: {player.get_total_magic_resist()}", "armadura")
+    _p(
+        f"Prob. Crítico: {player.get_total_crit_chance() * 100:.0f}% | "
+        f"Daño Crítico: x{player.get_total_crit_damage():.2f}",
+        "critico",
+    )
     _p(f"Velocidad: {player.get_total_speed()}", "velocidad")
-    _p(f"Precisión: {player.get_total_precision()}", "precision")
-    _p(f"Evasión: {player.get_total_evasion()}", "evasion")
+    _p(f"Precisión: {player.get_total_precision()} | Evasión: {player.get_total_evasion()}", "precision")
     _p(
         f"Penetración de Armadura: {player.get_total_armor_penetration()} | "
         f"Penetración Mágica: {player.get_total_magic_penetration()}",
         "penetracion",
     )
+    if player.get_total_regen():
+        _p(f"Regeneración: {player.get_total_regen()} HP/turno", "regen")
     print()
 
     revealed = enemy.name in defeated_enemies
@@ -41,8 +49,12 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
 
     _p(f"Vida: {ev(enemy.stats.health)}/{ev(enemy.stats.max_health)}", "vida")
     _p(f"Ataque: {ev(enemy.stats.min_atk)}-{ev(enemy.stats.max_atk)}", "ataque")
-    _p(f"Armadura: {ev(enemy.stats.armor)}", "armadura")
-    _p(f"Resistencia Mágica: {ev(enemy.stats.magic_resist)}", "magica")
+    _p(f"Armadura: {ev(enemy.stats.armor)} | Resistencia Mágica: {ev(enemy.stats.magic_resist)}", "armadura")
+    _p(
+        f"Prob. Crítico: {f'{enemy.stats.crit_chance * 100:.0f}%' if revealed else _HIDDEN} | "
+        f"Daño Crítico: {f'x{enemy.stats.crit_damage:.2f}' if revealed else _HIDDEN}",
+        "critico",
+    )
     _p(f"Velocidad: {ev(enemy.stats.speed)}", "velocidad")
     _p(f"Precisión: {ev(enemy.stats.precision)} | Evasión: {ev(enemy.stats.evasion)}", "precision")
     _p(
@@ -50,6 +62,8 @@ def print_player_enemy_info(player, enemy, defeated_enemies: list) -> None:
         f"Penetración Mágica: {ev(enemy.stats.magic_penetration)}",
         "penetracion",
     )
+    if revealed and enemy.stats.regen:
+        _p(f"Regeneración: {enemy.stats.regen} HP/turno", "regen")
 
     print("\n" + "=" * 60)
 

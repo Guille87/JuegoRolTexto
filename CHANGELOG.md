@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
+  balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or
+  **Arcanista** (magic) at character creation. Each has its own starting stats
+  and per-level growth. Old saves and existing characters stay Vagabundo.
+- **`poder mágico`** stat: the Arcanista's standard attack is magical
+  (`is_magical`), scales with `poder mágico` instead of the weapon, defaults to
+  the `arcano` element, and is mitigated by the enemy's magic resist — so
+  `magic_resist` finally matters against a player. Grows every level for the
+  Arcanista only.
+- Save files now record `clase` and `habilidades_equipadas` (the latter unused
+  until the skill system lands).
+
+### Changed
+
+- Stat sheets (the "Estadísticas" menu and both in-combat info panels) group
+  related stats on one line: armour + magic resist, precision + evasion, crit
+  chance + crit damage; XP now sits next to the level. The combat info panel also
+  shows the player's crit damage and the enemy's crit chance + crit damage.
+- The admin character now picks a class too, so the classes can be tested with
+  cheat stats.
+
 ## [0.9.0] - 2026-09-09
 
 ### Added

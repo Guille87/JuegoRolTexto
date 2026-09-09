@@ -41,6 +41,8 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
         "unlocked_enemies": unlocked_enemies,
         "defeated_enemies": defeated_enemies,
         "gold": player.inventory.gold,
+        "clase": player.char_class.value,
+        "habilidades_equipadas": list(player.equipped_skills),
         "player_stats": {
             "level": player.level,
             "experience": player.experience,
@@ -56,6 +58,7 @@ def save_game(player, unlocked_enemies: list, defeated_enemies: list) -> None:
             "armor_penetration": player.stats.armor_penetration,
             "magic_penetration": player.stats.magic_penetration,
             "regen": player.stats.regen,
+            "magic_power": player.stats.magic_power,
         },
         # Usamos list comprehension para el inventario
         "inventory": [item.to_dict() for item in player.inventory.items],
@@ -173,6 +176,12 @@ def _perform_load(player, path):
     player.stats.magic_penetration = stats_data.get("magic_penetration", 0)
     # Compatibilidad con partidas guardadas antes de añadir regeneración de salud.
     player.stats.regen = stats_data.get("regen", 0)
+    # Compatibilidad con partidas guardadas antes de las clases de personaje
+    # (v0.10.0): sin "clase" -> Vagabundo; sin poder mágico -> 0; sin
+    # habilidades equipadas -> ninguna.
+    player.stats.magic_power = stats_data.get("magic_power", 0)
+    player.char_class = save_data.get("clase")
+    player.equipped_skills = list(save_data.get("habilidades_equipadas", []))
 
     player.inventory.gold = save_data.get("gold", 0)
     items_reconstructed = [item_factory(data) for data in save_data.get("inventory", [])]
