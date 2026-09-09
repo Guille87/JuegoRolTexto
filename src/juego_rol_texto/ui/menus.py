@@ -382,23 +382,27 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
 
         battle_choice = console.ask(f"\nElige a tu oponente (1-{len(unlocked_enemies) + 1}): ")
 
-        if battle_choice.isdigit():
-            target_idx = int(battle_choice) - 1
-
-            # Si elige un enemigo de la lista
-            if 0 <= target_idx < len(unlocked_enemies):
-                enemy_name = unlocked_enemies[target_idx]
-                enemy_obj = _get_enemy_instance(enemy_name)
-                # Iniciamos la batalla
-                initiate_battle(player, enemy_obj, defeated_enemies, unlocked_enemies)
-
-            # Si elige la opción de volver
-            elif target_idx == len(unlocked_enemies):
-                return
-            else:
-                console.error("Opción fuera de rango.")
-        else:
+        if not battle_choice.isdigit():
             console.error("Entrada no válida.")
+            return
+
+        target_idx = int(battle_choice) - 1
+        if target_idx == len(unlocked_enemies):
+            return
+        if not (0 <= target_idx < len(unlocked_enemies)):
+            console.error("Opción fuera de rango.")
+            return
+
+        enemy_name = unlocked_enemies[target_idx]
+        # enemy_factory permite encadenar peleas si el jugador activa la
+        # auto-batalla contra un enemigo ya derrotado (ver initiate_battle).
+        initiate_battle(
+            player,
+            _get_enemy_instance(enemy_name),
+            defeated_enemies,
+            unlocked_enemies,
+            enemy_factory=lambda: _get_enemy_instance(enemy_name),
+        )
 
     # Dentro de la partida el aviso se muestra una sola vez (al entrar), no en
     # cada redibujado del menú: aquí la llamada a la acción es "guarda y vuelve
@@ -674,8 +678,14 @@ def _admin_direct_battle(player, defeated_enemies: list, unlocked_enemies: list)
         console.error("Opción fuera de rango.")
         return
 
-    enemy = _get_enemy_instance(ALL_ENEMY_NAMES[idx])
-    initiate_battle(player, enemy, defeated_enemies, unlocked_enemies)
+    enemy_name = ALL_ENEMY_NAMES[idx]
+    initiate_battle(
+        player,
+        _get_enemy_instance(enemy_name),
+        defeated_enemies,
+        unlocked_enemies,
+        enemy_factory=lambda: _get_enemy_instance(enemy_name),
+    )
 
 
 def _collect_all_possible_drops() -> list:

@@ -77,6 +77,34 @@ def test_play_battle_music_routes_by_enemy(rm, monkeypatch):
     assert calls == ["Siege_of_the_Black_Gate", "scaring_crows", "adventure"]
 
 
+def test_enter_battle_switches_music_only_for_dedicated_enemies(rm, monkeypatch):
+    calls = []
+    monkeypatch.setattr(rm, "play_battle_music", lambda enemy: calls.append(enemy))
+
+    rm.set_mood("adventure")
+    rm.enter_battle("Goblin")  # estándar -> no toca la música
+    assert calls == []
+    assert rm.mood == "adventure"
+
+    rm.enter_battle("Dragón")  # jefe -> cambia
+    assert calls == ["Dragón"]
+    assert rm.mood == "battle"
+
+
+def test_exit_battle_only_forces_a_track_when_leaving_dedicated_music(rm, monkeypatch):
+    calls = []
+    monkeypatch.setattr(rm, "play_random_adventure_music", lambda: calls.append("adventure"))
+
+    rm.set_mood("adventure")
+    rm.exit_battle()  # no veníamos de combate -> no corta nada
+    assert calls == []
+
+    rm.set_mood("battle", "Mago")
+    rm.exit_battle()
+    assert calls == ["adventure"]
+    assert rm.mood == "adventure"
+
+
 def test_play_random_adventure_music_picks_from_the_pool(rm, monkeypatch):
     monkeypatch.setattr(rm_mod.random, "choice", lambda seq: seq[0])
     played = []

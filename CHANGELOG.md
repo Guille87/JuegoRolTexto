@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Auto-battle chains**: after you turn on Auto-Battle or Turbo against an
+  already-defeated enemy, the game asks how many fights to run back-to-back (up
+  to 20). Each resolves as normal (loot, gold, XP, post-battle heal) and the next
+  starts on its own — no menu, no per-fight "press Enter". The chain stops if you
+  fall or flee; pressing `Q` drops you back to manual control, and you can switch
+  Auto ↔ Turbo mid-chain from the menu. At the end (win or loss) it prints a
+  summary of everything gained across the whole chain — gold, XP, levels, and
+  each item with its type (weapon / armour + slot / potion / forge material).
+
 - **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
   balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or
   **Arcanista** (magic) at character creation. Each has its own starting stats
@@ -35,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and again when you enter "Nueva Partida" / "Cargar Partida" (before the name
   prompt), instead of only once per session — easy to miss otherwise. In-game it
   still shows just once, on entering the session.
+- Combat no longer cuts the current track for a standard enemy — only the final
+  boss and the five hard late-game enemies switch to dedicated battle music. Keeps
+  short (and chained auto-) fights from restarting the music every few seconds.
+  (When zone elites/guardians exist they'll be what triggers battle music — see
+  `TODO.md`.)
 
 ## [0.9.0] - 2026-09-09
 

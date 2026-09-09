@@ -54,6 +54,33 @@ class ResourceManager:
         self.mood = mood
         self.target_enemy = enemy_name
 
+    def has_dedicated_battle_music(self, enemy_name) -> bool:
+        """¿Este enemigo tiene tema de combate propio? Hoy: el jefe final y los
+        5 enemigos duros del tramo final. El resto (enemigos "estándar")
+        comparten el pool de aventura/menú.
+
+        Pendiente (ver TODO.md): cuando existan élites y guardianes de zona,
+        serán ellos —no la dificultad calibrada— quienes activen música de
+        combate; los enemigos normales de zona nunca cortarán la pista."""
+        return enemy_name == FINAL_BOSS or enemy_name in HARD_BATTLE_ENEMIES
+
+    def enter_battle(self, enemy_name) -> None:
+        """Entra en combate. Solo cambia la música si el enemigo tiene tema
+        propio; contra enemigos estándar se deja sonar lo que hubiera, para no
+        cortar la pista una y otra vez en peleas cortas (sobre todo en
+        auto-batalla y sus cadenas)."""
+        if self.has_dedicated_battle_music(enemy_name):
+            self.set_mood("battle", enemy_name)
+            self.play_battle_music(enemy_name)
+
+    def exit_battle(self) -> None:
+        """Sale de combate. Solo fuerza un cambio de pista si veníamos de música
+        de combate dedicada; si sonaba una pista de aventura, sigue sonando."""
+        was_battle = self.mood == "battle"
+        self.set_mood("adventure")
+        if was_battle:
+            self.play_random_adventure_music()
+
     def play_battle_music(self, enemy_name) -> None:
         """Elige y reproduce de inmediato la música de combate del enemigo dado,
         sin esperar a que la pista actual termine (a diferencia de update(),

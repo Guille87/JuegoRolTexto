@@ -48,47 +48,205 @@ def check_for_interrupt() -> bool:
     return key_pressed() == "q"
 
 
-def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: list) -> None:
-    """Punto de entrada principal para cualquier combate."""
+_MAX_CHAIN_BATTLES = 20
+
+
+def _ask_chain_count() -> int:
+    """Pregunta cuántas peleas seguidas quiere el jugador al activar la
+    auto-batalla contra un enemigo ya derrotado. Enter / algo no numérico -> 1;
+    por encima del máximo, se avisa y se recorta."""
+    raw = console.ask(f"¿Cuántas peleas seguidas? (1-{_MAX_CHAIN_BATTLES}, Enter = 1): ").strip()
+    if not raw:
+        return 1
+    if not raw.isdigit():
+        console.warning("Eso no es un número; se hará una sola pelea.")
+        return 1
+    n = int(raw)
+    if n > _MAX_CHAIN_BATTLES:
+        console.warning(f"El máximo son {_MAX_CHAIN_BATTLES} peleas seguidas.")
+        return _MAX_CHAIN_BATTLES
+    return max(1, n)
+
+
+def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: list, *, enemy_factory=None) -> str:
+    """Punto de entrada principal para cualquier combate.
+
+    Si al activar la auto-batalla (o el turbo) contra un enemigo ya derrotado el
+    jugador pide varias peleas seguidas, aquí se encadenan: cada pelea es como
+    siempre (botín, oro, XP, curación) y la siguiente arranca sola en el mismo
+    modo. `enemy_factory` (una función que crea una instancia nueva del enemigo)
+    es necesaria para poder encadenar; sin ella solo se juega una pelea.
+
+    Devuelve el desenlace de la última pelea: `"victory"`, `"defeat"`, `"fled"`
+    o `"cancelled"` (el jugador pulsó 'Q' y terminó a mano sin volver a auto)."""
+    rm = ResourceManager()
+    rm.enter_battle(enemy.name)
+    player.in_combat = True
+
+    # Estado de la cadena, compartido con _run_player_turn: cuando el jugador
+    # elige auto/turbo se rellenan "count" y "mode"; "mode" puede cambiar a mitad
+    # (p. ej. pasar de auto a turbo tras pulsar 'Q').
+    chain = {"factory": enemy_factory, "chosen": False, "count": 1, "mode": False}
+
+    # Instantánea para el resumen de botín de la cadena (oro/XP/nivel/objetos).
+    chain_start = {
+        "gold": player.inventory.gold,
+        "xp": player.experience,
+        "level": player.level,
+        "items": dict(player.inventory.quantities),
+    }
+
+    fight_index = 1
+    current_enemy = enemy
+    outcome = "victory"
+    while True:
+        if fight_index > 1:
+            print(
+                console.colorize(
+                    f"\n=== CADENA DE BATALLA: PELEA {fight_index}/{chain['count']} ===",
+                    console.Fore.MAGENTA,
+                    bright=True,
+                )
+            )
+        outcome = _run_one_battle(player, current_enemy, defeated_enemies, unlocked_enemies, chain, fight_index)
+        if outcome != "victory" or fight_index >= chain["count"]:
+            break
+        fight_index += 1
+        current_enemy = chain["factory"]()
+
+    player.in_combat = False
+    rm.exit_battle()
+
+    if chain["count"] > 1:
+        if outcome == "victory":
+            console.success(f"🔗 Cadena completada: {chain['count']}/{chain['count']} peleas.")
+        else:
+            done = fight_index - 1 if outcome in ("defeat", "fled") else fight_index
+            motivo = {
+                "defeat": "Has caído en combate",
+                "fled": "Has huido",
+                "cancelled": "Has salido del modo automático",
+            }.get(outcome, "Cadena interrumpida")
+            console.warning(f"🔗 {motivo}. Cadena interrumpida ({done}/{chain['count']} peleas completadas).")
+        # Resumen de todo lo conseguido en la cadena (en 20 peleas es fácil
+        # perder la cuenta) y una única pausa al final, gane o pierda.
+        _print_chain_loot(player, chain_start)
+        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+        return outcome
+
+    # Pelea única: pausa salvo tras una victoria limpia en turbo (farmeo) y
+    # salvo tras una derrota (ya pausó _handle_defeat).
+    clean_turbo_win = outcome == "victory" and chain["mode"] == "turbo"
+    if outcome in ("victory", "cancelled", "fled") and not clean_turbo_win:
+        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+
+    return outcome
+
+
+def _print_chain_loot(player, start: dict) -> None:
+    """Resumen del botín acumulado en una cadena de peleas: oro, XP, niveles y
+    objetos nuevos (por diferencia contra la instantánea del inicio)."""
+    from juego_rol_texto.items.equipment import Armor, Weapon, slot_label
+    from juego_rol_texto.items.materials import Material
+    from juego_rol_texto.items.potions.potion_base import Potion
+
+    gold_delta = player.inventory.gold - start["gold"]
+    xp_delta = player.experience - start["xp"]
+    levels = player.level - start["level"]
+
+    gained = {
+        name: qty - start["items"].get(name, 0)
+        for name, qty in player.inventory.quantities.items()
+        if qty - start["items"].get(name, 0) > 0
+    }
+
+    print(console.colorize("\n--- BOTÍN DE LA CADENA ---", console.Fore.CYAN, bright=True))
+    gold_sign = "+" if gold_delta >= 0 else ""
+    print(console.stat_line(f"Oro: {gold_sign}{gold_delta}", "oro"))
+    xp_line = f"XP: +{xp_delta}"
+    if levels > 0:
+        xp_line += f"  (subes {levels} nivel{'es' if levels > 1 else ''}: {start['level']} → {player.level})"
+    print(console.stat_line(xp_line, "xp"))
+
+    if not gained:
+        print("Objetos: ninguno")
+        return
+
+    item_by_name = {it.name: it for it in player.inventory.items}
+
+    def _color(name: str) -> str:
+        item = item_by_name.get(name)
+        if isinstance(item, Weapon):
+            return console.colorize(name, console.element_color(item.element))
+        if isinstance(item, Armor):
+            return console.colorize(name, console.Fore.BLUE, bright=True)
+        if isinstance(item, Potion):
+            return console.colorize(name, console.Fore.GREEN)
+        if isinstance(item, Material):
+            return console.colorize(name, console.Fore.LIGHTBLACK_EX)
+        return name
+
+    def _kind(name: str) -> str:
+        item = item_by_name.get(name)
+        if isinstance(item, Weapon):
+            return f"arma · {item.element}" if item.element else "arma"
+        if isinstance(item, Armor):
+            return f"armadura · {slot_label(item.slot).lower()}"
+        if isinstance(item, Potion):
+            return "poción"
+        if isinstance(item, Material):
+            return "material de herrería"
+        return "objeto"
+
+    print("Objetos:")
+    for name, qty in gained.items():
+        suffix = f" x{qty}" if qty > 1 else ""
+        kind = console.colorize(f"({_kind(name)})", console.Fore.LIGHTBLACK_EX)
+        print(f"  {_color(name)}{suffix} {kind}")
+
+
+def _run_one_battle(
+    player, enemy, defeated_enemies: list, unlocked_enemies: list, chain: dict, fight_index: int
+) -> str:
+    """Una sola pelea completa. `chain` guía el modo automático de arranque (en
+    la 2ª pelea de una cadena en adelante) y recoge la elección del jugador si
+    activa la auto-batalla aquí. Devuelve `"victory"` / `"defeat"` / `"fled"` /
+    `"cancelled"`."""
     print("=" * 60)
     print(f"{console.colorize(f'¡Ha comenzado la batalla contra {enemy.name}!', console.Fore.WHITE, bright=True)}")
-    player.in_combat = True
+    rm = ResourceManager()
     # Vida justo al entrar en combate: si el jugador huye, solo debe poder
-    # recuperar parte de lo que ha perdido en ESTA pelea, no del total de vida
-    # que le faltase de antes (eso no tendría sentido: huir no es una victoria).
+    # recuperar parte de lo que ha perdido en ESTA pelea.
     health_before_battle = player.stats.health
 
-    rm = ResourceManager()
-    # Sincronizamos el manager con la batalla y forzamos el cambio de música
-    # de inmediato (no basta con update(): solo actúa cuando la pista anterior
-    # ya ha terminado, así que sin esto el tema de aventura seguiría sonando
-    # sobre el combate si todavía no había acabado).
-    rm.set_mood("battle", enemy.name)
-    rm.play_battle_music(enemy.name)
+    # En la 2ª pelea de una cadena en adelante arrancamos ya en el modo elegido.
+    start_auto: bool | str = chain["mode"] if fight_index > 1 else False
 
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
     if hasattr(enemy, "check_ambush"):
         if enemy.check_ambush(player, defeated_enemies):
-            # Mostramos el estado inmediatamente después del daño de emboscada
             print_status(player, enemy, defeated_enemies)
 
-        # Si el jugador muere por la emboscada (poco probable pero posible)
         if not player.is_alive():
-            _handle_defeat(player)
+            # En una cadena la pausa (y el resumen) van una sola vez al final.
+            _handle_defeat(player, pause=chain["count"] == 1)
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
-            return
+            return "defeat"
 
-    # Ficha de ambos combatientes al empezar, pase lo que pase con el orden de
-    # turnos. El enemigo sale con "???" mientras no se haya derrotado (igual que
-    # la barra de vida).
-    print_player_enemy_info(player, enemy, defeated_enemies)
+    # Ficha de ambos combatientes al empezar. En turbo se omite (farmeo).
+    if start_auto != "turbo":
+        print_player_enemy_info(player, enemy, defeated_enemies)
 
-    # Guardamos estado inicial para restaurar después
     snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
 
-    is_auto: bool | str = False
+    is_auto: bool | str = start_auto
+    if start_auto:
+        modo = "TURBO (sin pausas)" if start_auto == "turbo" else "ACTIVADO"
+        print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
+    auto_cancelled = False
     player_won = False
     player_fled = False
+    player_defeated = False
     gauge_player = 0.0
     gauge_enemy = 0.0
     enemy_acted = True  # el primer turno del jugador no cuenta como "repetido"
@@ -101,11 +259,15 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             gauge_enemy += enemy.stats.speed
 
         # El turno del jugador (y una posible huida) se resuelve siempre antes que
-        # el del enemigo si ambos gauges están listos en el mismo "tick": así la
-        # huida nunca puede ser interrumpida por un enemigo más rápido.
+        # el del enemigo si ambos gauges están listos en el mismo "tick".
         if gauge_player >= ATB_THRESHOLD:
             gauge_player -= ATB_THRESHOLD
-            signal, is_auto = _run_player_turn(player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted)
+            was_auto = bool(is_auto)
+            signal, is_auto = _run_player_turn(
+                player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted, chain=chain
+            )
+            if was_auto and not is_auto:
+                auto_cancelled = True  # pulsó 'Q'; si vuelve a activar auto se corrige abajo
             enemy_acted = False
             if signal == "huir":
                 player_fled = True
@@ -113,10 +275,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 
         if not enemy.is_alive():
             player_won = True
-            # CAPTURAMOS LOS NUEVOS STATS SI SUBE DE NIVEL
             new_atk, new_armor = _handle_victory(player, enemy, defeated_enemies, unlocked_enemies)
-
-            # SI SUBIÓ DE NIVEL, ACTUALIZAMOS EL SNAPSHOT
             if player.just_leveled_up:
                 snapshot["atk"] = new_atk
                 snapshot["armor"] = new_armor
@@ -138,31 +297,36 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             break
 
         if not player.is_alive():
-            _handle_defeat(player)
+            _handle_defeat(player, pause=chain["count"] == 1)  # cura del todo -> de ahí el flag
+            player_defeated = True
             break
 
-        # En auto normal, una pausa para poder leer el resultado. En turbo no
-        # hay pausas (el objetivo es farmear lo más rápido posible).
+        # En auto normal, una pausa para poder leer el resultado. En turbo no.
         if is_auto == "auto" and player.is_alive() and enemy.is_alive():
             print(console.colorize("(Esperando siguiente turno...)", console.Fore.BLACK, bright=True))
-            time.sleep(1)  # Pequeña pausa para asimilar el daño recibido
+            time.sleep(1)
 
     if player_fled:
         _restore_player(player, snapshot, max_recovery=health_before_battle - player.stats.health)
     else:
         _restore_player(player, snapshot)
-    player.in_combat = False
-    # Al salir, volvemos a modo aventura
-    rm.set_mood("adventure")
-    rm.play_random_adventure_music()
 
-    if player_won and is_auto != "turbo":
-        # Pausa deliberada: victoria, oro, botín y curación tras el combate
-        # imprimen bastante texto seguido; sin esta pausa el menú se
-        # reescribía encima antes de que el jugador pudiera leerlo (podía
-        # pasarle por alto un objeto conseguido, por ejemplo). En turbo se
-        # omite: el jugador está farmeando y quiere volver al menú ya.
-        console.ask(f"\n{console.colorize('Presiona Enter para continuar...', console.Fore.YELLOW)}")
+    if player_defeated:
+        return "defeat"
+    if player_fled:
+        return "fled"
+    # "cancelled" solo si pulsó 'Q' y NO volvió a activar la auto-batalla.
+    if auto_cancelled and not is_auto:
+        return "cancelled"
+    return "victory" if player_won else "fled"
+
+    if player_defeated:
+        return "defeat"
+    if player_fled:
+        return "fled"
+    if auto_cancelled:
+        return "cancelled"
+    return "victory" if player_won else "fled"
 
 
 def _player_menu(player, enemy, defeated_enemies: list, immobilized: bool = False) -> str:
@@ -216,13 +380,16 @@ def _attempt_flee(player, enemy, chance_mult: float = 1.0) -> bool:
     return random.random() < flee_chance
 
 
-def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: bool = False):
+def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: bool = False, chain: dict | None = None):
     """Ejecuta el turno del jugador cuando su gauge ATB está lista.
 
     `is_auto` es `False`, `"auto"` (auto normal, con pausas) o `"turbo"` (auto
     sin pausas, para farmear). `repeated` = el jugador vuelve a actuar sin que el
-    enemigo haya actuado por el medio (es más rápido). Devuelve `(señal, is_auto
-    actualizado)`; señal es `"huir"` si el combate debe terminar, o `"ok"`.
+    enemigo haya actuado por el medio (es más rápido). `chain` (si se pasa) recibe
+    la elección del jugador al activar la auto-batalla: la primera vez se le
+    pregunta cuántas peleas seguidas quiere; el modo (`"auto"`/`"turbo"`) se
+    actualiza siempre, para poder cambiar de uno a otro a mitad de una cadena.
+    Devuelve `(señal, is_auto actualizado)`; señal es `"huir"` o `"ok"`.
     """
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
@@ -244,7 +411,7 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
     if is_auto and check_for_interrupt():
         was_turbo = is_auto == "turbo"
         is_auto = False
-        console.warning("\n🛑 ¡Auto-batalla cancelada! Volviendo al menú...")
+        console.warning("\n🛑 Auto-batalla detenida. Vuelves a controlar el combate.")
         if not was_turbo:
             time.sleep(1)  # Pausa para que el usuario lo vea
 
@@ -262,6 +429,14 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
 
             if action in ("auto", "turbo"):
                 is_auto = action
+                # Cadena de peleas: se pregunta la primera vez que se activa la
+                # auto-batalla; el modo se actualiza siempre (permite cambiar de
+                # auto a turbo o viceversa a mitad de una cadena).
+                if chain is not None:
+                    if chain["factory"] and not chain["chosen"]:
+                        chain["chosen"] = True
+                        chain["count"] = _ask_chain_count()
+                    chain["mode"] = action
                 modo = "TURBO (sin pausas)" if action == "turbo" else "ACTIVADO"
                 print(console.colorize(f">>> MODO AUTO: {modo}. (Pulsa 'Q' para detener)", console.Fore.CYAN))
 
@@ -523,8 +698,10 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     return (player.stats.min_atk, player.stats.max_atk), player.stats.armor
 
 
-def _handle_defeat(player) -> None:
-    """Gestiona lo que ocurre cuando el jugador cae en combate."""
+def _handle_defeat(player, pause: bool = True) -> None:
+    """Gestiona lo que ocurre cuando el jugador cae en combate. `pause=False`
+    cuando estamos en una cadena: la pausa (y el resumen de botín) se hacen una
+    sola vez al final."""
     print("\n" + "x" * 60)
     print(console.colorize("¡HAS SIDO DERROTADO!", console.Fore.RED, bright=True))
 
@@ -539,7 +716,8 @@ def _handle_defeat(player) -> None:
     print(f"Penalización: Has perdido {console.colorize(f'{penalty} de oro', console.Fore.RED)}.")
     console.success("Tu salud ha sido restaurada para que puedas continuar.")
     print("x" * 60)
-    console.ask("\nPresiona Enter para volver...")
+    if pause:
+        console.ask("\nPresiona Enter para volver...")
 
 
 def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> None:
