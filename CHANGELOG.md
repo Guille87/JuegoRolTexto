@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   shows the player's crit damage and the enemy's crit chance + crit damage.
 - The admin character now picks a class too, so the classes can be tested with
   cheat stats.
+- The "new version available" notice now shows every time the main menu is drawn
+  and again when you enter "Nueva Partida" / "Cargar Partida" (before the name
+  prompt), instead of only once per session — easy to miss otherwise. In-game it
+  still shows just once, on entering the session.
 
 ## [0.9.0] - 2026-09-09
 

@@ -77,16 +77,14 @@ def _check_admin_password() -> bool:
     return hashlib.sha256(entered.encode("utf-8")).hexdigest() == _ADMIN_PASSWORD_HASH
 
 
-_update_notice_shown = False
-
-
 def _maybe_show_update_notice(*, in_game: bool) -> None:
-    """Si el hilo de arranque encontró una versión nueva, lo dice una vez."""
-    global _update_notice_shown
+    """Si el hilo de arranque encontró una versión nueva, lo recuerda. Se llama
+    en cada redibujado del menú principal y al entrar en "Nueva Partida" /
+    "Cargar Partida", para que no se pase por alto yendo rápido; también una vez
+    al abrir la partida (con la nota de guardar y volver al menú)."""
     info = updater.available()
-    if not info or _update_notice_shown:
+    if not info:
         return
-    _update_notice_shown = True
     print(console.colorize(f"\n⬆  Versión nueva disponible: {info.tag}", console.Fore.GREEN, bright=True))
     if in_game:
         print(console.colorize("   Guarda la partida y vuelve al Menú Principal para actualizar.", console.Fore.GREEN))
@@ -176,6 +174,7 @@ def _choose_class() -> CharClass:
 
 
 def start_new_game() -> None:
+    _maybe_show_update_notice(in_game=False)
     print(console.colorize("\n--- NUEVA AVENTURA ---", console.Fore.CYAN))
     name = ""  # Inicializa el nombre del jugador como una cadena vacía
     is_admin = False
@@ -234,6 +233,7 @@ def start_new_game() -> None:
 
 
 def load_saved_game() -> None:
+    _maybe_show_update_notice(in_game=False)
     name = ""
     is_admin = False
 
@@ -400,9 +400,13 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
         else:
             console.error("Entrada no válida.")
 
+    # Dentro de la partida el aviso se muestra una sola vez (al entrar), no en
+    # cada redibujado del menú: aquí la llamada a la acción es "guarda y vuelve
+    # al Menú Principal", no algo que puedas hacer sin salir.
+    _maybe_show_update_notice(in_game=True)
+
     while True:
         resource_manager.update()  # Por si la pista de aventura ya ha terminado
-        _maybe_show_update_notice(in_game=True)
 
         print("\n" + "=" * 40)
         print(console.colorize(f"ESTADO: {player.name} | Nivel: {player.level}", console.Fore.CYAN))
