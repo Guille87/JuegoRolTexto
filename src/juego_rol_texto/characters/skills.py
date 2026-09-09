@@ -93,7 +93,7 @@ _add(
         CharClass.GUERRERO,
         SkillKind.ACTIVE,
         1,
-        "Un golpe fuerte (+50% daño) con un 40% de aturdir al enemigo 1 turno.",
+        "Un golpe fuerte (+50% daño) con un 40% de probabilidad de aturdir al enemigo 1 turno.",
         cooldown=3,
         params={"damage_mult": 1.5, "stun_chance": 0.4},
     )
@@ -165,7 +165,7 @@ _add(
         CharClass.VAGABUNDO,
         SkillKind.PASSIVE,
         2,
-        "Por debajo del 30% de vida, +15% de armadura y de resistencia mágica.",
+        "Por debajo del 30% de vida obtienes +15% de armadura y de resistencia mágica.",
         params={"low_hp_defense_pct": 0.15},
     )
 )
@@ -176,7 +176,7 @@ _add(
         CharClass.GUERRERO,
         SkillKind.PASSIVE,
         2,
-        "30% de contraatacar cuando recibes un golpe físico.",
+        "30% de probabilidad de contraatacar cuando recibes un golpe físico.",
         params={"counter_chance": 0.30},
     )
 )
@@ -187,7 +187,7 @@ _add(
         CharClass.PICARO,
         SkillKind.PASSIVE,
         2,
-        "20% de envenenar al enemigo cuando lo golpeas.",
+        "20% de probabilidad de envenenar al enemigo cuando lo golpeas.",
         params={"on_hit_poison_chance": 0.20},
     )
 )

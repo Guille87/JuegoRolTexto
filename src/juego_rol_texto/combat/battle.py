@@ -566,7 +566,7 @@ def _choose_skill(player, cooldowns: dict):
             print(
                 f"{console.colorize(f'{i}.', console.Fore.CYAN)} {console.colorize(skill.name, console.Fore.MAGENTA)} [{estado}]"
             )
-            print(f"   {skill.description}")
+            print(f"   {console.tint_status(skill.description)}")
         print(f"{console.colorize(f'{len(actives) + 1}.', console.Fore.CYAN)} Volver")
 
         choice = console.ask("Elige habilidad: ").strip()

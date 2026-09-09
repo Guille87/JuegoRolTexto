@@ -186,6 +186,10 @@ el cambio a mitigación multiplicativa.
   (Pícaro: 20% envenenar al golpear, en `_execute_turn`), Escudo de Maná
   (Arcanista: activa a4 de utilidad, `Player.mana_shield` absorbe el próximo
   golpe). **Números sin verificar** — balanceo en v0.14.
+- [ ] **Repensar "Veneno de Contacto"** (pasiva M2 del Pícaro). Envenenar
+  *cuando te golpean* no encaja con un pícaro (eso es de un monstruo espinoso);
+  envenenar *al atacar* ya lo cubriría una activa. Buscar otra pasiva para el
+  hueco M2 del Pícaro. De momento se queda implementada y funcional.
 - [ ] **Hitos M3-M7** (más adelante): filas M3-M7 de la tabla §6.2, atadas a
   guardianes de zona en la fase de mundo/presupuesto de poder.
 - [ ] **Guardado**: v0.10.0 solo añade `clase` (back-fill "vagabundo") y
