@@ -158,6 +158,9 @@ class Enemy:
                     console.warning(i18n.t("combat.enemy_paralysed", name=self.name))
                     can_act = False
                 effect["fresh"] = False
+            elif effect["name"] == "aturdido":
+                console.warning(i18n.t("combat.enemy_stunned", name=self.name))
+                can_act = False
 
         for effect in self.status_effects[:]:
             if effect["name"] == "quemado":
@@ -168,6 +171,10 @@ class Enemy:
                 dmg = max(1, self.stats.max_health // 8)
                 self.stats.health -= dmg
                 console.success(i18n.t("combat.enemy_poison", amount=dmg, name=self.name))
+            elif effect["name"] == "sangrado":
+                dmg = max(1, self.stats.max_health // 12)
+                self.stats.health -= dmg
+                console.error(i18n.t("combat.enemy_bleed", amount=dmg, name=self.name))
 
         return can_act
 

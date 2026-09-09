@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Skills** (GDD §6.2): each class now has a skill pool. **Passives** are always
+  on once learned; **actives** replace your attack and have a turn cooldown — you
+  equip up to 4 to bring into a fight. New "Habilidades" menu to manage them and a
+  "Habilidades" combat action to use them (auto-battle uses a ready active if it
+  has one). This release ships milestone 1 (one active + one passive per class,
+  learned at creation): Golpe Firme / Segundo Aliento (Aventurero), Embate / Piel
+  de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
+  Sintonía (Arcanista). New `sangrado` (bleed) and `aturdido` (stun) statuses,
+  each with its own message and colour. Numbers are provisional.
+
 - **Auto-battle chains**: after you turn on Auto-Battle or Turbo against an
   already-defeated enemy, the game asks how many fights to run back-to-back (up
   to 20). Each resolves as normal (loot, gold, XP, post-battle heal) and the next
@@ -20,10 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   summary of everything gained across the whole chain — gold, XP, levels, and
   each item with its type (weapon / armour + slot / potion / forge material).
 
-- **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
+- **Character classes** (GDD §6.1): pick one of **Aventurero** (the classic
   balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or
   **Arcanista** (magic) at character creation. Each has its own starting stats
-  and per-level growth. Old saves and existing characters stay Vagabundo.
+  and per-level growth. Old saves and existing characters stay Aventurero.
 - **`poder mágico`** stat: the Arcanista's standard attack is magical
   (`is_magical`), scales with `poder mágico` instead of the weapon, defaults to
   the `arcano` element, and is mitigated by the enemy's magic resist — so
@@ -49,6 +59,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   short (and chained auto-) fights from restarting the music every few seconds.
   (When zone elites/guardians exist they'll be what triggers battle music — see
   `TODO.md`.)
+- Combat info sheets now print before a pre-battle ambush, not after, so you see
+  the matchup first. A line also states who has the initiative (higher speed),
+  and each action is now headed `── Turno N · Name ──` (with the class for the
+  player). A short pause after the enemy's turn lets you read the damage before
+  the menu redraws.
+- The balanced class is now called **Aventurero** (was "Vagabundo") — display
+  name only; the save value is unchanged.
+- The victory loot line shows each dropped item's type (weapon / armour + slot /
+  potion / forge material) and, for weapons and armour, the stats it grants.
+  Potions no longer repeat what they do (it was already in the description).
+- Turbo auto-battle keeps its speed (no pauses / sleeps) but no longer hides the
+  health bars after the enemy's turn — you can see how the fight is going.
+- A dodged attack now reads "X lo esquiva" instead of "falla el golpe" — attacks
+  never miss on their own, only when the target dodges (evasion vs precision).
+- More status effects are colour-coded: `sangrado` (light red, distinct from
+  burn), `aturdido` (light yellow, distinct from paralysis), `desarmado`,
+  `maldición`, `confusión`.
 
 ## [0.9.0] - 2026-09-09
 

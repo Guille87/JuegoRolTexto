@@ -32,3 +32,23 @@ def item_factory(data: dict):
             console.error(f"Error al reconstruir {tipo}: {e}")
             return None
     return None
+
+
+# Importado aquí abajo para evitar el ciclo con potion_base (Potion es la base).
+from juego_rol_texto.items.potions.potion_base import Potion  # noqa: E402
+
+
+def item_kind_label(item) -> str:
+    """Etiqueta corta del tipo de objeto para las listas de botín:
+    `arma` / `arma · fuego`, `armadura · casco`, `poción`, `material de herrería`."""
+    from juego_rol_texto.items.equipment import slot_label
+
+    if isinstance(item, Weapon):
+        return f"arma · {item.element}" if item.element else "arma"
+    if isinstance(item, Armor):
+        return f"armadura · {slot_label(item.slot).lower()}"
+    if isinstance(item, Potion):
+        return "poción"
+    if isinstance(item, Material):
+        return "material de herrería"
+    return "objeto"

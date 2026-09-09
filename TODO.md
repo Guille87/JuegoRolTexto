@@ -159,7 +159,37 @@ el cambio a mitigación multiplicativa.
   `arcano` (la pasiva Sintonía lo cambia al empezar el combate).
 - [ ] **Niveles de desbloqueo provisionales**: habilidades M1 al crear (nivel 1),
   M2 al nivel 4. Exactos a v0.14.
-- [ ] **Primeras 3 habilidades por clase** (M1 activa + M1 pasiva + M2): tabla de
-  §6.2 del GDD. Balancear cada efecto tras implementarlas.
+- [x] **Motor de habilidades + hito M1** (v0.10.0-b): `characters/skills.py`
+  (`Skill` dataclass + `CATALOG`, efectos guiados por `params`), menú
+  "Habilidades" (`_skills_flow`), acción "Habilidades" en combate
+  (`_choose_skill` / `_execute_skill`), enfriamiento por combate en un dict,
+  auto-batalla usa una activa lista si la hay. M1 = 1 activa + 1 pasiva por clase
+  (se aprende al crear). Nuevo estado `sangrado` (DoT físico, `max_health//12`).
+  **Números provisionales sin verificar** (balanceo en v0.14):
+  - Golpe Firme: a3, no falla, x1.4 daño. · Segundo Aliento: cura 12% vida máx. al matar.
+  - Embate: a3, x1.5 daño, 40% aturdir 1 turno (reutiliza `paralizado`). · Piel de Piedra: -12% daño físico recibido.
+  - Golpe Bajo: a3, crítico garantizado + `sangrado` 3 turnos. · Reflejos: +8 evasión plana (GDD decía "+12%", pendiente de cuadrar cómo se interpreta).
+  - Proyectil Arcano: a2, mágico, `magic_penetration += 9999` (ignora la res. mágica). · Sintonía: elige elemento al empezar el combate (`Player.battle_element`, se limpia al terminar).
+- [ ] **Balance: el ataque mágico del Arcanista salta la armadura.** Los ataques
+  físicos pierden ~30-50% contra la armadura (fórmula multiplicativa), pero el
+  ataque mágico se mitiga con `magic_resist`, que casi todos los enemigos tienen
+  a 0-2. Con poder mágico y ataque físico comparables, el Arcanista pega bastante
+  más en la práctica contra la mayoría de la cadena. Es en parte la fantasía de
+  clase (el GDD quiere que la `magic_resist` importe), pero hay que darle a los
+  enemigos algo de `magic_resist` o revisar el poder mágico en la pasada de
+  presupuesto de poder (v0.14). De momento el admin arranca con `magic_power=25`
+  (antes 40) para que el desajuste no sea tan bestia al probar.
+- [ ] **Hito M2 + más habilidades** (v0.10.0-c): añadir la fila M2 de la tabla
+  §6.2 del GDD, balancear.
 - [ ] **Guardado**: v0.10.0 solo añade `clase` (back-fill "vagabundo") y
   `habilidades_equipadas` (back-fill []). El bloque `mundo` completo va en v0.12.0.
+
+## Pulido final (casi lo último antes de 1.0)
+
+- [ ] **Más sonidos de ataque por clase / elemento.** Hoy todo ataque suena
+  `hit`/`slash` al azar. El Arcanista debería sonar a magia, el Guerrero a
+  espada/contundente, etc.; los hechizos elementales de enemigos y jugador,
+  a su elemento (fuego, rayo, hielo…). Ampliar `audio/catalog.py` y elegir el
+  SFX según quién ataca y con qué.
+- [ ] **Revisar/mejorar la música** (más pistas, mejor encaje por
+  zona/situación). Junto con la música por élite/guardián ya anotada arriba.

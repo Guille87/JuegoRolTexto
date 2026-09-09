@@ -48,6 +48,13 @@ def check_for_interrupt() -> bool:
     return key_pressed() == "q"
 
 
+def _turn_header(turn_no: int, name: str, extra: str = "") -> str:
+    """Cabecera tenue con el número de acción global y quién actúa (con su clase,
+    para el jugador)."""
+    suffix = f" ({extra})" if extra else ""
+    return console.colorize(f"\n── Turno {turn_no} · {name}{suffix} ──", console.Fore.LIGHTBLACK_EX, bright=True)
+
+
 _MAX_CHAIN_BATTLES = 20
 
 
@@ -146,7 +153,8 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 def _print_chain_loot(player, start: dict) -> None:
     """Resumen del botín acumulado en una cadena de peleas: oro, XP, niveles y
     objetos nuevos (por diferencia contra la instantánea del inicio)."""
-    from juego_rol_texto.items.equipment import Armor, Weapon, slot_label
+    from juego_rol_texto.items.equipment import Armor, Weapon
+    from juego_rol_texto.items.factory import item_kind_label
     from juego_rol_texto.items.materials import Material
     from juego_rol_texto.items.potions.potion_base import Potion
 
@@ -186,22 +194,11 @@ def _print_chain_loot(player, start: dict) -> None:
             return console.colorize(name, console.Fore.LIGHTBLACK_EX)
         return name
 
-    def _kind(name: str) -> str:
-        item = item_by_name.get(name)
-        if isinstance(item, Weapon):
-            return f"arma · {item.element}" if item.element else "arma"
-        if isinstance(item, Armor):
-            return f"armadura · {slot_label(item.slot).lower()}"
-        if isinstance(item, Potion):
-            return "poción"
-        if isinstance(item, Material):
-            return "material de herrería"
-        return "objeto"
-
     print("Objetos:")
     for name, qty in gained.items():
         suffix = f" x{qty}" if qty > 1 else ""
-        kind = console.colorize(f"({_kind(name)})", console.Fore.LIGHTBLACK_EX)
+        label = item_kind_label(item_by_name[name]) if name in item_by_name else "objeto"
+        kind = console.colorize(f"({label})", console.Fore.LIGHTBLACK_EX)
         print(f"  {_color(name)}{suffix} {kind}")
 
 
@@ -222,6 +219,12 @@ def _run_one_battle(
     # En la 2ª pelea de una cadena en adelante arrancamos ya en el modo elegido.
     start_auto: bool | str = chain["mode"] if fight_index > 1 else False
 
+    # Ficha de ambos combatientes al empezar, ANTES de la posible emboscada (para
+    # ver el enfrentamiento antes de que el enemigo pegue primero). En turbo se
+    # omite (farmeo).
+    if start_auto != "turbo":
+        print_player_enemy_info(player, enemy, defeated_enemies)
+
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
     if hasattr(enemy, "check_ambush"):
         if enemy.check_ambush(player, defeated_enemies):
@@ -233,11 +236,26 @@ def _run_one_battle(
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
             return "defeat"
 
-    # Ficha de ambos combatientes al empezar. En turbo se omite (farmeo).
+    # Pasiva "Sintonía" (Arcanista): elige el elemento de tu ataque este combate.
+    if not start_auto:
+        _prompt_battle_element(player)
+
+    # Quién tiene la iniciativa (más velocidad = llega antes al umbral ATB; en
+    # empate va el jugador). Solo informativo — la emboscada es aparte.
     if start_auto != "turbo":
-        print_player_enemy_info(player, enemy, defeated_enemies)
+        pv, ev = player.get_total_speed(), enemy.stats.speed
+        primero = player.name if pv >= ev else enemy.name
+        print(
+            console.colorize(
+                f"⚡ {primero} tiene la iniciativa (velocidad {pv} vs {ev}).",
+                console.Fore.LIGHTBLACK_EX,
+                bright=True,
+            )
+        )
 
     snapshot = {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor}
+    cooldowns: dict[str, int] = {}  # enfriamiento de habilidades, solo dura este combate
+    turn_no = 0  # contador global de acciones (jugador o enemigo)
 
     is_auto: bool | str = start_auto
     if start_auto:
@@ -262,9 +280,17 @@ def _run_one_battle(
         # el del enemigo si ambos gauges están listos en el mismo "tick".
         if gauge_player >= ATB_THRESHOLD:
             gauge_player -= ATB_THRESHOLD
+            turn_no += 1
             was_auto = bool(is_auto)
             signal, is_auto = _run_player_turn(
-                player, enemy, defeated_enemies, is_auto, repeated=not enemy_acted, chain=chain
+                player,
+                enemy,
+                defeated_enemies,
+                is_auto,
+                repeated=not enemy_acted,
+                chain=chain,
+                cooldowns=cooldowns,
+                turn_no=turn_no,
             )
             if was_auto and not is_auto:
                 auto_cancelled = True  # pulsó 'Q'; si vuelve a activar auto se corrige abajo
@@ -284,7 +310,8 @@ def _run_one_battle(
         # --- TURNO DEL ENEMIGO (solo si su gauge también está lista) ---
         if player.is_alive() and gauge_enemy >= ATB_THRESHOLD:
             gauge_enemy -= ATB_THRESHOLD
-            _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo")
+            turn_no += 1
+            _run_enemy_turn(player, enemy, defeated_enemies, turbo=is_auto == "turbo", turn_no=turn_no)
             enemy_acted = True
 
         # El enemigo pudo morir por veneno/quemadura al empezar su turno.
@@ -301,11 +328,6 @@ def _run_one_battle(
             player_defeated = True
             break
 
-        # En auto normal, una pausa para poder leer el resultado. En turbo no.
-        if is_auto == "auto" and player.is_alive() and enemy.is_alive():
-            print(console.colorize("(Esperando siguiente turno...)", console.Fore.BLACK, bright=True))
-            time.sleep(1)
-
     if player_fled:
         _restore_player(player, snapshot, max_recovery=health_before_battle - player.stats.health)
     else:
@@ -320,50 +342,42 @@ def _run_one_battle(
         return "cancelled"
     return "victory" if player_won else "fled"
 
-    if player_defeated:
-        return "defeat"
-    if player_fled:
-        return "fled"
-    if auto_cancelled:
-        return "cancelled"
-    return "victory" if player_won else "fled"
-
 
 def _player_menu(player, enemy, defeated_enemies: list, immobilized: bool = False) -> str:
     """Maneja la interfaz de usuario durante el combate. Si `immobilized`
-    (parálisis/congelación), no se ofrece "Defender" y "Atacar" pierde el turno,
-    pero sí se puede usar un objeto (poción, antídoto) o intentar huir."""
+    (parálisis/congelación), no se ofrece "Defender" ni "Habilidades" y "Atacar"
+    pierde el turno, pero sí se puede usar un objeto o intentar huir."""
     while True:
-        atacar = "1. Atacar (no puedes moverte)" if immobilized else "1. Atacar"
-        options = [atacar, "2. Objetos", "3. Info", "4. Huir"]
+        # Opciones numeradas dinámicamente: (etiqueta, token que devuelve).
+        options: list[tuple[str, str]] = [
+            ("Atacar (no puedes moverte)" if immobilized else "Atacar", "atacar"),
+            ("Objetos", "objetos"),
+            ("Info", "info"),
+            ("Huir", "huir"),
+        ]
         if not immobilized:
-            options.append("5. Defender")
+            options.append(("Defender", "defender"))
+            if player.get_equipped_active_skills():
+                options.append(("Habilidades", "habilidades"))
         if enemy.name in defeated_enemies:
-            options.append("6. Auto-Batalla")
-            options.append("7. Auto-Batalla Turbo")
+            options.append(("Auto-Batalla", "auto"))
+            options.append(("Auto-Batalla Turbo", "turbo"))
 
-        print("\n" + " | ".join(options))
-        choice = console.ask("Selección: ")
+        print("\n" + " | ".join(f"{i}. {label}" for i, (label, _) in enumerate(options, 1)))
+        choice = console.ask("Selección: ").strip()
+        if not choice.isdigit() or not (1 <= int(choice) <= len(options)):
+            console.error("Opción no válida.")
+            continue
 
-        if choice == "1":
-            return "atacar"
-        elif choice == "2":
-            # Si el menú de equipo devuelve True es que se usó un objeto
-            if player.inventory.equip_menu():
+        token = options[int(choice) - 1][1]
+        if token == "objetos":
+            if player.inventory.equip_menu():  # True = se usó un objeto
                 return "objeto_usado"
-        elif choice == "3":
+            continue
+        if token == "info":
             print_player_enemy_info(player, enemy, defeated_enemies)
             continue
-        elif choice == "4":
-            return "huir"
-        elif choice == "5" and not immobilized:
-            return "defender"
-        elif choice == "6" and enemy.name in defeated_enemies:
-            return "auto"
-        elif choice == "7" and enemy.name in defeated_enemies:
-            return "turbo"
-        else:
-            console.error("Opción no válida.")
+        return token
 
 
 def _attempt_flee(player, enemy, chance_mult: float = 1.0) -> bool:
@@ -380,7 +394,16 @@ def _attempt_flee(player, enemy, chance_mult: float = 1.0) -> bool:
     return random.random() < flee_chance
 
 
-def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: bool = False, chain: dict | None = None):
+def _run_player_turn(
+    player,
+    enemy,
+    defeated_enemies: list,
+    is_auto,
+    repeated: bool = False,
+    chain: dict | None = None,
+    cooldowns=None,
+    turn_no: int = 0,
+):
     """Ejecuta el turno del jugador cuando su gauge ATB está lista.
 
     `is_auto` es `False`, `"auto"` (auto normal, con pausas) o `"turbo"` (auto
@@ -391,6 +414,9 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
     actualiza siempre, para poder cambiar de uno a otro a mitad de una cadena.
     Devuelve `(señal, is_auto actualizado)`; señal es `"huir"` o `"ok"`.
     """
+    if turn_no:
+        print(_turn_header(turn_no, player.name, getattr(player, "class_name", "")))
+
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
     # vuelve a tocar: al empezar su turno se limpia.
@@ -398,6 +424,11 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
     hp_before = player.stats.health
     can_act = player.on_turn_start()
     turn_consumed = False
+
+    # Enfriamiento de habilidades: baja 1 en cada turno del jugador.
+    cooldowns = cooldowns if cooldowns is not None else {}
+    for sid in list(cooldowns):
+        cooldowns[sid] = max(0, cooldowns[sid] - 1)
 
     # Si el veneno/quemadura le hizo daño, una línea con su vida (barra +
     # estados) para que sepa con cuánta se queda antes de decidir.
@@ -418,7 +449,18 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
     action = None
     if player.is_alive():  # El veneno podría haberlo matado en on_turn_start
         if not is_auto:
-            action = _player_menu(player, enemy, defeated_enemies, immobilized=not can_act)
+            action = "_menu"
+            while action == "_menu":
+                action = _player_menu(player, enemy, defeated_enemies, immobilized=not can_act)
+                if action == "habilidades":
+                    skill = _choose_skill(player, cooldowns)
+                    if skill is None:
+                        action = "_menu"  # volver al menú de combate
+                        continue
+                    _execute_skill(player, enemy, skill, defeated_enemies)
+                    cooldowns[skill.id] = skill.cooldown
+                    turn_consumed = True
+
             if action == "huir":
                 # Inmovilizado, la probabilidad de huir baja a la mitad.
                 if _attempt_flee(player, enemy, chance_mult=1.0 if can_act else 0.5):
@@ -459,15 +501,100 @@ def _run_player_turn(player, enemy, defeated_enemies: list, is_auto, repeated: b
 
         # --- ATAQUE DEL JUGADOR (Si puede actuar) ---
         if (is_auto or action == "atacar") and can_act and not turn_consumed:
-            _execute_turn(player, enemy, defeated_enemies)
+            # En auto/turbo: usa una activa equipada que esté lista si la hay.
+            auto_skill = _pick_auto_skill(player, cooldowns) if is_auto else None
+            if auto_skill is not None:
+                _execute_skill(player, enemy, auto_skill, defeated_enemies)
+                cooldowns[auto_skill.id] = auto_skill.cooldown
+            else:
+                _execute_turn(player, enemy, defeated_enemies)
 
     player.on_turn_end()
     return "ok", is_auto
 
 
-def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) -> None:
+def _prompt_battle_element(player) -> None:
+    """Pasiva "Sintonía": deja al jugador elegir el elemento de su ataque para
+    este combate. Solo hace algo si tiene la pasiva y aún no lo ha elegido."""
+    if player.battle_element or not player.has_passive("sintonia"):
+        return
+    from juego_rol_texto.combat.elements import ELEMENTS
+
+    elements = sorted(ELEMENTS)
+    print(console.colorize("\n🎵 Sintonía — elige el elemento de tu ataque este combate:", console.Fore.CYAN))
+    print(
+        "  "
+        + " | ".join(
+            f"{console.colorize(f'{i}.', console.Fore.CYAN)} {console.colorize(e.capitalize(), console.element_color(e))}"
+            for i, e in enumerate(elements, 1)
+        )
+    )
+    choice = console.ask(f"Elemento (1-{len(elements)}, Enter = ninguno): ").strip()
+    if choice.isdigit() and 1 <= int(choice) <= len(elements):
+        player.battle_element = elements[int(choice) - 1]
+        console.success(f"Tu ataque será de {player.battle_element} este combate.")
+
+
+def _pick_auto_skill(player, cooldowns: dict):
+    """Primera habilidad activa equipada disponible (sin enfriamiento) para auto/turbo."""
+    for skill in player.get_equipped_active_skills():
+        if cooldowns.get(skill.id, 0) <= 0:
+            return skill
+    return None
+
+
+def _choose_skill(player, cooldowns: dict):
+    """Submenú de habilidades activas equipadas en combate. Devuelve la Skill
+    elegida (lista para usar) o `None` si se cancela."""
+    actives = player.get_equipped_active_skills()
+    if not actives:
+        console.error("No tienes habilidades activas equipadas (equípalas en el menú 'Habilidades').")
+        return None
+    while True:
+        print(console.colorize("\n--- HABILIDADES ---", console.Fore.MAGENTA, bright=True))
+        for i, skill in enumerate(actives, 1):
+            cd = cooldowns.get(skill.id, 0)
+            estado = (
+                console.colorize("lista", console.Fore.GREEN)
+                if cd <= 0
+                else console.colorize(
+                    f"en enfriamiento: {cd} turno{'s' if cd != 1 else ''}", console.Fore.LIGHTBLACK_EX, bright=True
+                )
+            )
+            print(
+                f"{console.colorize(f'{i}.', console.Fore.CYAN)} {console.colorize(skill.name, console.Fore.MAGENTA)} [{estado}]"
+            )
+            print(f"   {skill.description}")
+        print(f"{console.colorize(f'{len(actives) + 1}.', console.Fore.CYAN)} Volver")
+
+        choice = console.ask("Elige habilidad: ").strip()
+        if not choice.isdigit():
+            console.error("Opción no válida.")
+            continue
+        idx = int(choice) - 1
+        if idx == len(actives):
+            return None
+        if not (0 <= idx < len(actives)):
+            console.error("Opción fuera de rango.")
+            continue
+        skill = actives[idx]
+        if cooldowns.get(skill.id, 0) > 0:
+            turnos = cooldowns[skill.id]
+            console.error(f"{skill.name} todavía está en enfriamiento ({turnos} turno{'s' if turnos != 1 else ''}).")
+            continue
+        return skill
+
+
+def _execute_skill(player, enemy, skill, defeated_enemies: list) -> None:
+    print(console.colorize(f"\n✨ {player.name} usa {skill.name}.", console.Fore.MAGENTA, bright=True))
+    ResourceManager().play_sfx("level_up")
+    _execute_turn(player, enemy, defeated_enemies, skill_params=skill.params)
+
+
+def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False, turn_no: int = 0) -> None:
     """Ejecuta el turno del enemigo cuando su gauge ATB está lista. En `turbo`
-    no hay pausa ni barra de vida por turno (solo el texto del ataque)."""
+    solo se saltan las pausas/sleeps; las barras de vida y los avisos se muestran
+    igual, para no perder de vista cómo va el combate."""
     if not turbo:
         time.sleep(1)
 
@@ -481,25 +608,35 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False) 
     took_dot = enemy.stats.health != hp_before
 
     if can_act:
-        print(f"\nTurno de {console.colorize(enemy.name, console.Fore.RED)}...")
+        print(_turn_header(turn_no, enemy.name))
         enemy.perform_turn(player)
     enemy.on_turn_end()
     enemy.decay_status_effects()
 
     # Si el enemigo pierde el turno y no hubo daño por veneno/quemadura, no
     # repetimos las barras de vida: el mensaje de parálisis/congelación basta.
-    if not turbo and (can_act or took_dot):
+    if can_act or took_dot:
         print_status(player, enemy, defeated_enemies)
 
-    announcements = enemy.pop_announcements()
+    for message in enemy.pop_announcements():
+        print(message)
+
+    # Pausa para asimilar el resultado del turno del enemigo antes de que salga
+    # el menú (o el siguiente turno). En turbo no.
     if not turbo:
-        for message in announcements:
-            print(message)
+        time.sleep(1)
 
 
-def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list) -> None:
-    """Ejecuta un ataque estándar calculando daño y stats."""
+def _execute_turn(
+    attacker: "Player", defender: "Enemy", defeated_enemies: list, *, skill_params: dict | None = None
+) -> int | None:
+    """Ejecuta un ataque del jugador calculando daño y stats. `skill_params`
+    (cuando el ataque viene de una habilidad activa) puede forzar acierto/crítico,
+    multiplicar el daño, hacerlo mágico, perforar la resistencia mágica o aplicar
+    un estado extra. Devuelve el daño final, o `None` si el golpe falló."""
     from juego_rol_texto.characters.player import Player
+
+    p = skill_params or {}
 
     if isinstance(attacker, Player):
         rm = ResourceManager()
@@ -517,22 +654,27 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     # antes que cualquier otro cálculo de daño.
     attacker_precision = attacker.get_total_precision() if isinstance(attacker, Player) else attacker.stats.precision
     defender_evasion = defender.get_total_evasion() if isinstance(defender, Player) else defender.stats.evasion
-    if not resolve_hit(attacker_precision, defender_evasion):
+    if not p.get("guaranteed_hit") and not resolve_hit(attacker_precision, defender_evasion):
+        # Un ataque nunca "falla" por sí solo (acierto base 100%): si no entra, es
+        # porque el defensor lo esquivó con su evasión.
         print(
-            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
-            f"{console.colorize(defender.name, console.Fore.RED)}, pero falla el golpe."
+            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca, pero "
+            f"{console.colorize(defender.name, console.Fore.RED)} lo esquiva."
         )
         if isinstance(attacker, Player):
             print_status(attacker, defender, defeated_enemies)
         else:
             print_status(defender, attacker, defeated_enemies)
-        return
+        return None
 
     damage = attacker.get_attack_damage()
+    if p.get("damage_mult"):
+        damage = int(damage * p["damage_mult"])
 
     # Arcanista: su ataque estándar es mágico (escala con poder mágico, no con el
-    # arma) y su elemento es "arcano" por defecto si nada más lo fija.
-    is_magical_attack = isinstance(attacker, Player) and attacker.is_magical_attacker()
+    # arma) y su elemento es "arcano" por defecto si nada más lo fija. Una
+    # habilidad puede hacer mágico el golpe de cualquier clase (`magical`).
+    is_magical_attack = (isinstance(attacker, Player) and attacker.is_magical_attacker()) or p.get("magical", False)
     if is_magical_attack:
         from juego_rol_texto.characters.classes import ARCANIST_DEFAULT_ELEMENT
 
@@ -549,7 +691,7 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     attacker_crit_damage = (
         attacker.get_total_crit_damage() if isinstance(attacker, Player) else attacker.stats.crit_damage
     )
-    is_crit = random.random() < attacker_crit_chance
+    is_crit = p.get("force_crit", False) or random.random() < attacker_crit_chance
     if is_crit:
         damage = int(damage * attacker_crit_damage)
 
@@ -568,12 +710,15 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
         attacker.get_total_armor_penetration() if isinstance(attacker, Player) else attacker.stats.armor_penetration
     )
     if is_magical_attack:
+        magic_pen = attacker.get_total_magic_penetration() if isinstance(attacker, Player) else 0
+        if p.get("pierce_magic_resist"):
+            magic_pen += 9999  # ignora por completo la resistencia mágica del enemigo
         final_dmg = defender.take_damage(
             damage,
             defeated_enemies=defeated_enemies,
             element=element,
             is_magical=True,
-            magic_penetration=attacker.get_total_magic_penetration(),
+            magic_penetration=magic_pen,
         )
     else:
         final_dmg = defender.take_damage(
@@ -615,10 +760,19 @@ def _execute_turn(attacker: "Player", defender: "Enemy", defeated_enemies: list)
     if isinstance(attacker, Player) and hasattr(defender, "apply_status"):
         _try_inflict_weapon_status(attacker, defender, element)
 
+    # Estado extra de la habilidad (aturdir / sangrado), si el objetivo sigue vivo.
+    if defender.is_alive() and hasattr(defender, "apply_status"):
+        if p.get("stun_chance") and random.random() < p["stun_chance"] and defender.apply_status("aturdido", 1):
+            print(console.colorize(f"💫 ¡{defender.name} queda aturdido!", console.Fore.LIGHTYELLOW_EX, bright=True))
+        if p.get("bleed_turns") and defender.apply_status("sangrado", p["bleed_turns"]):
+            print(console.colorize(f"🩸 ¡{defender.name} empieza a sangrar!", console.Fore.RED))
+
     if isinstance(attacker, Player):
         print_status(attacker, defender, defeated_enemies)
     else:
         print_status(defender, attacker, defeated_enemies)
+
+    return final_dmg
 
 
 def _try_inflict_weapon_status(player: "Player", enemy, element: str | None) -> None:
@@ -689,10 +843,33 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
     drops = enemy.drop_item()
     if drops:
         print(console.colorize("\n--- BOTÍN ENCONTRADO ---", console.Fore.CYAN))
+        from juego_rol_texto.items.equipment import Armor, Weapon
+        from juego_rol_texto.items.factory import item_kind_label
+
         for item in drops:
             player.inventory.add_item(item)
-            # Imprimimos solo aquí el mensaje del objeto encontrado
-            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)}: {item.description}")
+            # Nombre + tipo + (solo armas/armaduras) las estadísticas que otorga.
+            # Las pociones no: su descripción ya dice lo que hacen.
+            kind = console.colorize(f"({item_kind_label(item)})", console.Fore.LIGHTBLACK_EX)
+            extra = ""
+            if isinstance(item, (Weapon, Armor)) and item.get_stats_info():
+                extra = f" {console.colorize(f'[{item.get_stats_info()}]', console.Fore.LIGHTBLACK_EX)}"
+            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)} {kind}: {item.description}{extra}")
+
+    # Pasiva "Segundo Aliento" (Vagabundo): curación al derrotar a un enemigo.
+    for skill in player._active_passives():
+        pct = skill.params.get("heal_on_kill_pct")
+        if pct:
+            healed = min(player.stats.max_health - player.stats.health, round(player.stats.max_health * pct))
+            if healed > 0:
+                player.stats.health += healed
+                print(
+                    console.colorize(
+                        f"💚 {skill.name}: recuperas {healed} HP "
+                        f"(vida: {player.stats.health}/{player.stats.max_health}).",
+                        console.Fore.GREEN,
+                    )
+                )
 
     # Si sube de nivel, devolvemos el nuevo snapshot de stats
     return (player.stats.min_atk, player.stats.max_atk), player.stats.armor
@@ -734,6 +911,7 @@ def _restore_player(player, snapshot: dict, max_recovery: int | None = None) -> 
     # Limpiar estados alterados
     player.status_effects = []
     player.defending = False
+    player.battle_element = None  # el elemento elegido por "Sintonía" solo dura el combate
 
     if hasattr(player, "active_effects"):
         player.active_effects = []

@@ -24,6 +24,7 @@ from juego_rol_texto.characters.enemies import (
 )
 from juego_rol_texto.characters.enemies.mage import Mago
 from juego_rol_texto.characters.player import Player
+from juego_rol_texto.characters.skills import MAX_EQUIPPED_ACTIVES, SkillKind
 from juego_rol_texto.characters.stats import Stats
 from juego_rol_texto.combat.battle import initiate_battle
 from juego_rol_texto.config import crash_reporting, secret_store, settings
@@ -165,7 +166,9 @@ def _choose_class() -> CharClass:
         print(f"   {profile.identity}")
 
     while True:
-        choice = console.ask(f"\nSelecciona una clase (1-{len(options)}, Enter = Vagabundo): ").strip()
+        choice = console.ask(
+            f"\nSelecciona una clase (1-{len(options)}, Enter = {PROFILES[CharClass.VAGABUNDO].name}): "
+        ).strip()
         if not choice:
             return CharClass.VAGABUNDO
         if choice.isdigit() and 1 <= int(choice) <= len(options):
@@ -209,8 +212,9 @@ def start_new_game() -> None:
         # Stats muy altas: Vida 500, Ataque 50-70, Armadura 20
         initial_stats = Stats(500, 500, 20, 40, 10, crit_chance=0.15)
         if char_class == CharClass.ARCANISTA:
-            # Poder mágico acorde a las stats de cheat para que su ataque mágico pegue igual de fuerte.
-            initial_stats.magic_power = 40
+            # Poder mágico a la par del ataque físico de cheat (20-40): 25 da un
+            # rango mágico ~25-33, comparable, no el doble.
+            initial_stats.magic_power = 25
         player = Player(name, initial_stats, char_class=char_class)
         console.success(f"Empiezas como {PROFILES[char_class].name}.")
         player.level = 10
@@ -227,6 +231,8 @@ def start_new_game() -> None:
         console.success(f"Empiezas como {PROFILES[char_class].name}.")
         unlocked = ["Goblin"]
         defeated = []
+
+    player.autoequip_skills()  # equipa las activas que ya conoce (1 al empezar)
 
     # Datos iniciales del mundo
     game_loop(player, unlocked, defeated, is_admin=is_admin)
@@ -424,6 +430,7 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
             ("Tienda", lambda: Shop().open(player)),
             ("Herrería", lambda: Forge().open(player)),
             ("Estadísticas", player.show_stats),
+            ("Habilidades", lambda: _skills_flow(player)),
             ("Bestiario", lambda: _bestiary_flow(player, defeated_enemies)),
             # Pasamos la clase Weapon a la opción de equipar arma
             ("Equipar Arma", lambda: player.inventory.equip_menu(Weapon)),
@@ -458,6 +465,60 @@ def game_loop(player, unlocked_enemies: list, defeated_enemies: list, is_admin: 
                     console.ask("\nPresiona Enter para continuar...")
             else:
                 console.error("Opción fuera de rango.")
+
+
+def _skills_flow(player) -> None:
+    """Menú de habilidades: muestra las pasivas (siempre activas) y deja
+    equipar / quitar hasta 4 activas para llevar al combate."""
+    known = player.known_skills()
+    passives = [s for s in known if s.kind is SkillKind.PASSIVE]
+    actives = [s for s in known if s.is_active]
+
+    while True:
+        print(console.colorize(f"\n--- HABILIDADES ({player.class_name}) ---", console.Fore.MAGENTA))
+        if not known:
+            print("Todavía no has aprendido ninguna habilidad. Sube de nivel.")
+            return
+
+        if passives:
+            print(console.colorize("Pasivas (siempre activas):", console.Fore.CYAN))
+            for s in passives:
+                print(f"  · {console.colorize(s.name, console.Fore.MAGENTA)} — {s.description}")
+
+        print(
+            console.colorize(
+                f"\nActivas equipadas: {len(player.equipped_skills)}/{MAX_EQUIPPED_ACTIVES}", console.Fore.CYAN
+            )
+        )
+        for idx, s in enumerate(actives, 1):
+            mark = console.colorize("[✔]", console.Fore.GREEN) if s.id in player.equipped_skills else "[ ]"
+            cd = f" · enfriamiento {s.cooldown}" if s.cooldown else ""
+            print(
+                f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {mark} {console.colorize(s.name, console.Fore.MAGENTA)}{cd}"
+            )
+            print(f"     {s.description}")
+        print(f"{console.colorize(f'{len(actives) + 1}.', console.Fore.CYAN)} Volver")
+
+        choice = console.ask("\nElige una activa para equipar/quitar: ").strip()
+        if not choice.isdigit():
+            console.error("Opción no válida.")
+            continue
+        idx = int(choice) - 1
+        if idx == len(actives):
+            return
+        if not (0 <= idx < len(actives)):
+            console.error("Opción fuera de rango.")
+            continue
+
+        skill = actives[idx]
+        if skill.id in player.equipped_skills:
+            player.equipped_skills.remove(skill.id)
+            console.info(f"{skill.name} desequipada.")
+        elif len(player.equipped_skills) >= MAX_EQUIPPED_ACTIVES:
+            console.error(f"Ya llevas {MAX_EQUIPPED_ACTIVES} activas equipadas. Quita una primero.")
+        else:
+            player.equipped_skills.append(skill.id)
+            console.success(f"{skill.name} equipada.")
 
 
 def _equip_armor_flow(player) -> None:

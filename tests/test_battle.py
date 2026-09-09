@@ -32,6 +32,86 @@ def test_victory_unlocks_next_enemy_and_grants_rewards(player, weak_enemy, monke
     assert player.enemy_kill_counts["Goblin"] == 1
 
 
+def test_victory_drop_line_shows_type_and_equipment_stats(player, monkeypatch, capsys):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+    from juego_rol_texto.combat.battle import _handle_victory
+    from juego_rol_texto.items.equipment import Armor
+    from juego_rol_texto.items.potions.healing_potion import HealingPotion
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    g = Goblin()
+    monkeypatch.setattr(
+        g,
+        "drop_item",
+        lambda: [
+            Armor("Perneras Test", "Ligeras.", 5, slot="perneras", evasion=3),
+            HealingPotion("Poción Test", "Restaura 20 HP", 2, 20),
+        ],
+    )
+    _handle_victory(player, g, [], ["Goblin"])
+
+    import re
+
+    out = re.sub(r"\x1b\[[0-9;]*m", "", capsys.readouterr().out)
+    assert "Perneras Test (armadura · perneras):" in out
+    assert "Evasión" in out  # las stats de la armadura aparecen
+    assert "Poción Test (poción): Restaura 20 HP" in out
+    assert "[Cura:" not in out  # la poción NO repite lo que hace
+
+
+def test_battle_announces_who_has_the_initiative(player, weak_enemy, monkeypatch, capsys):
+    from juego_rol_texto.combat.battle import initiate_battle
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "1")
+    weak_enemy.stats.speed = 999  # el enemigo es claramente más rápido
+
+    initiate_battle(player, weak_enemy, ["Goblin"], ["Goblin"])
+
+    assert "tiene la iniciativa" in capsys.readouterr().out
+
+
+def test_enemy_turn_pauses_at_the_end_to_read_the_result(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    sleeps = []
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda s: sleeps.append(s))
+    _run_enemy_turn(player, Goblin(), ["Goblin"], turbo=False, turn_no=2)
+    assert len(sleeps) >= 2  # una antes de actuar y otra después de las barras
+
+
+def test_player_turn_header_includes_the_class(player, weak_enemy, monkeypatch):
+    from juego_rol_texto.characters.classes import CharClass, starting_stats
+    from juego_rol_texto.characters.player import Player
+
+    arc = Player("Mag", starting_stats(CharClass.ARCANISTA), char_class=CharClass.ARCANISTA)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._player_menu", lambda *a, **k: "atacar")
+    import contextlib
+    import io
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _run_player_turn(arc, weak_enemy, ["Goblin"], is_auto=False, turn_no=3)
+    assert "── Turno 3 · Mag (Arcanista) ──" in buf.getvalue()
+
+
+def test_turbo_enemy_turn_still_shows_the_status_bars():
+    import contextlib
+    import io
+
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+    from juego_rol_texto.characters.player import Player
+    from juego_rol_texto.characters.stats import Stats
+
+    p = Player("P", Stats(100, 100, 5, 10, 2))
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _run_enemy_turn(p, Goblin(), ["Goblin"], turbo=True, turn_no=2)
+    out = buf.getvalue()
+    assert "── Turno 2" in out
+    assert "HP" in out
+
+
 def test_victory_increments_kill_count_on_repeat_wins(player, monkeypatch):
     from juego_rol_texto.characters.enemies.goblin import Goblin
 
@@ -416,11 +496,11 @@ def test_frozen_enemy_loses_the_turn_without_the_turn_header(player, monkeypatch
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        _run_enemy_turn(player, goblin, defeated_enemies=["Goblin"])
+        _run_enemy_turn(player, goblin, defeated_enemies=["Goblin"], turn_no=1)
     out = buf.getvalue()
 
     assert "congelado" in out
-    assert "Turno de" not in out  # no cabecera de turno cuando pierde el turno
+    assert "── Turno" not in out  # no cabecera de turno cuando pierde el turno
 
 
 def test_mage_spells_print_the_damage_dealt(player, monkeypatch):

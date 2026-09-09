@@ -292,12 +292,12 @@ peleas de élite/guardián.
 
 ### 6.1 Clases
 
-Se elige una vez al crear el personaje; se guarda; las partidas viejas usan
-**Vagabundo**.
+Se elige una vez al crear el personaje; se guarda (la clase equilibrada como
+`clase="vagabundo"` en disco, por compatibilidad); las partidas viejas usan esa.
 
 | Clase | Identidad | Efecto |
 |-------|-----------|--------|
-| **Vagabundo** | equilibrado (el personaje de hoy) | estadísticas base y curvas actuales; el default seguro; un pool de habilidades flexible |
+| **Aventurero** | equilibrado (el personaje de hoy) | estadísticas base y curvas actuales; el default seguro; un pool de habilidades flexible |
 | **Guerrero** | tanque / bruto | +Vida, +armadura, +daño físico; crecimiento más tanque; sin magia |
 | **Pícaro** | rápido / crítico / veneno | +velocidad, +evasión, +prob. crítico; crecimiento ágil; frágil |
 | **Arcanista** | mágico / elemental | menos vida/armadura; **su ataque estándar es mágico** (`is_magical`), escala con un stat nuevo de *poder mágico* — por fin hace que importe la `magic_resist` de los enemigos |
@@ -305,6 +305,17 @@ Se elige una vez al crear el personaje; se guarda; las partidas viejas usan
 Las clases tocan la creación del personaje, `Stats`, las constantes
 `_*_GROWTH_RATE`, la rama del Arcanista en `_execute_turn`, y de qué pool de
 habilidades tira el jugador (§6.2).
+
+**Pendientes de diseño (para más adelante, no v0.10):**
+
+- **Familias de arma por clase.** Cada clase solo equiparía armas de su familia
+  —pero una *familia*, no un solo tipo—: Guerrero → contundentes/espadas/hachas/
+  mazas + escudo; Pícaro → dagas *y* otras armas ligeras/de precisión; Arcanista
+  → bastones *y* otras armas de lanzador (varitas, orbes…); Aventurero →
+  cualquiera (o un subconjunto amplio). Requiere una categoría de arma en
+  `Weapon` y un filtro al equipar. *(Hecho: la clase equilibrada pasó de
+  "Vagabundo" a "Aventurero" — solo el nombre visible, el valor guardado no
+  cambia.)*
 
 ### 6.2 Habilidades
 
@@ -333,7 +344,7 @@ hay, si no ataca.
 Esbozo (tipos: `fís` físico, `mág` mágico, `ele` elemental, `util` utilidad;
 `aN` = activa, enfriamiento N turnos; `p` = pasiva; sujeto a balanceo):
 
-| M | Vagabundo | Guerrero | Pícaro | Arcanista |
+| M | Aventurero | Guerrero | Pícaro | Arcanista |
 |---|-----------|----------|--------|-----------|
 | 1 | Golpe Firme — a3 fís: +40 % daño, no falla · Segundo Aliento — p: cura 12 % vida máx. al matar | Embate — a3 fís: golpe fuerte, 40 % aturdir · Piel de Piedra — p: −12 % daño físico recibido | Golpe Bajo — a3 fís: crítico garantizado + sangrado · Reflejos — p: +12 % evasión | Proyectil Arcano — a2 arc: perfora res. mágica · Sintonía — p: eliges el elemento de tu ataque al empezar el combate |
 | 2 | Aguante — p: bajo 30 % vida, +15 % armadura y res. mágica | Represalia — p: 30 % de contraatacar al recibir un golpe físico | Veneno de Contacto — p: 20 % de aplicar veneno al golpear | Escudo de Maná — a4 util: absorbe por completo el próximo golpe |
@@ -349,9 +360,9 @@ Revisadas y cerradas con el mantenedor; los números son provisionales y se
 revisarán en la fase de presupuesto de poder de v0.14 (anotado en `TODO.md`).
 
 1. **Deltas de stats / crecimiento por clase (provisionales).** Se aplican sobre
-   la base actual del Vagabundo al crear; los ajustes de crecimiento van sobre
+   la base actual del Aventurero al crear; los ajustes de crecimiento van sobre
    los `_*_GROWTH_RATE` actuales:
-   - **Vagabundo** — sin cambios (el personaje de hoy exactamente).
+   - **Aventurero** — sin cambios (el personaje de hoy exactamente).
    - **Guerrero** — +15 % vida máx., +2 armadura base, +1 ataque mín./máx.;
      crecimiento de armadura ×1.3; sin ninguna interacción con magia.
    - **Pícaro** — +3 velocidad, +5 % evasión, +5 % prob. crítico, −10 % vida
