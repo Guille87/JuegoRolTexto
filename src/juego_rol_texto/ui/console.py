@@ -39,6 +39,8 @@ _STATUS_PATTERNS = (
     (re.compile(r"\b(?:desarmad[oa]s?)\b", re.IGNORECASE), Fore.LIGHTBLACK_EX),
     (re.compile(r"\b(?:maldici[oó]n|maldit[oa]s?)\b", re.IGNORECASE), Fore.MAGENTA),
     (re.compile(r"\b(?:confusi[oó]n|confundid[oa]s?)\b", re.IGNORECASE), Fore.CYAN),
+    # contraataque / represalia: magenta claro.
+    (re.compile(r"\b(?:contraataqu\w*|contraatac\w*|represalias?)\b", re.IGNORECASE), Fore.LIGHTMAGENTA_EX),
 )
 
 

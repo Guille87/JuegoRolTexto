@@ -483,7 +483,7 @@ def _skills_flow(player) -> None:
         if passives:
             print(console.colorize("Pasivas (siempre activas):", console.Fore.CYAN))
             for s in passives:
-                print(f"  · {console.colorize(s.name, console.Fore.MAGENTA)} — {s.description}")
+                print(f"  · {console.colorize(s.name, console.Fore.MAGENTA)} — {console.tint_status(s.description)}")
 
         print(
             console.colorize(
@@ -496,7 +496,7 @@ def _skills_flow(player) -> None:
             print(
                 f"{console.colorize(f'{idx}.', console.Fore.CYAN)} {mark} {console.colorize(s.name, console.Fore.MAGENTA)}{cd}"
             )
-            print(f"     {s.description}")
+            print(f"     {console.tint_status(s.description)}")
         print(f"{console.colorize(f'{len(actives) + 1}.', console.Fore.CYAN)} Volver")
 
         choice = console.ask("\nElige una activa para equipar/quitar: ").strip()

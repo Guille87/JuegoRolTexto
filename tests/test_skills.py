@@ -30,8 +30,9 @@ def test_every_class_has_one_active_and_one_passive_at_m1():
 
 def test_known_skills_are_gated_by_level():
     assert {s.id for s in known_skills(CharClass.VAGABUNDO, 1)} == {"golpe_firme", "segundo_aliento"}
-    # M2 (nivel 4) todavía no tiene contenido, así que sigue siendo lo mismo a nivel 5.
-    assert {s.id for s in known_skills(CharClass.VAGABUNDO, 5)} == {"golpe_firme", "segundo_aliento"}
+    assert {s.id for s in known_skills(CharClass.VAGABUNDO, 3)} == {"golpe_firme", "segundo_aliento"}
+    # M2 se aprende al nivel 4 (provisional).
+    assert {s.id for s in known_skills(CharClass.VAGABUNDO, 4)} == {"golpe_firme", "segundo_aliento", "aguante"}
 
 
 def test_has_passive_only_true_for_learned_passives():
@@ -154,6 +155,73 @@ def test_sintonia_only_prompts_for_the_arcanist(monkeypatch):
     )
     battle._prompt_battle_element(vaga)
     assert vaga.battle_element is None
+
+
+def test_m2_adds_one_skill_per_class_at_level_4():
+    for cls in CharClass:
+        lvl1 = {s.id for s in known_skills(cls, 1)}
+        lvl4 = {s.id for s in known_skills(cls, 4)}
+        assert len(lvl4 - lvl1) == 1
+
+
+def test_aguante_boosts_defense_below_30_percent(monkeypatch):
+    p = _player(CharClass.VAGABUNDO, level=4)
+    p.stats.armor = 20
+    p.stats.magic_resist = 20
+    p.stats.health = p.stats.max_health  # sano: sin bonus
+    assert p.get_total_armor() == 20
+    p.stats.health = int(p.stats.max_health * 0.2)  # < 30%
+    assert p.get_total_armor() == 23  # +15%
+    assert p.get_total_magic_resist() == 23
+
+
+def test_veneno_de_contacto_can_poison_on_hit(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)  # acierta
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # el veneno prende
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+
+    p = _player(CharClass.PICARO, level=4)
+    enemy = Goblin()
+    battle._execute_turn(p, enemy, [])
+    assert any(e["name"] == "veneno" for e in enemy.status_effects)
+
+
+def test_escudo_de_mana_absorbs_the_next_hit():
+    p = _player(CharClass.ARCANISTA, level=4)
+    battle._execute_skill(p, Goblin(), CATALOG["escudo_de_mana"], [])
+    assert p.mana_shield is True
+
+    hp = p.stats.health
+    dealt = p.take_damage(40)
+    assert dealt == 0
+    assert p.stats.health == hp
+    assert p.mana_shield is False  # se consume
+    assert p.take_damage(40) > 0  # el siguiente golpe ya entra
+
+
+def test_represalia_counterattacks_after_a_physical_hit(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # contraataca
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+
+    p = _player(CharClass.GUERRERO, level=4)
+    p.took_physical_hit = True
+    enemy = Goblin()
+    enemy.stats.armor = 0
+    hp = enemy.stats.health
+    battle._try_represalia(p, enemy, [])
+    assert enemy.stats.health < hp
+
+
+def test_represalia_does_nothing_without_a_physical_hit():
+    p = _player(CharClass.GUERRERO, level=4)
+    p.took_physical_hit = False
+    enemy = Goblin()
+    hp = enemy.stats.health
+    battle._try_represalia(p, enemy, [])
+    assert enemy.stats.health == hp
 
 
 def test_enemy_bleed_damages_over_time():

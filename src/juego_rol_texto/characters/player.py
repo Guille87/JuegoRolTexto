@@ -22,6 +22,11 @@ class Player(Character):
         # Elemento elegido para este combate (pasiva "Sintonía" del Arcanista);
         # lo limpia _restore_player() al terminar la pelea.
         self.battle_element: str | None = None
+        # Escudo de Maná (activa del Arcanista): absorbe el próximo golpe.
+        self.mana_shield = False
+        # Represalia (pasiva del Guerrero): ¿recibió un golpe físico este turno?
+        # Se pone en take_damage y lo consulta/limpia el bucle de combate.
+        self.took_physical_hit = False
         self.inventory = Inventory(self)
         self.equipped_weapon = None
         self.equipped_armor = {slot: None for slot in ARMOR_SLOTS}
@@ -69,6 +74,17 @@ class Player(Character):
         if self.defending and final_damage > 0:
             final_damage //= 2
             console.info(f"🛡️ Tu postura defensiva reduce el golpe a {final_damage}.")
+
+        # Escudo de Maná (activa del Arcanista): absorbe por completo el próximo
+        # golpe que fuese a hacer daño, y se consume.
+        if self.mana_shield and final_damage > 0:
+            self.mana_shield = False
+            console.info("🛡️ El escudo de maná absorbe el golpe por completo.")
+            return 0
+
+        # Represalia (Guerrero): registrar que se recibió un golpe físico real.
+        if not is_magical and final_damage > 0:
+            self.took_physical_hit = True
 
         self.stats.health -= final_damage
 
@@ -118,6 +134,13 @@ class Player(Character):
         """¿El jugador tiene aprendida esa pasiva?"""
         return any(s.id == skill_id for s in self._active_passives())
 
+    def passive_param(self, skill_id: str, key: str, default=None):
+        """Valor de un `params[...]` de una pasiva aprendida (o `default`)."""
+        for skill in self._active_passives():
+            if skill.id == skill_id:
+                return skill.params.get(key, default)
+        return default
+
     def get_equipped_active_skills(self) -> list:
         """Las activas equipadas que además siguen siendo válidas (conocidas)."""
         known = {s.id: s for s in self.known_active_skills()}
@@ -141,6 +164,16 @@ class Player(Character):
         from juego_rol_texto.characters.skills import MAX_EQUIPPED_ACTIVES
 
         self.equipped_skills = [s.id for s in self.known_active_skills()][:MAX_EQUIPPED_ACTIVES]
+
+    def _low_hp_defense_mult(self) -> float:
+        """Multiplicador extra sobre armadura/res. mágica de pasivas tipo
+        "Aguante" cuando el jugador está por debajo del 30% de vida."""
+        if self.stats.health >= 0.3 * self.stats.max_health:
+            return 1.0
+        mult = 1.0
+        for skill in self._active_passives():
+            mult += skill.params.get("low_hp_defense_pct", 0.0)
+        return mult
 
     def get_total_magic_power(self) -> int:
         """Poder mágico total (hoy solo el stat base; ningún equipo lo otorga aún)."""
@@ -187,12 +220,13 @@ class Player(Character):
         if curse:
             total = max(0, total - curse.get("power", 0))
 
-        return total
+        return round(total * self._low_hp_defense_mult())  # "Aguante" con poca vida
 
     def get_total_magic_resist(self) -> int:
         """Devuelve la resistencia mágica total sumando todas las piezas equipadas."""
         bonus = sum(item.magic_resist for item in self.equipped_armor.values() if item)
-        return self.stats.magic_resist + bonus
+        total = self.stats.magic_resist + bonus
+        return round(total * self._low_hp_defense_mult())  # "Aguante" con poca vida
 
     def get_total_crit_chance(self) -> float:
         """Devuelve la probabilidad de golpe crítico total sumando todas las piezas equipadas."""
