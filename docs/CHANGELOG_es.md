@@ -17,7 +17,7 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   llevar al combate. Nuevo menú "Habilidades" para gestionarlas y una acción
   "Habilidades" en combate para usarlas (la auto-batalla usa una activa lista si
   la hay). Este release trae el hito 1 (1 activa + 1 pasiva por clase, se aprende
-  al crear el personaje): Golpe Firme / Segundo Aliento (Vagabundo), Embate /
+  al crear el personaje): Golpe Firme / Segundo Aliento (Aventurero), Embate /
   Piel de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
   Sintonía (Arcanista). Nuevos estados `sangrado` y `aturdido`, cada uno con su
   mensaje y color propios. Los números son provisionales.
@@ -33,10 +33,10 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   hueco / poción / material de herrería).
 
 - **Clases de personaje** (GDD §6.1): al crear personaje eliges entre
-  **Vagabundo** (el personaje equilibrado de siempre), **Guerrero** (tanque),
+  **Aventurero** (el personaje equilibrado de siempre), **Guerrero** (tanque),
   **Pícaro** (rápido / crítico / frágil) o **Arcanista** (mágico). Cada una tiene
   sus stats de arranque y su crecimiento por nivel. Las partidas viejas y los
-  personajes actuales siguen siendo Vagabundo.
+  personajes actuales siguen siendo Aventurero.
 - Stat **`poder mágico`**: el ataque estándar del Arcanista es mágico
   (`is_magical`), escala con `poder mágico` en vez de con el arma, usa el
   elemento `arcano` por defecto y lo mitiga la resistencia mágica del enemigo
@@ -66,7 +66,10 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 - Las fichas de combate se imprimen ahora antes de una emboscada previa, no
   después, para ver el enfrentamiento primero. Además una línea indica quién
   tiene la iniciativa (más velocidad) y cada acción lleva ahora una cabecera
-  `── Turno N · Nombre ──`.
+  `── Turno N · Nombre ──` (con la clase, para el jugador). Una pequeña pausa
+  tras el turno del enemigo deja leer el daño antes de que salga el menú.
+- La clase equilibrada se llama ahora **Aventurero** (antes "Vagabundo") — solo
+  el nombre visible; el valor guardado no cambia.
 - La línea de botín al ganar muestra el tipo de cada objeto (arma / armadura +
   hueco / poción / material de herrería) y, para armas y armaduras, las
   estadísticas que otorga. Las pociones ya no repiten lo que hacen (ya estaba en

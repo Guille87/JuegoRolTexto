@@ -166,7 +166,9 @@ def _choose_class() -> CharClass:
         print(f"   {profile.identity}")
 
     while True:
-        choice = console.ask(f"\nSelecciona una clase (1-{len(options)}, Enter = Vagabundo): ").strip()
+        choice = console.ask(
+            f"\nSelecciona una clase (1-{len(options)}, Enter = {PROFILES[CharClass.VAGABUNDO].name}): "
+        ).strip()
         if not choice:
             return CharClass.VAGABUNDO
         if choice.isdigit() and 1 <= int(choice) <= len(options):
@@ -473,7 +475,7 @@ def _skills_flow(player) -> None:
     actives = [s for s in known if s.is_active]
 
     while True:
-        print(console.colorize(f"\n--- HABILIDADES ({player.char_class.value.capitalize()}) ---", console.Fore.MAGENTA))
+        print(console.colorize(f"\n--- HABILIDADES ({player.class_name}) ---", console.Fore.MAGENTA))
         if not known:
             print("Todavía no has aprendido ninguna habilidad. Sube de nivel.")
             return

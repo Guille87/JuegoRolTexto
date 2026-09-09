@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   equip up to 4 to bring into a fight. New "Habilidades" menu to manage them and a
   "Habilidades" combat action to use them (auto-battle uses a ready active if it
   has one). This release ships milestone 1 (one active + one passive per class,
-  learned at creation): Golpe Firme / Segundo Aliento (Vagabundo), Embate / Piel
+  learned at creation): Golpe Firme / Segundo Aliento (Aventurero), Embate / Piel
   de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
   Sintonía (Arcanista). New `sangrado` (bleed) and `aturdido` (stun) statuses,
   each with its own message and colour. Numbers are provisional.
@@ -30,10 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   summary of everything gained across the whole chain — gold, XP, levels, and
   each item with its type (weapon / armour + slot / potion / forge material).
 
-- **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
+- **Character classes** (GDD §6.1): pick one of **Aventurero** (the classic
   balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or
   **Arcanista** (magic) at character creation. Each has its own starting stats
-  and per-level growth. Old saves and existing characters stay Vagabundo.
+  and per-level growth. Old saves and existing characters stay Aventurero.
 - **`poder mágico`** stat: the Arcanista's standard attack is magical
   (`is_magical`), scales with `poder mágico` instead of the weapon, defaults to
   the `arcano` element, and is mitigated by the enemy's magic resist — so
@@ -61,7 +61,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `TODO.md`.)
 - Combat info sheets now print before a pre-battle ambush, not after, so you see
   the matchup first. A line also states who has the initiative (higher speed),
-  and each action is now headed `── Turno N · Name ──`.
+  and each action is now headed `── Turno N · Name ──` (with the class for the
+  player). A short pause after the enemy's turn lets you read the damage before
+  the menu redraws.
+- The balanced class is now called **Aventurero** (was "Vagabundo") — display
+  name only; the save value is unchanged.
 - The victory loot line shows each dropped item's type (weapon / armour + slot /
   potion / forge material) and, for weapons and armour, the stats it grants.
   Potions no longer repeat what they do (it was already in the description).

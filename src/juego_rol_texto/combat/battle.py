@@ -48,9 +48,11 @@ def check_for_interrupt() -> bool:
     return key_pressed() == "q"
 
 
-def _turn_header(turn_no: int, name: str) -> str:
-    """Cabecera tenue con el número de acción global y quién actúa."""
-    return console.colorize(f"\n── Turno {turn_no} · {name} ──", console.Fore.LIGHTBLACK_EX, bright=True)
+def _turn_header(turn_no: int, name: str, extra: str = "") -> str:
+    """Cabecera tenue con el número de acción global y quién actúa (con su clase,
+    para el jugador)."""
+    suffix = f" ({extra})" if extra else ""
+    return console.colorize(f"\n── Turno {turn_no} · {name}{suffix} ──", console.Fore.LIGHTBLACK_EX, bright=True)
 
 
 _MAX_CHAIN_BATTLES = 20
@@ -326,11 +328,6 @@ def _run_one_battle(
             player_defeated = True
             break
 
-        # En auto normal, una pausa para poder leer el resultado. En turbo no.
-        if is_auto == "auto" and player.is_alive() and enemy.is_alive():
-            print(console.colorize("(Esperando siguiente turno...)", console.Fore.BLACK, bright=True))
-            time.sleep(1)
-
     if player_fled:
         _restore_player(player, snapshot, max_recovery=health_before_battle - player.stats.health)
     else:
@@ -418,7 +415,7 @@ def _run_player_turn(
     Devuelve `(señal, is_auto actualizado)`; señal es `"huir"` o `"ok"`.
     """
     if turn_no:
-        print(_turn_header(turn_no, player.name))
+        print(_turn_header(turn_no, player.name, getattr(player, "class_name", "")))
 
     # --- INICIO DE TURNO (Procesar veneno, quemaduras, parálisis) ---
     # La postura defensiva del turno anterior solo cubre hasta que al jugador le
@@ -623,6 +620,11 @@ def _run_enemy_turn(player, enemy, defeated_enemies: list, turbo: bool = False, 
 
     for message in enemy.pop_announcements():
         print(message)
+
+    # Pausa para asimilar el resultado del turno del enemigo antes de que salga
+    # el menú (o el siguiente turno). En turbo no.
+    if not turbo:
+        time.sleep(1)
 
 
 def _execute_turn(

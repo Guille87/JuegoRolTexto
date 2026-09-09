@@ -71,6 +71,30 @@ def test_battle_announces_who_has_the_initiative(player, weak_enemy, monkeypatch
     assert "tiene la iniciativa" in capsys.readouterr().out
 
 
+def test_enemy_turn_pauses_at_the_end_to_read_the_result(player, monkeypatch):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    sleeps = []
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda s: sleeps.append(s))
+    _run_enemy_turn(player, Goblin(), ["Goblin"], turbo=False, turn_no=2)
+    assert len(sleeps) >= 2  # una antes de actuar y otra después de las barras
+
+
+def test_player_turn_header_includes_the_class(player, weak_enemy, monkeypatch):
+    from juego_rol_texto.characters.classes import CharClass, starting_stats
+    from juego_rol_texto.characters.player import Player
+
+    arc = Player("Mag", starting_stats(CharClass.ARCANISTA), char_class=CharClass.ARCANISTA)
+    monkeypatch.setattr("juego_rol_texto.combat.battle._player_menu", lambda *a, **k: "atacar")
+    import contextlib
+    import io
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _run_player_turn(arc, weak_enemy, ["Goblin"], is_auto=False, turn_no=3)
+    assert "── Turno 3 · Mag (Arcanista) ──" in buf.getvalue()
+
+
 def test_turbo_enemy_turn_still_shows_the_status_bars():
     import contextlib
     import io

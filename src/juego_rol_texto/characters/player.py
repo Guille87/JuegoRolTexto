@@ -89,6 +89,11 @@ class Player(Character):
     def char_class(self, value: CharClass | str | None) -> None:
         self._class_profile = get_profile(value)
 
+    @property
+    def class_name(self) -> str:
+        """Nombre visible de la clase (p. ej. "Aventurero")."""
+        return self._class_profile.name
+
     def is_magical_attacker(self) -> bool:
         """El ataque estándar es mágico y escala con `poder_magico` (Arcanista)."""
         return self._class_profile.is_magical_attacker

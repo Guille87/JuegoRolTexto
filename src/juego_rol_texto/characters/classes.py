@@ -61,9 +61,11 @@ class ClassProfile:
 
 
 PROFILES: dict[CharClass, ClassProfile] = {
+    # El valor guardado sigue siendo "vagabundo" (compatibilidad); solo cambia el
+    # nombre visible.
     CharClass.VAGABUNDO: ClassProfile(
         id=CharClass.VAGABUNDO,
-        name="Vagabundo",
+        name="Aventurero",
         identity="Equilibrado. Estadísticas y curvas de siempre; el pool de habilidades más flexible.",
     ),
     CharClass.GUERRERO: ClassProfile(

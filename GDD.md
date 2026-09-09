@@ -279,11 +279,12 @@ elite/guardian fights.
 
 ### 6.1 Classes
 
-Chosen once at character creation; persisted; old saves default to **Vagabundo**.
+Chosen once at character creation; persisted (as `clase="vagabundo"` on disk for
+the balanced class — kept for save compatibility); old saves default to it.
 
 | Class | Identity | Effect |
 |-------|----------|--------|
-| **Vagabundo** | balanced (today's character) | current base stats & growth; the safe default; a flexible skill pool |
+| **Aventurero** | balanced (today's character) | current base stats & growth; the safe default; a flexible skill pool |
 | **Guerrero** | tank / bruiser | +HP, +armour, +physical damage; tankier growth; no magic |
 | **Pícaro** | fast / crit / poison | +speed, +evasion, +crit chance; agile growth; fragile |
 | **Arcanista** | magic / elemental | lower HP/armour; **standard attack is magical** (`is_magical`), scaling with a new *poder mágico* stat — finally makes enemy `magic_resist` matter |
@@ -294,14 +295,13 @@ player draws from (§6.2).
 
 **Open design questions (later, not v0.10):**
 
-- **Rename Vagabundo.** It reads as a "bad guy" and the class isn't one.
-  Candidates: Aventurero, Errante, Nómada, Trotamundos, Mercenario. The saved
-  value `clase="vagabundo"` stays for compatibility; only the display name would
-  change.
-- **Per-class weapon types.** Each class could only equip its own weapon family:
-  Guerrero → blunt / swords / axes / maces + shield; Pícaro → daggers and the
-  like; Arcanista → staves; Vagabundo → anything (or a broad subset). Needs a
-  weapon-category field on `Weapon` and a filter in the equip flow.
+- **Per-class weapon families.** Each class could only equip weapons from its own
+  family — but a *family*, not a single type: Guerrero → blunt / swords / axes /
+  maces + shield; Pícaro → daggers *and* other light/finesse weapons; Arcanista →
+  staves *and* other caster weapons (wands, orbs…); Aventurero → anything (or a
+  broad subset). Needs a weapon-category field on `Weapon` and a filter in the
+  equip flow. *(Done: the balanced class was renamed "Vagabundo" → "Aventurero"
+  — display only, save value unchanged.)*
 
 ### 6.2 Skills
 
@@ -329,7 +329,7 @@ exists, else attack.
 Sketch (types: `fís` physical, `mág` magical, `ele` elemental, `util` utility;
 `aN` = active, cooldown N turns; `p` = passive; subject to balancing):
 
-| M | Vagabundo | Guerrero | Pícaro | Arcanista |
+| M | Aventurero | Guerrero | Pícaro | Arcanista |
 |---|-----------|----------|--------|-----------|
 | 1 | Golpe Firme — a3 fís: +40 % dmg, can't miss · Segundo Aliento — p: heal 12 % max HP on kill | Embate — a3 fís: strong hit, 40 % stun · Piel de Piedra — p: −12 % physical dmg taken | Golpe Bajo — a3 fís: guaranteed crit + sangrado · Reflejos — p: +12 % evasion | Proyectil Arcano — a2 arc: pierces magic resist · Sintonía — p: choose your attack element at battle start |
 | 2 | Aguante — p: below 30 % HP, +15 % armour & magic resist | Represalia — p: 30 % counter on physical hit | Veneno de Contacto — p: 20 % poison on hit | Escudo de Maná — a4 util: fully absorb next hit |
@@ -345,9 +345,9 @@ These were reviewed and fixed with the maintainer; the numbers are provisional
 and will be revisited in the v0.14 power-budget phase (tracked in `TODO.md`).
 
 1. **Per-class stat / growth deltas (provisional).** Applied on top of the
-   current Vagabundo baseline at creation; growth-rate tweaks on top of the
+   current Aventurero baseline at creation; growth-rate tweaks on top of the
    current `_*_GROWTH_RATE`:
-   - **Vagabundo** — unchanged (today's character exactly).
+   - **Aventurero** — unchanged (today's character exactly).
    - **Guerrero** — +15 % max HP, +2 base armour, +1 min/max attack; armour
      growth ×1.3; no other magic interaction.
    - **Pícaro** — +3 speed, +5 % evasion, +5 % crit chance, −10 % max HP;
