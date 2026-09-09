@@ -75,33 +75,95 @@ def test_defeat_penalizes_gold_and_fully_heals_player(player, monkeypatch):
     assert player.inventory.gold == 90 - (90 // 3)
 
 
-def test_initiate_battle_returns_victory_and_auto_start_skips_the_menu(player, weak_enemy, monkeypatch):
-    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
-    # start_auto + pause_on_victory=False: no debe pedir NADA por consola.
-    monkeypatch.setattr(
-        "juego_rol_texto.combat.battle.console.ask",
-        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debería pedir input")),
-    )
+def _weak_goblin():
+    from juego_rol_texto.characters.enemies.goblin import Goblin
 
-    outcome = initiate_battle(player, weak_enemy, [], ["Goblin"], start_auto="auto", pause_on_victory=False)
+    g = Goblin()
+    g.stats.health = g.stats.max_health = 1
+    g.ambush_done = True
+    return g
+
+
+def test_initiate_battle_returns_victory(player, monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "1")
+
+    outcome = initiate_battle(player, _weak_goblin(), ["Goblin"], ["Goblin"])
 
     assert outcome == "victory"
-    assert player.enemy_kill_counts["Goblin"] == 1
 
 
-def test_initiate_battle_returns_defeat(player, monkeypatch):
+def test_ask_chain_count_parsing(monkeypatch):
+    from juego_rol_texto.combat import battle
+
+    def answer(value):
+        monkeypatch.setattr(battle.console, "ask", lambda *a, **k: value)
+        return battle._ask_chain_count()
+
+    assert answer("") == 1
+    assert answer("abc") == 1
+    assert answer("3") == 3
+    assert answer("999") == battle._MAX_CHAIN_BATTLES
+
+
+def test_chain_runs_several_fights_when_player_picks_auto(player, monkeypatch):
+    """El jugador activa la auto-batalla y pide 3 peleas: la pelea en curso
+    cuenta como la 1, y se encadenan 2 más contra enemigos nuevos."""
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    # Turno 1: "6" (auto) -> "3" peleas. A partir de ahí auto y "" para las pausas.
+    answers = iter(["6", "3"])
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: next(answers, ""))
+
+    first = Goblin()
+    first.stats.health = first.stats.max_health = 40  # aguanta a que el jugador elija auto
+    first.ambush_done = True
+
+    outcome = initiate_battle(player, first, ["Goblin"], ["Goblin"], enemy_factory=_weak_goblin)
+
+    assert outcome == "victory"
+    assert player.enemy_kill_counts["Goblin"] == 3
+
+
+def test_chain_mode_can_switch_from_auto_to_turbo_mid_chain(player, weak_enemy, monkeypatch):
+    """Tras pulsar 'Q' y volver a elegir en el menú, el modo de la cadena se
+    actualiza (auto -> turbo) para las peleas que quedan."""
+    from juego_rol_texto.combat import battle
+
+    chain = {"factory": lambda: weak_enemy, "chosen": True, "count": 3, "mode": "auto"}
+    monkeypatch.setattr("juego_rol_texto.combat.battle._player_menu", lambda *a, **k: "turbo")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+
+    battle._run_player_turn(player, weak_enemy, ["Goblin"], is_auto=False, chain=chain)
+
+    assert chain["mode"] == "turbo"
+
+
+def test_chain_stops_on_defeat(player, monkeypatch):
+    """Auto-batalla de 5 peleas: gana la 1ª (goblin flojo) y cae en la 2ª contra
+    un enemigo que pega letal. La cadena se detiene con desenlace 'defeat'."""
+    from juego_rol_texto.characters.enemies.goblin import Goblin
     from juego_rol_texto.characters.enemies.orc import Orc
 
-    strong = Orc()
-    strong.stats.min_atk = strong.stats.max_atk = 500
     monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
-    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "")
+    answers = iter(["6", "5"])
+    monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: next(answers, ""))
 
-    outcome = initiate_battle(
-        player, strong, ["Goblin", "Orco"], ["Goblin", "Orco"], start_auto="turbo", pause_on_victory=False
-    )
+    first = Goblin()
+    first.stats.health = first.stats.max_health = 1
+    first.ambush_done = True
+
+    def deadly_orc():
+        o = Orc()
+        o.stats.min_atk = o.stats.max_atk = 5000
+        o.stats.speed = 999  # actúa antes que el jugador
+        return o
+
+    outcome = initiate_battle(player, first, ["Goblin", "Orco"], ["Goblin", "Orco"], enemy_factory=deadly_orc)
 
     assert outcome == "defeat"
+    assert player.enemy_kill_counts["Goblin"] == 1
 
 
 def test_troll_takes_double_damage_from_fire():

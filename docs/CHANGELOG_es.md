@@ -11,11 +11,12 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Añadido
 
-- **Cadenas de auto-batalla**: al elegir un enemigo ya derrotado ahora puedes
-  decidir cuántas peleas seguidas hacer (hasta 20) en Auto-Batalla o Turbo. Cada
-  pelea se resuelve como siempre (botín, oro, XP, curación tras el combate) y la
+- **Cadenas de auto-batalla**: tras activar la Auto-Batalla o el Turbo contra un
+  enemigo ya derrotado, el juego pregunta cuántas peleas seguidas hacer (hasta
+  20). Cada una se resuelve como siempre (botín, oro, XP, curación) y la
   siguiente empieza sola — sin menú, sin "Presiona Enter" por pelea. La cadena se
-  detiene si caes, huyes o pulsas `Q` para salir del modo automático.
+  detiene si caes o huyes; pulsar `Q` te devuelve al control manual, y desde el
+  menú puedes cambiar de Auto a Turbo (o al revés) a mitad de la cadena.
 
 - **Clases de personaje** (GDD §6.1): al crear personaje eliges entre
   **Vagabundo** (el personaje equilibrado de siempre), **Guerrero** (tanque),
@@ -43,6 +44,11 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   (antes de pedir el nombre), en vez de solo una vez por sesión — si no, es fácil
   pasarlo por alto. Dentro de la partida sigue mostrándose una sola vez, al
   entrar.
+- El combate ya no corta la canción que suena contra un enemigo estándar — solo
+  el jefe final y los cinco enemigos duros del tramo final cambian a música de
+  combate propia. Evita que las peleas cortas (y las cadenas de auto-batalla)
+  reinicien la música cada pocos segundos. (Cuando existan élites y guardianes de
+  zona serán ellos quienes activen la música de combate — ver `TODO.md`.)
 
 ## [0.9.0] - 2026-09-09
 
