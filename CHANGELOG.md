@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   has one). This release ships milestone 1 (one active + one passive per class,
   learned at creation): Golpe Firme / Segundo Aliento (Vagabundo), Embate / Piel
   de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
-  Sintonía (Arcanista). New `sangrado` (bleed) status. Numbers are provisional.
+  Sintonía (Arcanista). New `sangrado` (bleed) and `aturdido` (stun) statuses,
+  each with its own message and colour. Numbers are provisional.
 
 - **Auto-battle chains**: after you turn on Auto-Battle or Turbo against an
   already-defeated enemy, the game asks how many fights to run back-to-back (up
@@ -58,6 +59,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   short (and chained auto-) fights from restarting the music every few seconds.
   (When zone elites/guardians exist they'll be what triggers battle music — see
   `TODO.md`.)
+- Combat info sheets now print before a pre-battle ambush, not after, so you see
+  the matchup first.
+- The victory loot line now shows the stats a dropped weapon or armour grants,
+  not just its name and flavour text.
+- A dodged attack now reads "X lo esquiva" instead of "falla el golpe" — attacks
+  never miss on their own, only when the target dodges (evasion vs precision).
+- More status effects are colour-coded: `sangrado` (light red, distinct from
+  burn), `aturdido` (light yellow, distinct from paralysis), `desarmado`,
+  `maldición`, `confusión`.
 
 ## [0.9.0] - 2026-09-09
 

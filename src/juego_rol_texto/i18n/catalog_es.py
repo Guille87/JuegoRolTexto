@@ -15,6 +15,7 @@ CATALOG: dict[str, str] = {
     "status.marchito": "marchitamiento",
     "status.fractura_magica": "fractura mágica",
     "status.sangrado": "sangrado",
+    "status.aturdido": "aturdimiento",
     # --- Participios para "X ha sido {verbo}" al aplicar un estado ---
     "status.verb.quemado": "quemado",
     "status.verb.veneno": "envenenado",
@@ -44,6 +45,7 @@ CATALOG: dict[str, str] = {
     "combat.enemy_frozen": "❄️  {name} está congelado y no puede moverse.",
     "combat.enemy_thaws": "El hielo que envuelve a {name} se resquebraja.",
     "combat.enemy_paralysed": "⚡ ¡{name} está paralizado y pierde el turno!",
+    "combat.enemy_stunned": "💫 ¡{name} está aturdido y pierde el turno!",
     "combat.enemy_regen": "💚 {name} regenera {amount} HP.",
     "combat.status_faded_enemy": "✨ El efecto de {status} sobre {name} ha desaparecido.",
     "combat.enemy_succumbs": "{name} sucumbe a sus heridas.",

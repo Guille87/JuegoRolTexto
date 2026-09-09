@@ -158,6 +158,9 @@ class Enemy:
                     console.warning(i18n.t("combat.enemy_paralysed", name=self.name))
                     can_act = False
                 effect["fresh"] = False
+            elif effect["name"] == "aturdido":
+                console.warning(i18n.t("combat.enemy_stunned", name=self.name))
+                can_act = False
 
         for effect in self.status_effects[:]:
             if effect["name"] == "quemado":

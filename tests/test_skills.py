@@ -162,3 +162,25 @@ def test_enemy_bleed_damages_over_time():
     hp = enemy.stats.health
     enemy.on_turn_start()
     assert enemy.stats.health < hp
+
+
+def test_embate_stuns_with_the_aturdido_status_not_paralizado(monkeypatch):
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.choice", lambda seq: "hit")
+    monkeypatch.setattr("juego_rol_texto.characters.stats.random.random", lambda: 0.0)
+    monkeypatch.setattr("juego_rol_texto.combat.battle.random.random", lambda: 0.0)  # el aturdir prende
+    monkeypatch.setattr("juego_rol_texto.characters.player.random.randint", lambda a, b: 10)
+
+    p = _player(CharClass.GUERRERO)
+    enemy = Goblin()
+    battle._execute_skill(p, enemy, CATALOG["embate"], [])
+
+    names = [e["name"] for e in enemy.status_effects]
+    assert "aturdido" in names
+    assert "paralizado" not in names
+
+
+def test_aturdido_enemy_loses_its_turn(capsys):
+    enemy = Goblin()
+    enemy.apply_status("aturdido", 1)
+    assert enemy.on_turn_start() is False
+    assert "aturdido" in capsys.readouterr().out

@@ -282,6 +282,11 @@ class Player(Character):
                     can_act = False
                 effect["fresh"] = False
 
+            elif effect["name"] == "aturdido":
+                # Aturdimiento: pierdes el turno mientras dure (sin tirada).
+                console.warning("💫 ¡Estás aturdido y pierdes el turno!")
+                can_act = False
+
         # 2. Procesamiento de daño/curación (Ocurre aunque no puedas actuar)
         for effect in self.status_effects[:]:
             if effect["name"] == "quemado":

@@ -32,6 +32,21 @@ def test_victory_unlocks_next_enemy_and_grants_rewards(player, weak_enemy, monke
     assert player.enemy_kill_counts["Goblin"] == 1
 
 
+def test_victory_drop_line_shows_equipment_stats(player, monkeypatch, capsys):
+    from juego_rol_texto.characters.enemies.goblin import Goblin
+    from juego_rol_texto.combat.battle import _handle_victory
+    from juego_rol_texto.items.equipment import Armor
+
+    monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
+    g = Goblin()
+    monkeypatch.setattr(g, "drop_item", lambda: [Armor("Perneras Test", "desc", 5, slot="perneras", evasion=3)])
+    _handle_victory(player, g, [], ["Goblin"])
+
+    out = capsys.readouterr().out
+    assert "Perneras Test" in out
+    assert "Evasión" in out or "evasion" in out.lower()  # las stats aparecen
+
+
 def test_victory_increments_kill_count_on_repeat_wins(player, monkeypatch):
     from juego_rol_texto.characters.enemies.goblin import Goblin
 

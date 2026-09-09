@@ -24,15 +24,21 @@ __all__ = [
 ]
 
 # --- Coloreado automático de estados alterados ---------------------------------
-# Cualquier texto que mencione un estado se colorea igual en todo el juego:
-# veneno -> verde, quemadura -> rojo, parálisis -> amarillo, congelación -> azul.
-# `colorize()` lo aplica solo, así que basta con usar los helpers de este módulo.
+# Cualquier texto que mencione un estado se colorea igual en todo el juego, con
+# un color propio por estado. `colorize()` lo aplica solo, así que basta con usar
+# los helpers de este módulo.
 _STATUS_PATTERNS = (
     (re.compile(r"\b(?:veneno|venenos[oa]s?|envenen\w*)\b", re.IGNORECASE), Fore.GREEN),
     (re.compile(r"\b(?:quemad\w*|quemaduras?|quema)\b", re.IGNORECASE), Fore.RED),
     (re.compile(r"\b(?:par[aá]lisis|paraliz\w*)\b", re.IGNORECASE), Fore.YELLOW),
     (re.compile(r"\b(?:congelaci[oó]n|congelad[oa]s?|congela)\b", re.IGNORECASE), Fore.BLUE),
-    (re.compile(r"\b(?:sangrado|sangra\w*)\b", re.IGNORECASE), Fore.RED),
+    # sangrado: rojo claro, distinto del rojo normal de la quemadura.
+    (re.compile(r"\b(?:sangrado|sangra\w*|herido de gravedad)\b", re.IGNORECASE), Fore.LIGHTRED_EX),
+    # aturdimiento: amarillo claro, distinto del amarillo de la parálisis.
+    (re.compile(r"\b(?:aturdi\w*|aturdimiento)\b", re.IGNORECASE), Fore.LIGHTYELLOW_EX),
+    (re.compile(r"\b(?:desarmad[oa]s?)\b", re.IGNORECASE), Fore.LIGHTBLACK_EX),
+    (re.compile(r"\b(?:maldici[oó]n|maldit[oa]s?)\b", re.IGNORECASE), Fore.MAGENTA),
+    (re.compile(r"\b(?:confusi[oó]n|confundid[oa]s?)\b", re.IGNORECASE), Fore.CYAN),
 )
 
 

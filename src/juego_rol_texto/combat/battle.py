@@ -222,6 +222,12 @@ def _run_one_battle(
     # En la 2ª pelea de una cadena en adelante arrancamos ya en el modo elegido.
     start_auto: bool | str = chain["mode"] if fight_index > 1 else False
 
+    # Ficha de ambos combatientes al empezar, ANTES de la posible emboscada (para
+    # ver el enfrentamiento antes de que el enemigo pegue primero). En turbo se
+    # omite (farmeo).
+    if start_auto != "turbo":
+        print_player_enemy_info(player, enemy, defeated_enemies)
+
     # --- LÓGICA DE EMBOSCADA (Ataque previo) ---
     if hasattr(enemy, "check_ambush"):
         if enemy.check_ambush(player, defeated_enemies):
@@ -232,10 +238,6 @@ def _run_one_battle(
             _handle_defeat(player, pause=chain["count"] == 1)
             _restore_player(player, {"atk": (player.stats.min_atk, player.stats.max_atk), "armor": player.stats.armor})
             return "defeat"
-
-    # Ficha de ambos combatientes al empezar. En turbo se omite (farmeo).
-    if start_auto != "turbo":
-        print_player_enemy_info(player, enemy, defeated_enemies)
 
     # Pasiva "Sintonía" (Arcanista): elige el elemento de tu ataque este combate.
     if not start_auto:
@@ -509,7 +511,7 @@ def _prompt_battle_element(player) -> None:
 
 
 def _pick_auto_skill(player, cooldowns: dict):
-    """Primera habilidad activa equipada que no esté enfriándose (para auto/turbo)."""
+    """Primera habilidad activa equipada disponible (sin enfriamiento) para auto/turbo."""
     for skill in player.get_equipped_active_skills():
         if cooldowns.get(skill.id, 0) <= 0:
             return skill
@@ -528,9 +530,11 @@ def _choose_skill(player, cooldowns: dict):
         for i, skill in enumerate(actives, 1):
             cd = cooldowns.get(skill.id, 0)
             estado = (
-                console.colorize("listo", console.Fore.GREEN)
+                console.colorize("lista", console.Fore.GREEN)
                 if cd <= 0
-                else console.colorize(f"enfriando {cd}", console.Fore.LIGHTBLACK_EX, bright=True)
+                else console.colorize(
+                    f"en enfriamiento: {cd} turno{'s' if cd != 1 else ''}", console.Fore.LIGHTBLACK_EX, bright=True
+                )
             )
             print(
                 f"{console.colorize(f'{i}.', console.Fore.CYAN)} {console.colorize(skill.name, console.Fore.MAGENTA)} [{estado}]"
@@ -550,7 +554,8 @@ def _choose_skill(player, cooldowns: dict):
             continue
         skill = actives[idx]
         if cooldowns.get(skill.id, 0) > 0:
-            console.error(f"{skill.name} todavía se está enfriando ({cooldowns[skill.id]} turnos).")
+            turnos = cooldowns[skill.id]
+            console.error(f"{skill.name} todavía está en enfriamiento ({turnos} turno{'s' if turnos != 1 else ''}).")
             continue
         return skill
 
@@ -621,9 +626,11 @@ def _execute_turn(
     attacker_precision = attacker.get_total_precision() if isinstance(attacker, Player) else attacker.stats.precision
     defender_evasion = defender.get_total_evasion() if isinstance(defender, Player) else defender.stats.evasion
     if not p.get("guaranteed_hit") and not resolve_hit(attacker_precision, defender_evasion):
+        # Un ataque nunca "falla" por sí solo (acierto base 100%): si no entra, es
+        # porque el defensor lo esquivó con su evasión.
         print(
-            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca a "
-            f"{console.colorize(defender.name, console.Fore.RED)}, pero falla el golpe."
+            f"{console.colorize(attacker.name, console.Fore.GREEN)} ataca, pero "
+            f"{console.colorize(defender.name, console.Fore.RED)} lo esquiva."
         )
         if isinstance(attacker, Player):
             print_status(attacker, defender, defeated_enemies)
@@ -726,8 +733,8 @@ def _execute_turn(
 
     # Estado extra de la habilidad (aturdir / sangrado), si el objetivo sigue vivo.
     if defender.is_alive() and hasattr(defender, "apply_status"):
-        if p.get("stun_chance") and random.random() < p["stun_chance"] and defender.apply_status("paralizado", 1):
-            print(console.colorize(f"💫 ¡{defender.name} queda aturdido!", console.Fore.YELLOW, bright=True))
+        if p.get("stun_chance") and random.random() < p["stun_chance"] and defender.apply_status("aturdido", 1):
+            print(console.colorize(f"💫 ¡{defender.name} queda aturdido!", console.Fore.LIGHTYELLOW_EX, bright=True))
         if p.get("bleed_turns") and defender.apply_status("sangrado", p["bleed_turns"]):
             print(console.colorize(f"🩸 ¡{defender.name} empieza a sangrar!", console.Fore.RED))
 
@@ -809,8 +816,11 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
         print(console.colorize("\n--- BOTÍN ENCONTRADO ---", console.Fore.CYAN))
         for item in drops:
             player.inventory.add_item(item)
-            # Imprimimos solo aquí el mensaje del objeto encontrado
-            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)}: {item.description}")
+            # Imprimimos solo aquí el mensaje del objeto encontrado; para armas y
+            # armaduras, además, las estadísticas que otorga.
+            stats_info = item.get_stats_info() if hasattr(item, "get_stats_info") else ""
+            extra = f" {console.colorize(f'[{stats_info}]', console.Fore.LIGHTBLACK_EX)}" if stats_info else ""
+            print(f"📦 {console.colorize(item.name, console.Fore.GREEN)}: {item.description}{extra}")
 
     # Pasiva "Segundo Aliento" (Vagabundo): curación al derrotar a un enemigo.
     for skill in player._active_passives():
@@ -819,7 +829,13 @@ def _handle_victory(player, enemy, defeated_enemies: list, unlocked_enemies: lis
             healed = min(player.stats.max_health - player.stats.health, round(player.stats.max_health * pct))
             if healed > 0:
                 player.stats.health += healed
-                print(console.colorize(f"💚 {skill.name}: recuperas {healed} HP.", console.Fore.GREEN))
+                print(
+                    console.colorize(
+                        f"💚 {skill.name}: recuperas {healed} HP "
+                        f"(vida: {player.stats.health}/{player.stats.max_health}).",
+                        console.Fore.GREEN,
+                    )
+                )
 
     # Si sube de nivel, devolvemos el nuevo snapshot de stats
     return (player.stats.min_atk, player.stats.max_atk), player.stats.armor

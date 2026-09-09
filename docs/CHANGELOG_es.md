@@ -19,7 +19,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   la hay). Este release trae el hito 1 (1 activa + 1 pasiva por clase, se aprende
   al crear el personaje): Golpe Firme / Segundo Aliento (Vagabundo), Embate /
   Piel de Piedra (Guerrero), Golpe Bajo / Reflejos (Pícaro), Proyectil Arcano /
-  Sintonía (Arcanista). Nuevo estado `sangrado`. Los números son provisionales.
+  Sintonía (Arcanista). Nuevos estados `sangrado` y `aturdido`, cada uno con su
+  mensaje y color propios. Los números son provisionales.
 
 - **Cadenas de auto-batalla**: tras activar la Auto-Batalla o el Turbo contra un
   enemigo ya derrotado, el juego pregunta cuántas peleas seguidas hacer (hasta
@@ -62,6 +63,16 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   combate propia. Evita que las peleas cortas (y las cadenas de auto-batalla)
   reinicien la música cada pocos segundos. (Cuando existan élites y guardianes de
   zona serán ellos quienes activen la música de combate — ver `TODO.md`.)
+- Las fichas de combate se imprimen ahora antes de una emboscada previa, no
+  después, para ver el enfrentamiento primero.
+- La línea de botín al ganar muestra ahora las estadísticas que otorga un arma o
+  armadura que cae, no solo su nombre y descripción.
+- Un ataque esquivado dice ahora "X lo esquiva" en vez de "falla el golpe" — los
+  ataques no fallan por sí solos, solo cuando el objetivo esquiva (evasión vs
+  precisión).
+- Más estados van coloreados: `sangrado` (rojo claro, distinto de la quemadura),
+  `aturdido` (amarillo claro, distinto de la parálisis), `desarmado`, `maldición`,
+  `confusión`.
 
 ## [0.9.0] - 2026-09-09
 
