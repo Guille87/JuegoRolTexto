@@ -81,6 +81,7 @@
 - [x] Añadir submenú "Herrería" en la ciudad.
 - [x] Añadir más recetas (una por hueco de armadura nuevo, reutilizando los materiales comunes).
 - [x] Dar a la Armadura Regenerativa su efecto de regeneración real por turno: ahora usa el bonus `regen` de `Armor` (+8 HP/turno) sumado en `Player.get_total_regen()` y aplicado en `Player.on_turn_start()` — ver el nuevo stat "Regeneración de Salud" más abajo.
+- [ ] **Pendiente: revisar la coherencia de nombres de objetos (materiales / armas / armaduras).** Varios materiales suenan a objeto equipable y su receta no pega con el nombre: p. ej. "Capa de Sombras" es un `Material` (suena a Peto) y con él se craftea una Daga Envenenada + unas Perneras de Placa. Ahora que el resumen de botín de la cadena (`_print_chain_loot`) y el bestiario etiquetan el tipo, se nota más. Pasada de renombrado + revisión de recetas cuando toque el pase de contenido/mundo (v0.12+). Los nombres actuales son provisionales.
 
 ## Mejoras de Combate
 - [x] Implementar daño elemental (Fuego vs. Troll).

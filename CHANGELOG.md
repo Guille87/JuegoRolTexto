@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   starts on its own — no menu, no per-fight "press Enter". The chain stops if you
   fall or flee; pressing `Q` drops you back to manual control, and you can switch
   Auto ↔ Turbo mid-chain from the menu. At the end (win or loss) it prints a
-  summary of everything gained across the whole chain — gold, XP, levels, items.
+  summary of everything gained across the whole chain — gold, XP, levels, and
+  each item with its type (weapon / armour + slot / potion / forge material).
 
 - **Character classes** (GDD §6.1): pick one of **Vagabundo** (the classic
   balanced character), **Guerrero** (tank), **Pícaro** (fast / crit / fragile) or

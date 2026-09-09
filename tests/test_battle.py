@@ -147,6 +147,31 @@ def test_chain_prints_a_loot_summary_at_the_end(player, monkeypatch, capsys):
     assert player.inventory.gold > gold_before
 
 
+def test_chain_loot_summary_labels_each_item_by_type(player, capsys):
+    from juego_rol_texto.combat.battle import _print_chain_loot
+    from juego_rol_texto.items.equipment import Armor, Weapon
+    from juego_rol_texto.items.materials import Material
+    from juego_rol_texto.items.potions.healing_potion import HealingPotion
+
+    start = {"gold": 0, "xp": 0, "level": 1, "items": {}}
+    player.inventory.gold = 94
+    player.experience = 188
+    player.inventory.add_item(HealingPotion("Poción de Salud", "desc", 2, 20), 3, announce=False)
+    player.inventory.add_item(Material("Capa de Sombras", "desc", 1), announce=False)
+    player.inventory.add_item(Weapon("Daga Robada", "desc", 5, damage=4), announce=False)
+    player.inventory.add_item(Armor("Capucha de Ladrón", "desc", 5, slot="casco", max_health=10), announce=False)
+
+    _print_chain_loot(player, start)
+    import re
+
+    out = re.sub(r"\x1b\[[0-9;]*m", "", capsys.readouterr().out)
+
+    assert "Poción de Salud x3 (poción)" in out
+    assert "Capa de Sombras (material de herrería)" in out
+    assert "Daga Robada (arma)" in out
+    assert "Capucha de Ladrón (armadura · casco)" in out
+
+
 def test_single_fight_has_no_chain_loot_summary(player, weak_enemy, monkeypatch, capsys):
     monkeypatch.setattr("juego_rol_texto.combat.battle.time.sleep", lambda *a, **k: None)
     monkeypatch.setattr("juego_rol_texto.combat.battle.console.ask", lambda *a, **k: "1")

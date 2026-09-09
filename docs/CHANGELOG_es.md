@@ -18,7 +18,8 @@ y este proyecto sigue el [Versionado Semántico](https://semver.org/lang/es/).
   detiene si caes o huyes; pulsar `Q` te devuelve al control manual, y desde el
   menú puedes cambiar de Auto a Turbo (o al revés) a mitad de la cadena. Al
   terminar (ganes o pierdas) muestra un resumen de todo lo conseguido en la
-  cadena entera — oro, XP, niveles y objetos.
+  cadena entera — oro, XP, niveles y cada objeto con su tipo (arma / armadura +
+  hueco / poción / material de herrería).
 
 - **Clases de personaje** (GDD §6.1): al crear personaje eliges entre
   **Vagabundo** (el personaje equilibrado de siempre), **Guerrero** (tanque),

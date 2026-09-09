@@ -146,7 +146,7 @@ def initiate_battle(player, enemy, defeated_enemies: list, unlocked_enemies: lis
 def _print_chain_loot(player, start: dict) -> None:
     """Resumen del botín acumulado en una cadena de peleas: oro, XP, niveles y
     objetos nuevos (por diferencia contra la instantánea del inicio)."""
-    from juego_rol_texto.items.equipment import Armor, Weapon
+    from juego_rol_texto.items.equipment import Armor, Weapon, slot_label
     from juego_rol_texto.items.materials import Material
     from juego_rol_texto.items.potions.potion_base import Potion
 
@@ -186,10 +186,23 @@ def _print_chain_loot(player, start: dict) -> None:
             return console.colorize(name, console.Fore.LIGHTBLACK_EX)
         return name
 
+    def _kind(name: str) -> str:
+        item = item_by_name.get(name)
+        if isinstance(item, Weapon):
+            return f"arma · {item.element}" if item.element else "arma"
+        if isinstance(item, Armor):
+            return f"armadura · {slot_label(item.slot).lower()}"
+        if isinstance(item, Potion):
+            return "poción"
+        if isinstance(item, Material):
+            return "material de herrería"
+        return "objeto"
+
     print("Objetos:")
     for name, qty in gained.items():
         suffix = f" x{qty}" if qty > 1 else ""
-        print(f"  {_color(name)}{suffix}")
+        kind = console.colorize(f"({_kind(name)})", console.Fore.LIGHTBLACK_EX)
+        print(f"  {_color(name)}{suffix} {kind}")
 
 
 def _run_one_battle(
